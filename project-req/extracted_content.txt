@@ -1,0 +1,513 @@
+﻿
+SENTINEL
+Agentic AI-Powered IoT Security System
+Final Year Project — Architecture &amp; Technology Reference
+Vinay  |  Security Engineer  |  charon19d  |  April 2026
+1. Project Overview
+1.1 Concept
+SENTINEL is a consumer-grade, plug-and-play network security appliance powered by an agentic AI system. It sits inline between a home ISP router and the internal network switch, acting as a transparent Layer 2 bridge — giving it full visibility into all home network traffic without requiring any reconfiguration of existing devices or the ISP router.
+The system autonomously detects threats, profiles every IoT device, deploys deception technologies (honeypots and honeytokens), and enforces firewall rules in real time — entirely on the edge device with no mandatory cloud dependency.
+1.2 Objectives
+Design an agentic AI-powered IoT security system protecting home users from cyber attacks
+Implement autonomous threat detection using LSTM Autoencoder + Isolation Forest
+Deploy deception technologies: virtual honeypots (Cowrie, OpenCanary) and honeytokens
+Build real-time automated response with eBPF/XDP + nftables firewall engine
+Create a consumer-friendly plug-and-play security appliance (Raspberry Pi 5)
+Deliver a unified real-time risk dashboard for all home IoT devices
+Use Gemma 4 E4B LLM for on-device MITRE ATT&amp;CK TTP classification
+1.3 Feature Summary
+Feature
+Description
+IoT Device Discovery
+Automatic detection via ARP, mDNS, SSDP, DHCP passive sniffing — no active scanning required
+Risk Profiling
+Per-device CVE scoring via NVD API, firmware vulnerability assessment, open port mapping
+Anomaly Detection
+LSTM Autoencoder trained on each device&apos;s traffic baseline — personalised per deployment
+Threat Classification
+Gemma 4 E4B with MITRE ATT&amp;CK for ICS/IoT mapping, native function calling, JSON output
+Deception Layer
+Cowrie SSH, OpenCanary multi-service, custom UPnP honeypots + honeytoken alerts
+Firewall Engine
+eBPF/XDP sub-millisecond packet filter + nftables dynamic rule injection
+Auto Quarantine
+DHCP starvation + ARP block of compromised devices without touching the ISP router
+Dashboard
+Next.js PWA — D3.js device risk graph, live threat feed, WebSocket push alerts, mobile-ready
+2. Development Approach — PC First, Pi Later
+2.1 Strategy
+Build, test, and validate the entire SENTINEL software stack on a personal laptop or PC first. Only buy the Raspberry Pi 5 hardware after the software is fully working. This is standard embedded security development practice and the codebase is designed to be 99% identical across both environments.
+2.2 What Runs Identically on PC and Pi
+AI engine — LSTM, Isolation Forest, Gemma 4 via Ollama — runs on any 64-bit Linux/macOS/WSL2
+Next.js dashboard — identical on both environments
+All Docker containers: Cowrie, OpenCanary, Redis, Loki, Elasticsearch
+FastAPI backend, threat intel pipeline, SQLite device registry
+nftables firewall rules — same syntax on PC Linux and Pi OS Lite
+LangGraph agent orchestration — pure Python, no hardware dependency
+2.3 PC Workarounds (Temporary During Development)
+Packet capture: use libpcap on local Wi-Fi interface instead of a two-NIC bridge
+Monitor mode: TP-Link TL-WN722N v1 (~800 INR) gives full home network visibility without being the gateway
+Firewall enforcement: iptables/nftables on loopback — functionally identical code to the Pi bridge setup
+Honeypot redirect: DNAT rules on localhost — same nftables syntax, just a different target interface
+2.4 Pi Porting Checklist (When Software Is Ready)
+Add two-NIC bridge config via a single netplan YAML file
+Recompile llama.cpp for ARM64 — one command, roughly 15 minutes on Pi 5
+Docker containers pull ARM64 images automatically — no changes to Compose file
+Swap Gemma 4 E4B for E2B in Ollama — same API, smaller model
+All Python/Node application code stays 100% identical
+Hardware budget: 
+Raspberry Pi 5 (8GB) approx 6,000-7,000 INR. Buy only after software demo is working end-to-end on PC. TP-Link TL-WN722N for monitor mode during development: ~800 INR.
+3. System Architecture
+3.1 Layer Overview
+Layer
+Name
+Primary Function
+0
+Physical / IoT Devices
+All home network devices — the asset being protected
+1
+Network Capture &amp; Packet Engine
+Raw traffic ingestion, DPI, protocol classification via nDPI
+2
+Device Discovery &amp; Risk Profiler Agent
+Fingerprint devices, score CVEs, model per-device baselines
+3
+Agentic AI Engine
+Multi-agent orchestration: anomaly detection, TTP classification, response planning
+4
+Deception Layer
+Honeypots, honeytokens, attacker session capture, AI-driven redirect
+5
+Firewall &amp; Response Engine
+eBPF/XDP blocking, nftables rule injection, auto quarantine
+6
+Threat Intel Bus + Log Store
+STIX/TAXII feed sync, IoC enrichment, Elasticsearch/Loki event storage
+7
+Dashboard &amp; Alert UI
+Next.js PWA — device risk map, live threat feed, push alerts
+3.2 Physical Deployment Topology
+  [Internet]
+      |
+  [ISP Router]  (no config change needed)
+      |
+  [SENTINEL Appliance]  &lt;-- eth0 faces router, eth1 faces internal network
+      |                     Linux bridge (br0) ties them transparently
+  [Home Switch / Wi-Fi AP]
+      |
+  [All IoT Devices — TVs, cameras, bulbs, thermostats, wearables...]
+3.3 Layer-by-Layer Engineering Detail
+Layer 1 — Network Capture &amp; Packet Engine
+Uses libpcap and AF_PACKET sockets for raw traffic capture. nDPI handles deep packet inspection for 300+ protocols, producing per-flow metadata: source/destination IP, protocol, TLS SNI, HTTP User-Agents, DNS queries, and application-layer protocol identification.
+Layer 2 — Device Discovery &amp; Risk Profiler Agent
+Combines passive and active fingerprinting. Passive: ARP broadcasts, mDNS (.local names), SSDP/UPnP descriptions, DHCP hostname options — identifies 80%+ of devices without sending a single packet. Active (weekly, low-noise): Nmap OS detection and service version scan.
+MAC-to-vendor via IEEE OUI database. CVE scoring via NVD API — vendor and product strings from fingerprinting are queried to pull CVSS scores. Results stored in SQLite device registry.
+Schema: device_id, mac, ip, vendor, os_guess, firmware_version, open_ports[], cve_list[], risk_score, last_seen, baseline_model_path
+Layer 3 — Agentic AI Engine (Three Agents via LangGraph)
+Three specialised agents run concurrently, communicating via Redis pub/sub, orchestrated by LangGraph.
+Anomaly Detector Agent: LSTM Autoencoder trained on per-device traffic baselines (bytes/sec, packets/sec, top destination IPs, DNS query rate, connection attempt rate). Isolation Forest for cold-start (new devices with no baseline). Reconstruction error above learned threshold fires anomaly event to Redis.
+Threat Classifier Agent: Gemma 4 E4B via Ollama. Receives anomaly events from Redis, maps them to MITRE ATT&amp;CK for ICS/IoT using native function calling, outputs structured JSON: {tactic, technique_id, confidence, severity, summary, recommended_action}. Also checks IoCs against local STIX threat intel store.
+Response Planner Agent: YAML-defined policy tree. Severity 9-10 = immediate quarantine + dashboard alert. Severity 6-8 = redirect to honeypot + alert. Severity 1-5 = log + passive monitor. Calls firewall engine via internal FastAPI REST endpoints.
+Layer 4 — Deception Layer
+Multi-tier deception stack running as isolated Docker containers on the same appliance. Each honeypot gets its own virtual IP via macvlan — they appear as separate physical devices to the network.
+Cowrie: SSH/Telnet honeypot — logs all attacker commands, credentials, and session behaviour
+OpenCanary: Multi-service honeypot — emulates HTTP, SMB, FTP, MySQL, Redis services
+Custom UPnP honeypot (U-POT style): serves fake device description XML files impersonating smart bulbs and IP cameras
+SDN-style traffic steering: when attacker is detected, nftables DNAT rules redirect their traffic to the appropriate honeypot without them knowing
+Honeytokens: fake AWS keys, API tokens, and credentials planted in UPnP responses, fake HTTP headers, and exposed Samba shares — trigger out-of-band alerts via Canarytokens when used
+Cowrie session logs fed to Threat Classifier Agent for real-time TTP identification from attacker commands
+Research note: 
+The honeypot selection is dynamic, not static. The Response Planner agent decides which honeypot to redirect each attacker to based on their classified TTP — SSH probe goes to Cowrie, HTTP scan goes to OpenCanary. This AI-driven deception coordination is a novel contribution.
+Layer 5 — Firewall &amp; Response Engine
+eBPF/XDP programs attached to network interfaces — sub-millisecond packet decisions, blocks known-bad IPs at line rate before they touch the kernel network stack
+nftables for stateful rules: port blocking, connection rate limiting, DNAT for honeypot redirect
+Python rule manager daemon subscribes to Redis and translates agent decisions into live nftables commands
+VLAN micro-segmentation: pushes VLAN assignments via SNMP on managed switches to isolate device classes from each other
+Auto-quarantine: DHCP starvation + static ARP injection isolates a compromised device without any router config change
+Security gate: 
+Any destructive action (quarantine, firewall block) triggered by the LLM requires explicit dashboard confirmation for severity 8+. This prevents prompt injection attacks from silently taking network actions.
+4. AI &amp; ML Strategy
+4.1 Three Components, Three Approaches
+Component
+Train?
+Method
+Effort
+LSTM Autoencoder
+Yes — self-trained on your network
+Collect 4 hrs traffic per device, train in PyTorch, export to ONNX
+~1 day total
+Isolation Forest
+No — unsupervised
+scikit-learn, zero data needed, handles new devices with no baseline
+Minutes to set up
+Gemma 4 E4B (Classifier)
+No — use pre-trained
+Run via Ollama, prompt engineering + JSON output parsing only
+Zero (optional LoRA)
+Optional LoRA Fine-tune
+Optional
+QLoRA on ~500 MITRE ATT&amp;CK examples on Google Colab T4 free tier
+~2 hrs on Colab
+4.2 Gemma 4 — Why It Is the Right Choice
+Gemma 4 was released April 2, 2026 by Google DeepMind under the Apache 2.0 license. It is the recommended LLM for SENTINEL for the following reasons:
+Native function calling — agents call block_ip(), redirect_to_honeypot(), send_alert() as first-class LLM tools, not fragile prompt hacks
+128K context window on E2B/E4B — feed full packet logs, CVE context, and MITRE descriptions in a single prompt
+Apache 2.0 license — publish the full SENTINEL system including the model with zero licensing restrictions
+Confirmed Pi 5 compatibility — E2B runs at 7.6 tokens/sec on Raspberry Pi 5 with 8GB RAM
+Multimodal capability — future extension: feed IP camera frames for physical intrusion detection without any model change
+4.3 Model Selection by Phase
+Phase
+Model
+How to Run
+RAM Required
+PC development
+Gemma 4 E4B (INT4)
+ollama run gemma4:e4b
+~4GB
+Pi 5 deployment
+Gemma 4 E2B (INT4)
+ollama run gemma4:e2b
+~2GB
+GPU laptop (optional)
+Gemma 4 26B MoE
+ollama run gemma4:26b
+~16GB VRAM
+4.4 Threat Classifier Prompt Design
+The classifier agent sends structured prompts and receives JSON via native function calling. The system prompt is injected once; each anomaly event is a user message.
+SYSTEM: You are a cybersecurity analyst specialising in IoT threats.
+Given a network anomaly event, classify it using MITRE ATT&amp;CK for ICS.
+Return ONLY valid JSON. No explanation. No markdown.
+USER: Device 192.168.1.45 (Hikvision camera, CVE-2021-36260 vulnerable)
+initiated 23 outbound TCP connections to 185.220.101.x:443 in 60 seconds.
+Baseline deviation: +1800%. Last seen DNS query: update.hikvision-upgrade.ru
+OUTPUT: {&quot;tactic&quot;:&quot;Command and Control&quot;,&quot;technique_id&quot;:&quot;T0884&quot;,
+         &quot;confidence&quot;:0.91,&quot;severity&quot;:9,&quot;summary&quot;:&quot;Camera likely compromised,
+         communicating with C2 server&quot;,&quot;recommended_action&quot;:&quot;quarantine&quot;}
+5. Complete Technology Stack
+5.1 AI &amp; Machine Learning
+Purpose
+Tool
+Notes
+Anomaly detection
+PyTorch LSTM Autoencoder
+Self-trained on local traffic, exported to ONNX for fast inference
+Statistical outlier
+scikit-learn Isolation Forest
+Unsupervised, handles cold-start new devices
+Threat classification LLM
+Gemma 4 E4B via Ollama
+Native function calling, swap to E2B on Pi 5
+Model inference runtime
+ONNX Runtime
+Fast ARM64 inference, same code on PC and Pi
+Optional fine-tuning
+QLoRA via Unsloth
+Runs on Google Colab T4 free tier, ~500 MITRE examples
+5.2 Network &amp; Security
+Purpose
+Tool
+Notes
+Packet capture
+Scapy + pyshark (libpcap)
+Python-native for dev; AF_PACKET for production performance
+Protocol analysis / DPI
+nDPI Python bindings
+Identifies 300+ protocols including IoT-specific (UPnP, MQTT, Zigbee)
+Device fingerprinting
+python-nmap + custom passive sniffer
+OUI database + Nmap banner grabbing + mDNS/SSDP/ARP
+Firewall control
+nftables via Python subprocess
+Same syntax on PC Linux and Pi OS Lite
+Fast kernel packet drop
+eBPF via BCC toolkit
+XDP for known-bad IP blocklist at sub-millisecond latency
+5.3 Honeypots &amp; Deception
+Purpose
+Tool
+Docker Image
+SSH/Telnet honeypot
+Cowrie
+cowrie/cowrie:latest
+Multi-service honeypot
+OpenCanary (HTTP, SMB, FTP, MySQL, Redis)
+thinkst/opencanary
+UPnP device emulation
+Custom U-POT style container (build from scratch)
+Custom Dockerfile
+Traffic redirect to honeypot
+nftables DNAT (Python daemon, no container)
+n/a
+Honeytoken alert callbacks
+Canarytokens self-hosted
+thinkst/canarytokens-docker
+5.4 Infrastructure &amp; Data
+Purpose
+Tool
+Notes
+Agent orchestration
+LangGraph (Python)
+Built for multi-agent state machines, pip install langgraph
+Inter-agent event bus
+Redis pub/sub
+Lightweight, sub-ms latency, Pi-friendly, docker: redis:alpine
+Device registry
+SQLite + SQLAlchemy
+Zero config, single .db file, no server required
+Log and event storage
+Loki + Grafana
+Lighter than Elasticsearch on Pi; alt: Elasticsearch for search
+Container runtime
+Docker + Docker Compose
+Identical environment on PC and Pi, ARM64 images auto-pulled
+5.5 API &amp; Dashboard
+Purpose
+Tool
+Notes
+Backend REST API
+FastAPI (Python + Uvicorn)
+Async, auto-generates OpenAPI docs, pip install fastapi uvicorn
+Real-time event streaming
+WebSockets via FastAPI
+Push threat alerts to browser without polling
+Frontend framework
+Next.js 14 + TailwindCSS
+PWA support, server-side rendering, excellent mobile experience
+Device risk visualisation
+D3.js force-directed graph
+Shows devices as nodes sized by risk score, edges = connections
+Traffic and metric charts
+Recharts
+Clean React integration, npm install recharts
+Mobile push notifications
+Web Push API
+No Firebase or third-party service needed, fully self-hosted
+5.6 Threat Intelligence
+Source
+What It Provides
+Cost
+API / Format
+NVD (NIST)
+CVE data, CVSS scores by vendor+product
+Free
+REST API — nvd.nist.gov/developers
+AbuseIPDB
+IP reputation — flag malicious outbound connections
+Free: 1000/day
+REST API — abuseipdb.com/api
+OTX AlienVault
+IoC feeds, threat bulletins
+Free
+STIX/TAXII — otx.alienvault.com
+MISP
+Community IoC sharing, STIX format
+Free / Self-hosted
+STIX/TAXII
+MITRE ATT&amp;CK for ICS
+TTP taxonomy used by LLM classifier
+Free / Open
+STIX JSON repository on GitHub
+Quad9 / DNS RPZ
+Malware domain blocking at DNS layer
+Free
+DNS resolver — 9.9.9.9
+6. Project Folder Structure
+sentinel/
+  core/
+    capture/           # Scapy packet capture + nDPI protocol analysis
+    fingerprinting/    # Device discovery, OUI lookup, CVE scoring via NVD
+    firewall/          # nftables rule manager + eBPF/XDP loader
+  agents/
+    anomaly/           # LSTM Autoencoder + Isolation Forest training + inference
+    classifier/        # Gemma 4 via Ollama — MITRE ATT&amp;CK TTP classifier
+    responder/         # Policy engine + action executor (LangGraph graph)
+  deception/
+    docker-compose.yml # Cowrie + OpenCanary + Canarytokens containers
+    redirect/          # nftables DNAT honeypot steering daemon
+  api/                 # FastAPI backend + WebSocket real-time event server
+  dashboard/           # Next.js 14 PWA frontend
+  intel/               # CVE, AbuseIPDB, OTX, MISP background sync workers
+  models/              # Saved LSTM weights (.pth), ONNX exports (.onnx)
+  data/                # SQLite DB, Redis config, PCAP archive, logs
+  docker-compose.yml   # Full stack: Redis, Loki, Grafana, honeypots
+  requirements.txt     # Python dependencies
+  README.md
+7. Build Phases &amp; Timeline
+Recommended 16-Week Plan
+Build in this exact sequence — each phase depends on the one before it. Do not skip phases.
+Phase
+Weeks
+Deliverable
+Done When
+1 — Data foundation
+1-2
+Scapy sniffer, mDNS/ARP/SSDP passive listener, Nmap scanner, OUI lookup, NVD CVE query, SQLite device registry
+All home devices visible in a table with vendor, IP, open ports, CVE risk score
+2 — Anomaly detection
+3-4
+LSTM Autoencoder in PyTorch, 4 hrs traffic collection per device, training script, Isolation Forest for cold-start, wire into packet pipeline
+Model correctly flags abnormal traffic from a test device
+3 — LLM classifier
+5-6
+Gemma 4 E4B via Ollama, system prompt design, JSON output parsing, LangGraph agent wiring, Redis pub/sub event flow
+LLM correctly classifies a simulated port scan as T1046 Network Service Discovery
+4 — Deception stack
+7-8
+Docker Compose for Cowrie + OpenCanary + Canarytokens, macvlan IPs, nftables DNAT redirect daemon listening to Redis
+nmap against honeypot IP logs attacker session in Cowrie JSON logs
+5 — FastAPI backend
+9-10
+REST endpoints for /devices /threats /alerts, WebSocket event stream, Redis subscriber, nftables action API
+Postman queries return correct data, WebSocket streams live events
+6 — Dashboard
+11-12
+Next.js PWA, D3.js force-directed risk graph, live threat feed, one-click quarantine (with severity gate), CVE panel, Web Push alerts
+Full end-to-end demo: attack detection to dashboard alert to quarantine
+7 — Integration testing
+13-14
+Attack simulation with hping3, nmap, Metasploit against own honeypots. Benchmark detection rate, false positives, response latency vs Snort/Suricata
+Detection rate above 90%, false positive rate below 5%, latency under 500ms
+8 — Pi porting + demo
+15-16
+Flash Pi OS Lite, configure netplan bridge, recompile llama.cpp ARM64, swap E4B for E2B, full demo on physical appliance
+Physical appliance protects real home network, demo-ready for evaluation panel
+8. Hardware Specification
+8.1 Edge Appliance Components
+Component
+Specification
+Approx Cost
+Primary SBC
+Raspberry Pi 5 — 8GB RAM (mandatory, not 4GB)
+6,000-7,000 INR
+Alternative SBC
+NVIDIA Jetson Orin Nano — has dedicated NPU for faster LLM inference
+Higher cost
+Primary NIC
+Built-in Pi 5 Gigabit Ethernet (eth0) — faces ISP router
+Included
+Secondary NIC
+USB 3.0 Gigabit adapter OR PCIe NIC via Pi 5 PCIe slot (eth1) — faces internal network
+500-1500 INR
+Dev monitor mode adapter
+TP-Link TL-WN722N v1 — monitor mode + packet injection supported
+~800 INR
+Storage
+64GB+ microSD A2 Class or USB 3.0 SSD for better disk I/O under load
+500-1500 INR
+OS
+Raspberry Pi OS Lite 64-bit — headless, no desktop environment
+Free
+Power supply
+Official Raspberry Pi 5 27W USB-C power supply
+~800 INR
+8.2 OS Hardening Steps (Pi Deployment)
+Read-only root filesystem with tmpfs overlays for /tmp and /var/log
+dm-verity for boot partition tamper detection
+unattended-upgrades for automatic security patching
+fail2ban protecting SSH and dashboard login from brute force
+ufw baseline — allow only ports: 22 (SSH), 443 (dashboard), honeypot service ports
+SSH key-only authentication, password auth and root login disabled
+Disable unused hardware: Bluetooth, HDMI output, audio, camera interface
+9. Novel Research Contributions
+Three angles give SENTINEL genuine academic value beyond a standard implementation project:
+9.1 On-Device LLM TTP Classification at Under 10 Watts
+Running a quantized 4B LLM (Gemma 4 E4B) for real-time MITRE ATT&amp;CK TTP classification entirely on a Raspberry Pi 5 at under 10W of power is a novel result. Very little published work has demonstrated LLM-based threat classification on a single-board computer without cloud connectivity. The confirmed 7.6 tokens/sec on Pi 5 (E2B) makes this practically viable and directly reproducible by other researchers.
+9.2 AI-Driven Dynamic Honeypot Coordination
+Honeypot selection and traffic steering in SENTINEL is dynamic — the Response Planner agent makes per-attacker decisions about which honeypot to redirect traffic to, based on the LLM-classified TTP. An SSH probe goes to Cowrie; an HTTP scan goes to OpenCanary; a UPnP probe goes to the camera emulator. This AI-driven deception coordination at the edge is an original combination not present in existing consumer-grade tools.
+9.3 Consumer-Grade Threat Attribution on a Sub-100 Dollar Device
+Combining passive fingerprinting, per-device LSTM behavior baselining, and deception telemetry to build attacker profiles on a 75 USD device is a publishable result — especially when benchmarked against existing tools like Snort and Suricata on the same traffic traces. This comparison can form the core of the evaluation chapter.
+9.4 Evaluation Metrics for the Paper
+Metric
+Target
+How to Measure
+Tool
+Threat detection rate
+&gt; 90%
+Known attack scenarios vs detected events ratio
+Metasploit + custom hping3 scripts
+False positive rate
+&lt; 5%
+Benign traffic incorrectly flagged as malicious
+24-hour baseline traffic replay
+End-to-end response latency
+&lt; 500ms
+Anomaly event timestamp to nftables rule active
+Redis event timestamps
+LLM TTP classification accuracy
+&gt; 85%
+LLM output vs ground truth MITRE labels
+Labelled IoT attack dataset
+Pi 5 resource usage under load
+&lt; 70% CPU, &lt; 6GB RAM
+Full stack running during simulated attack
+htop, vmstat, free
+Honeypot engagement (dwell time)
+Longer than baseline
+Attacker session duration in Cowrie JSON logs
+Cowrie built-in logging
+10. Quick Reference — Key Commands
+10.1 Start Full Stack (PC Development)
+# Start all infrastructure containers (Redis, Loki, Grafana, honeypots)
+docker compose up -d
+# Pull and start Gemma 4 E4B for development
+ollama run gemma4:e4b
+# Start FastAPI backend on port 8000
+uvicorn api.main:app --reload --port 8000
+# Start Next.js dashboard on port 3000
+cd dashboard &amp;&amp; npm run dev
+# Start packet capture agent (requires sudo for raw socket)
+sudo python core/capture/sniffer.py --interface wlan0
+10.2 FastAPI Endpoints Reference
+Method
+Endpoint
+Description
+GET
+/api/devices
+All discovered devices with risk scores, CVEs, open ports
+GET
+/api/threats
+Recent threat events with TTP classification and severity
+POST
+/api/quarantine/{ip}
+Quarantine a device (dashboard confirmation required for severity 8+)
+POST
+/api/honeypot/redirect/{ip}
+Manually redirect a device IP to honeypot
+GET
+/api/cve/{device_id}
+Full CVE list for a specific device
+GET
+/api/intel/ioc/{ip}
+Check IP against all connected threat intel feeds
+WS
+/ws/events
+WebSocket — real-time stream of threat events to dashboard
+10.3 Key Resources &amp; Documentation
+Resource
+URL
+Gemma 4 Model Card
+ai.google.dev/gemma/docs/core/model_card_4
+Gemma 4 on Ollama
+ollama.com/library/gemma4
+MITRE ATT&amp;CK for ICS
+attack.mitre.org/matrices/ics/
+NVD CVE API Documentation
+nvd.nist.gov/developers/vulnerabilities
+Cowrie Honeypot GitHub
+github.com/cowrie/cowrie
+OpenCanary GitHub
+github.com/thinkst/opencanary
+nDPI Library
+github.com/ntop/nDPI
+LangGraph Documentation
+github.com/langchain-ai/langgraph
+eBPF / BCC Toolkit
+github.com/iovisor/bcc
+OTX AlienVault
+otx.alienvault.com
+AbuseIPDB API
+abuseipdb.com/api
+Canarytokens Self-hosted
+github.com/thinkst/canarytokens-docker
+SENTINEL Final Year Project Reference  —  charon19d  —  Generated April 2026
+
