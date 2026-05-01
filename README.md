@@ -20,7 +20,7 @@ pip install -r requirements.txt
 cp .env.example .env
 
 # 3. Start Redis (via Docker)
-docker run -d --name sentinel-redis -p 6379:6379 redis:alpine
+docker-compose up -d
 
 # 4. List available interfaces
 sudo python -m sentinel.core.capture.main --list-interfaces
@@ -48,7 +48,7 @@ python -m sentinel.core.capture.main --pcap test.pcap --no-redis
 
 ```
 ┌─────────────┐    ┌──────────────┐    ┌───────────────┐
-│   Sniffer   │───▶│ Flow Tracker │───▶│ Redis Pub/Sub │
+│   Sniffer   │───▶│ Flow Parser  │───▶│ Redis Pub/Sub │
 │  (Scapy)    │    │  (5-tuple)   │    │               │
 └─────────────┘    └──────────────┘    └───────────────┘
       │                  │
@@ -65,28 +65,47 @@ python -m sentinel.core.capture.main --pcap test.pcap --no-redis
 
 | Channel | Content |
 |---|---|
-| `sentinel:flows` | Flow lifecycle events (new/update/end) |
-| `sentinel:packets` | Raw packet metadata (high frequency) |
-| `sentinel:discovery` | Device discovery (ARP/mDNS/SSDP/DHCP) |
-| `sentinel:stats` | Capture engine statistics |
+| `capture:flows` | Flow lifecycle events (new/update/end) |
+| `capture:packets` | Raw packet metadata (high frequency) |
+| `capture:discovery` | Device discovery (ARP/mDNS/SSDP/DHCP) |
+| `capture:stats` | Capture engine statistics |
 
 ### Project Structure
 
 ```
 sentinel/
+  config/
+    settings.py              # Centralized configuration
   core/
     capture/
       main.py                # CLI entry point
       sniffer.py             # Scapy AsyncSniffer engine
-      flow_tracker.py        # 5-tuple flow aggregation
+      flow_parser.py         # 5-tuple flow aggregation
       protocol_analyzer.py   # NFStream DPI + port inference
       metadata_extractor.py  # DNS/TLS/HTTP/ARP/mDNS/SSDP/DHCP
       redis_publisher.py     # Redis pub/sub publisher
       models.py              # Pydantic data models
-      config.py              # Configuration management
+      config.py              # Layer 1 specific config
       utils.py               # MAC vendor lookup, helpers
+    fingerprinting/
+      discovery.py           # Layer 2 Discovery Agent
+      registry.py            # SQLite Device Registry
+      cve.py                 # NVD CVE Scanner
+      oui.py                 # OUI Vendor Lookup
+      scanner.py             # Nmap Active Scanner
   data/
     oui_lookup.json          # IEEE OUI vendor database
+```
+
+## Layer 2 — Device Discovery & Risk Profiler
+
+Automatically discovers and risk-profiles every device on the home network. Uses passive fingerprinting (mDNS, SSDP, DHCP, ARP) and active scanning (Nmap) to identify vendors and vulnerabilities.
+
+### Quick Start
+
+```bash
+# Start the Discovery Agent
+python -m sentinel.core.fingerprinting.discovery
 ```
 
 ## License
