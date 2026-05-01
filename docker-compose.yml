@@ -1,11 +1,30 @@
 version: '3.8'
 
 services:
+  # --- Infrastructure ---
   redis:
     image: redis:alpine
     container_name: sentinel-redis
     ports:
       - "6379:6379"
     restart: always
+    networks:
+      - sentinel-net
 
-  # Future services can be added here (Loki, Grafana, etc.)
+  # --- Layer 2: Discovery Agent ---
+  discovery:
+    build: .
+    container_name: sentinel-discovery
+    restart: always
+    depends_on:
+      - redis
+    volumes:
+      - ./data:/app/data
+      - .env:/app/.env
+    networks:
+      - sentinel-net
+    command: python -m sentinel.core.fingerprinting.discovery
+
+networks:
+  sentinel-net:
+    driver: bridge
