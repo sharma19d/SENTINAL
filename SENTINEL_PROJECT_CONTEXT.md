@@ -166,12 +166,13 @@ Each honeypot gets its own virtual IP via **macvlan** — they appear as real se
 
 ### Agent 1 — Anomaly Detector
 
-- **Model:** LSTM Autoencoder (PyTorch → ONNX)
-- **Input features per device per time window:** bytes/sec, packets/sec, top 5 destination IPs, DNS query rate, unique destination count, protocol distribution, connection attempt rate
-- **Training:** 4 hours of baseline traffic per device, then export to ONNX
-- **Inference:** reconstruction error above learned threshold = anomaly event
-- **Cold start:** Isolation Forest handles new devices with no baseline
-- **Output:** publishes `{device_id, anomaly_score, deviation_pct, features}` to Redis channel `anomaly:events`
+- **Model:** Kitsune-based LSTM Autoencoder (Pre-trained on Kaggle/IoT datasets)
+- **Input features:** 115 Incremental Statistics (Kitsune framework) tracking Jitter, Magnitude, Radius, and Correlation across multiple time windows (L5, L3, L1, L0.1, L0.01).
+- **Training Strategy:** 
+  - **Pre-trained:** Initial deployment using models trained on high-quality public IoT datasets (e.g., IoT-23, Kitsune dataset).
+  - **Fine-tuning:** Local adaptation where the model is fine-tuned on the specific home network baseline to reduce false positives.
+- **Inference:** ONNX Runtime executing on packet-level statistics. Reconstruction error above `sentinel_threshold.txt` = anomaly event.
+- **Output:** publishes `{device_id, anomaly_score, feature_vector, alert_level}` to Redis channel `anomaly:events`.
 
 ### Agent 2 — Threat Classifier
 
@@ -265,11 +266,11 @@ sentinel/
 │   │   ├── flow_parser.py      # Per-flow feature extraction
 │   │   └── redis_publisher.py  # Publish flows to Redis
 │   ├── fingerprinting/
-│   │   ├── discovery.py        # ARP/mDNS/SSDP/DHCP passive listener
-│   │   ├── scanner.py          # python-nmap active scanner (weekly)
-│   │   ├── oui.py              # IEEE OUI MAC-to-vendor lookup
-│   │   ├── cve.py              # NVD API CVE scoring
-│   │   └── registry.py         # SQLite device registry CRUD
+│   │   ├── discovery.py        # Passive listener (mDNS, SSDP, DHCP, ARP)
+│   │   ├── scanner.py          # Active Nmap service scanner
+│   │   ├── oui.py              # MAC-to-vendor lookup
+│   │   ├── cve.py              # NIST NVD API scanner
+│   │   └── registry.py         # SQLite + SQLAlchemy device registry
 │   └── firewall/
 │       ├── nftables_manager.py # nftables rule injection via subprocess
 │       ├── ebpf_loader.py      # BCC eBPF/XDP program loader
@@ -277,10 +278,9 @@ sentinel/
 │
 ├── agents/
 │   ├── anomaly/
-│   │   ├── train.py            # LSTM Autoencoder training script
-│   │   ├── model.py            # PyTorch model definition
-│   │   ├── inference.py        # ONNX Runtime inference
-│   │   └── isolation_forest.py # scikit-learn cold-start detector
+│   │   ├── kitsune.py          # 115 Incremental Stats Extractor
+│   │   ├── inference.py        # ONNX Runtime inference engine
+│   │   └── finetune.py         # Local baseline adaptation script
 │   ├── classifier/
 │   │   ├── gemma_client.py     # Ollama REST API client
 │   │   ├── prompt_builder.py   # System prompt + anomaly event formatter
