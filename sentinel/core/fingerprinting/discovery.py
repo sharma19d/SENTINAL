@@ -59,10 +59,10 @@ class DiscoveryAgent:
                 
                 # Subscribe to discovery and flow channels
                 pubsub = self.redis_client.pubsub()
-                await pubsub.subscribe("capture:discovery", "capture:flows")
+                await pubsub.subscribe("sentinel:discovery", "sentinel:flows")
                 
                 logger.info("discovery_agent_started", 
-                            channels=["capture:discovery", "capture:flows"])
+                            channels=["sentinel:discovery", "sentinel:flows"])
                 
                 while self._running:
                     message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
@@ -70,9 +70,9 @@ class DiscoveryAgent:
                         channel = message["channel"]
                         data = json.loads(message["data"])
                         
-                        if channel == "capture:discovery":
+                        if channel == "sentinel:discovery":
                             await self._handle_discovery_event(data)
-                        elif channel == "capture:flows":
+                        elif channel == "sentinel:flows":
                             await self._handle_flow_event(data)
                             
             except (redis.ConnectionError, redis.TimeoutError) as e:

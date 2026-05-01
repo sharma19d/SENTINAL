@@ -157,7 +157,7 @@ def get_available_interfaces() -> list[dict[str, str]]:
     Uses Scapy's interface listing for cross-platform compatibility.
     """
     try:
-        from scapy.interfaces import get_if_list, get_if_hwaddr
+        from scapy.arch import get_if_list, get_if_hwaddr
         interfaces = []
         for iface_name in get_if_list():
             try:
@@ -186,7 +186,7 @@ def get_default_interface() -> str:
         5. Fallback to "any" (Linux capture-all pseudo-interface)
     """
     try:
-        from scapy.interfaces import get_if_list
+        from scapy.arch import get_if_list
         ifaces = get_if_list()
     except ImportError:
         return "any"
@@ -209,7 +209,7 @@ def validate_interface(name: str) -> bool:
     if name == "auto" or name == "any":
         return True
     try:
-        from scapy.interfaces import get_if_list
+        from scapy.arch import get_if_list
         return name in get_if_list()
     except ImportError:
         return True  # Assume valid if we can't check
