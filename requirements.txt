@@ -10,6 +10,9 @@ nfstream>=6.5.0                # nDPI-powered flow-level DPI (300+ protocols)
 # --- Event Bus ---
 redis>=5.0.0                   # Redis client for pub/sub event streaming
 
+# --- Logging ---
+structlog>=24.0.0              # Structured logging
+
 # --- Data Models & Configuration ---
 pydantic>=2.0.0                # Data validation and serialization
 pydantic-settings>=2.0.0       # Settings management from .env files

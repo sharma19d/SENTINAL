@@ -104,7 +104,6 @@ class DiscoveryAgent:
         vendor = data.get("vendor") or get_vendor(mac)
         
         device_update = {
-            "mac": mac,
             "ip": ip,
             "vendor": vendor,
         }

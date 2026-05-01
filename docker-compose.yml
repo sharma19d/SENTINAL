@@ -18,6 +18,8 @@ services:
     restart: always
     depends_on:
       - redis
+    environment:
+      - REDIS_HOST=redis
     volumes:
       - ./data:/app/data
       - .env:/app/.env
