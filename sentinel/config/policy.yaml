@@ -1,0 +1,24 @@
+rules:
+  - name: critical_threat
+    severity_min: 9
+    severity_max: 10
+    actions:
+      - quarantine_device
+      - push_alert_critical
+    require_confirmation: true
+
+  - name: high_threat
+    severity_min: 6
+    severity_max: 8
+    actions:
+      - redirect_to_honeypot
+      - push_alert_high
+    require_confirmation: false
+
+  - name: medium_low_threat
+    severity_min: 1
+    severity_max: 5
+    actions:
+      - log_event
+      - passive_monitor
+    require_confirmation: false

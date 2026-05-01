@@ -42,7 +42,7 @@ class SentinelSettings(BaseSettings):
 
     # --- AI Engine ---
     ollama_base_url: str = Field(default="http://localhost:11434")
-    llm_model: str = Field(default="gemma4:e4b")
+    llm_model: str = Field(default="gemma4:e2b")
 
 
 # Global settings instance
