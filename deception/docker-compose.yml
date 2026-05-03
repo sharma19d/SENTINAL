@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # --- Cowrie (SSH/Telnet Honeypot) ---
+  cowrie:
+    image: cowrie/cowrie:latest
+    container_name: sentinel-cowrie
+    restart: always
+    networks:
+      sentinel-honeypot-net:
+        ipv4_address: 192.168.0.201
+    volumes:
+      - ./cowrie/cowrie.cfg:/home/cowrie/cowrie-git/etc/cowrie.cfg
+      - ./cowrie/honeyfs:/home/cowrie/cowrie-git/honeyfs
+      - ./cowrie/log:/home/cowrie/cowrie-git/var/log/cowrie
+    environment:
+      - TZ=UTC
+
+  # --- OpenCanary (Multi-service Honeypot) ---
+  opencanary:
+    image: thinkst/opencanary:latest
+    container_name: sentinel-opencanary
+    restart: always
+    networks:
+      sentinel-honeypot-net:
+        ipv4_address: 192.168.0.202
+    volumes:
+      - ./opencanary/opencanary.conf:/root/.opencanary.conf
+    environment:
+      - TZ=UTC
+
+networks:
+  sentinel-honeypot-net:
+    driver: macvlan
+    driver_opts:
+      parent: wlan0
+    ipam:
+      config:
+        - subnet: 192.168.0.0/24
+          gateway: 192.168.0.1
+          ip_range: 192.168.0.200/29 # 192.168.0.200 to 192.168.0.207
