@@ -14,6 +14,7 @@ from typing import Dict, Any
 from sentinel.config.settings import settings as app_settings
 from sentinel.agents.classifier.gemma_client import GemmaClassifier
 from sentinel.core.fingerprinting.registry import DeviceRegistry
+from intel.bus import IntelBus
 
 logger = structlog.get_logger(__name__)
 
@@ -31,6 +32,7 @@ class ClassifierWorker:
         )
         self.registry = DeviceRegistry(db_url=app_settings.db_url)
         self.classifier = GemmaClassifier()
+        self.intel_bus = IntelBus()
         
         # Channels
         self.anomaly_channel = "sentinel:anomaly"
@@ -62,6 +64,7 @@ class ClassifierWorker:
         try:
             anomaly = json.loads(data_str)
             device_id = anomaly["device_id"]
+            dst_ip = anomaly["dst_ip"]
             
             # 1. Enrich with Device Registry
             device = self.registry.get_device(device_id)
@@ -74,19 +77,25 @@ class ClassifierWorker:
                 cves = json.loads(device.cve_list or "[]")
                 context["cves"] = ", ".join([c["cve_id"] for c in cves]) if cves else "None"
             
+            # 2. Enrich with Global Intel (Layer 6)
+            logger.info("enriching_with_global_intel", ip=dst_ip)
+            intel_data = await self.intel_bus.enrich_ip(dst_ip)
+            context["intel"] = intel_data
+            
             logger.info("classifying_threat", device=device_id, score=anomaly["anomaly_score"])
             
-            # 2. Gemma 4 Classification
+            # 3. Gemma 4 Classification
             classification = await self.classifier.classify(context)
             
             if classification:
-                # 3. Store and Publish Threat
+                # 4. Store and Publish Threat
                 event_id = str(uuid.uuid4())
                 threat_event = {
                     "event_id": event_id,
                     "device_id": device_id,
                     **classification,
                     "indicators": [anomaly["dst_ip"]],
+                    "intel": intel_data,
                     "timestamp": anomaly["timestamp"]
                 }
                 

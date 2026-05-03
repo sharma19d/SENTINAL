@@ -67,6 +67,13 @@ class GemmaClassifier:
         """
         Format the anomaly and device context into a prompt.
         """
+        intel = ctx.get('intel', {})
+        intel_context = (
+            f"- Global Reputation: Malicious Pulses found ({intel.get('otx_pulse_count', 0)}) "
+            f"with tags: {', '.join(intel.get('otx_tags', [])) or 'None'}. "
+            f"AbuseIPDB Confidence: {intel.get('abuse_score', 0)}%"
+        ) if intel else "- Global Reputation: Not checked"
+
         return f"""
 ANOMALY EVENT:
 - Device: {ctx.get('device_id')} ({ctx.get('vendor', 'Unknown')})
@@ -75,6 +82,7 @@ ANOMALY EVENT:
 - Anomaly Score: {ctx.get('anomaly_score')}
 - Alert Level: {ctx.get('alert_level')}
 - Known Vulnerabilities (CVEs): {ctx.get('cves', 'None')}
+{intel_context}
 
 TASK:
 Classify this behavior using MITRE ATT&CK. Identify the Tactic, Technique ID, Severity (1-10), and provide a brief Summary.
