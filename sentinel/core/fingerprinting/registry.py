@@ -143,6 +143,10 @@ class DeviceRegistry:
         finally:
             session.close()
 
+    def get_all_devices(self) -> list[DeviceModel]:
+        """Alias for list_devices for API clarity."""
+        return self.list_devices()
+
     # ── Threat Event Operations ──────────────────────────────────
 
     def add_threat_event(self, event_id: str, device_id: str, **kwargs) -> ThreatEventModel:
@@ -171,5 +175,15 @@ class DeviceRegistry:
             return session.query(ThreatEventModel).filter(
                 ThreatEventModel.device_id == device_id
             ).order_by(ThreatEventModel.timestamp.desc()).all()
+        finally:
+            session.close()
+
+    def get_recent_threats(self, limit: int = 50) -> list[ThreatEventModel]:
+        """List the most recent threat events across all devices."""
+        session = self.get_session()
+        try:
+            return session.query(ThreatEventModel).order_by(
+                ThreatEventModel.timestamp.desc()
+            ).limit(limit).all()
         finally:
             session.close()
