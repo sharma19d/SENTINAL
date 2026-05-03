@@ -1,29 +1,46 @@
 # ============================================================
-# SENTINEL — Layer 1: Network Capture & Packet Engine
-# Target: Kali Linux / Debian-based Linux
+# SENTINEL — Integrated AI IoT Security System
+# Complete Dependencies (Layer 1 - Layer 6)
 # ============================================================
 
-# --- Packet Capture & Network Analysis ---
-scapy>=2.5.0                   # Raw packet capture, dissection, forging
-nfstream>=6.5.0                # nDPI-powered flow-level DPI (300+ protocols)
+# --- Core Infrastructure & Networking (L1) ---
+scapy>=2.5.0                   # Raw packet capture and manipulation
+nfstream>=6.5.0                # nDPI-powered flow analysis
+dpkt>=1.9.8                    # Fast packet parsing
 
-# --- Event Bus ---
-redis>=5.0.0                   # Redis client for pub/sub event streaming
+# --- Device Discovery & Registry (L2) ---
+SQLAlchemy>=2.0.0               # SQLite ORM for device registry
+python-nmap>=0.7.1             # Active scanning
+requests>=2.31.0               # HTTP client for API syncs
+python-dotenv>=1.0.0           # Configuration management
 
-# --- Logging ---
-structlog>=24.0.0              # Structured logging
+# --- Agentic AI Engine & Orchestration (L3) ---
+langgraph>=1.0.0               # Multi-agent state machine
+langchain-core>=0.2.0          # LLM abstraction
+redis>=5.0.0                   # Event bus (Pub/Sub)
+pydantic>=2.0.0                # Data validation
+pydantic-settings>=2.0.0       # Environment configuration
 
-# --- Data Models & Configuration ---
-pydantic>=2.0.0                # Data validation and serialization
-pydantic-settings>=2.0.0       # Settings management from .env files
-python-dotenv>=1.0.0           # .env file loader
+# --- Machine Learning & Inference (L3/L5) ---
+numpy>=1.24.0                  # Numerical processing
+pandas>=2.0.0                  # Feature vector management
+scikit-learn>=1.3.0            # Isolation Forest & Preprocessing
+onnxruntime>=1.16.0            # Fast LSTM inference (PC/Pi 5)
 
-# --- Device Discovery & Fingerprinting ---
-SQLAlchemy>=2.0.0               # SQL Toolkit and ORM for SQLite
-python-nmap>=0.7.1             # Nmap port scanner bindings
-requests>=2.31.0               # HTTP client for NVD API
-aiohttp>=3.9.0                 # Async HTTP client
+# --- Deception & Firewall Control (L4/L5) ---
+# Note: eBPF/XDP requires 'python3-bpfcc' installed via apt-get
+# nftables is controlled via subprocess (requires /usr/sbin/nft)
+pyyaml>=6.0.0                  # Policy configuration (policy.yaml)
+
+# --- Threat Intelligence Bus (L6) ---
+OTXv2>=1.5.0                   # AlienVault OTX API client
+stix2>=3.0.0                   # Standardized threat intelligence data
+taxii2-client>=2.3.0           # Threat feed synchronization
+httpx>=0.25.0                  # Async HTTP client for AbuseIPDB
+
+# --- Logging & Monitoring (L6) ---
+structlog>=24.0.0              # Structured JSON logging (Loki ready)
 
 # --- Development & Testing ---
-pytest>=8.0.0                  # Test framework
-pytest-asyncio>=0.23.0         # Async test support
+pytest>=8.0.0                  # Unit and Integration tests
+pytest-asyncio>=0.23.0         # Async testing support
