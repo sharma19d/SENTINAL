@@ -1,26 +1,100 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-bg-void: #060A12;
+  --color-bg-base: #0B1120;
+  --color-bg-surface: #101829;
+  --color-bg-elevated: #162035;
+  --color-bg-overlay: #1C2A42;
+
+  /* ── Borders ───────────────────────────── */
+  --color-border-subtle: #1E2D45;
+  --color-border-default: #253552;
+  --color-border-strong: #2E4168;
+
+  /* ── Primary Accent — Electric Amber ───── */
+  --color-amber-dim: #92540A;
+  --color-amber-muted: #C4710F;
+  --color-amber-primary: #F59E0B;
+  --color-amber-bright: #FCD34D;
+  --color-amber-glow: rgba(245, 158, 11, 0.15);
+
+  /* ── Semantic Colors ───────────────────── */
+  --color-safe: #10B981;
+  --color-warning: #F59E0B;
+  --color-critical: #F43F5E;
+  --color-info: #6366F1;
+
+  /* ── Severity Scale ────────────────────── */
+  --color-sev-1: #10B981;
+  --color-sev-3: #34D399;
+  --color-sev-4: #FCD34D;
+  --color-sev-6: #F59E0B;
+  --color-sev-8: #FB923C;
+  --color-sev-9: #F43F5E;
+
+  /* ── Text ──────────────────────────────── */
+  --color-text-primary: #E8EDF5;
+  --color-text-secondary: #8A99B5;
+  --color-text-muted: #4A5A78;
+  --color-text-accent: #F59E0B;
+  --color-text-code: #93C5FD;
+
+  /* ── Typography ────────────────────────── */
+  --font-display: "Syne", sans-serif;
+  --font-body: "Sora", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    @apply bg-bg-void text-text-primary font-body antialiased;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Custom Animations ─────────────────── */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.04); opacity: 0.85; }
+}
+
+@keyframes threat-pulse {
+  0% { box-shadow: 0 0 0 0px rgba(244, 63, 94, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(244, 63, 94, 0); }
+  100% { box-shadow: 0 0 0 0px rgba(244, 63, 94, 0); }
+}
+
+@keyframes threat-enter {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes amber-flash {
+  0% { background-color: rgba(245, 158, 11, 0.3); }
+  100% { background-color: transparent; }
+}
+
+.animate-breathe {
+  animation: breathe 4s infinite ease-in-out;
+}
+
+.animate-threat {
+  animation: threat-pulse 1.5s infinite;
+}
+
+.animate-threat-enter {
+  animation: threat-enter 300ms ease-out forwards;
+}
+
+.animate-amber-flash {
+  animation: amber-flash 600ms ease-out forwards;
+}
+
+/* Hide scrollbars but allow scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

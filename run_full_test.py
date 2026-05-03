@@ -34,7 +34,7 @@ def run_integration_test():
     print("Injection complete. Waiting for agents to process...")
     
     # 3. Monitor Results
-    timeout = 60 # Gemma 4 can take some time
+    timeout = 180 # Increased for multiple lookups and LLM
     start_time = time.time()
     
     results = {
