@@ -9,6 +9,13 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const getSeverityMeta = (severity: number) => {
+  if (severity >= 9) return { label: 'CRITICAL', color: 'text-critical', dot: 'bg-critical' };
+  if (severity >= 6) return { label: 'HIGH',     color: 'text-warning',  dot: 'bg-warning'  };
+  if (severity >= 3) return { label: 'MEDIUM',   color: 'text-amber-primary', dot: 'bg-amber-primary' };
+  return                    { label: 'LOW',      color: 'text-safe',     dot: 'bg-safe'     };
+};
+
 export default function Dashboard() {
   const [devices, setDevices] = useState<any[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<any>(null);
@@ -60,10 +67,17 @@ export default function Dashboard() {
     try {
       await fetch(`http://localhost:8000/api/actions/quarantine/${pendingAction.device_id}`, { method: 'POST' });
       setPendingAction(null);
-      // Update local state immediately
       setDevices(prev => prev.map(d => d.device_id === pendingAction.device_id ? { ...d, is_quarantined: true } : d));
     } catch (err) {
-      console.error('Action failed:', err);
+      console.error('Quarantine action failed:', err);
+    }
+  };
+
+  const redirectToHoneypot = async (device_id: string) => {
+    try {
+      await fetch(`http://localhost:8000/api/actions/honeypot/${device_id}`, { method: 'POST' });
+    } catch (err) {
+      console.error('Honeypot redirect failed:', err);
     }
   };
 
@@ -128,22 +142,25 @@ export default function Dashboard() {
            {activeThreats.length === 0 ? (
              <span className="text-[10px] font-mono text-text-muted tracking-widest uppercase italic">All Systems Clear · Passive Monitoring Active</span>
            ) : (
-             activeThreats.map((t, i) => (
-               <motion.div 
-                 key={i} 
-                 initial={{ opacity: 0, x: 20 }}
-                 animate={{ opacity: 1, x: 0 }}
-                 className="flex items-center gap-3 shrink-0 group/card"
-                 onClick={(e) => { e.stopPropagation(); setSelectedThreat(t.data); }}
-               >
-                 <div className="w-2 h-2 rounded-full bg-critical shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
-                 <span className="font-display font-bold text-[10px] uppercase text-critical">CRITICAL</span>
-                 <span className="font-mono text-[10px] text-amber-primary">{t.data.technique_id}</span>
-                 <span className="font-mono text-[10px] text-text-code">{t.data.indicators?.[0]}</span>
-                 <span className="text-[10px] text-text-secondary max-w-[200px] truncate">{t.data.summary}</span>
-                 <ChevronRight size={12} className="text-text-muted group-hover/card:translate-x-1 transition-transform" />
-               </motion.div>
-             ))
+             activeThreats.map((t, i) => {
+               const sev = getSeverityMeta(t.data.severity ?? 5);
+               return (
+                 <motion.div
+                   key={i}
+                   initial={{ opacity: 0, x: 20 }}
+                   animate={{ opacity: 1, x: 0 }}
+                   className="flex items-center gap-3 shrink-0 group/card"
+                   onClick={(e) => { e.stopPropagation(); setSelectedThreat(t.data); }}
+                 >
+                   <div className={`w-2 h-2 rounded-full ${sev.dot} shadow-[0_0_8px_rgba(244,63,94,0.6)]`} />
+                   <span className={`font-display font-bold text-[10px] uppercase ${sev.color}`}>{sev.label}</span>
+                   <span className="font-mono text-[10px] text-amber-primary">{t.data.technique_id}</span>
+                   <span className="font-mono text-[10px] text-text-code">{t.data.indicators?.[0]}</span>
+                   <span className="text-[10px] text-text-secondary max-w-[200px] truncate">{t.data.summary}</span>
+                   <ChevronRight size={12} className="text-text-muted group-hover/card:translate-x-1 transition-transform" />
+                 </motion.div>
+               );
+             })
            )}
         </div>
       </div>
@@ -283,7 +300,9 @@ export default function Dashboard() {
                       <ShieldAlert size={18} className="group-hover:rotate-12 transition-transform" />
                       QUARANTINE DEVICE
                     </button>
-                    <button className="w-full py-4 bg-bg-elevated hover:bg-bg-overlay border border-border-default text-text-primary font-display font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => redirectToHoneypot(selectedThreat.device_id)}
+                      className="w-full py-4 bg-bg-elevated hover:bg-bg-overlay border border-border-default text-text-primary font-display font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2">
                       <Bug size={18} className="text-amber-primary" />
                       REDIRECT TO HONEYPOT
                     </button>
@@ -321,7 +340,7 @@ export default function Dashboard() {
                     </div>
                     <div className="bg-bg-base p-4 rounded-2xl border border-border-subtle">
                        <span className="text-3xl font-display font-black text-text-code">
-                         {JSON.parse(selectedDevice.open_ports || '[]').length}
+                         {(selectedDevice.open_ports || []).length}
                        </span>
                        <p className="text-[9px] font-display font-bold text-text-muted uppercase tracking-widest mt-1">OPEN PORTS</p>
                     </div>
@@ -330,12 +349,12 @@ export default function Dashboard() {
                  <div className="space-y-4">
                     <h4 className="text-[10px] font-display font-bold text-text-muted tracking-[0.2em] uppercase">Vulnerabilities Detected</h4>
                     <div className="space-y-3">
-                       {JSON.parse(selectedDevice.cve_list || '[]').length === 0 ? (
+                       {(selectedDevice.cve_list || []).length === 0 ? (
                          <div className="p-4 bg-safe/5 border border-safe/10 rounded-xl text-center">
                             <div className="text-xs text-safe font-medium uppercase tracking-tight">No CVEs found for this vendor.</div>
                          </div>
                        ) : (
-                         JSON.parse(selectedDevice.cve_list || '[]').map((cve: any) => (
+                         (selectedDevice.cve_list || []).map((cve: any) => (
                            <div key={cve.cve_id} className="p-4 bg-bg-base border border-border-subtle rounded-xl space-y-2 group hover:border-critical/30 transition-colors">
                               <div className="flex justify-between items-center">
                                  <span className="font-mono text-xs text-critical font-bold tracking-tight">{cve.cve_id}</span>

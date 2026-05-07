@@ -11,7 +11,7 @@ import asyncio
 import time
 from typing import Any, Optional
 
-import aiohttp
+import httpx
 import structlog
 
 from sentinel.config.settings import settings
@@ -55,19 +55,18 @@ class CVEScanner:
 
         logger.info("nvd_api_search", keyword=keyword)
         
-        async with aiohttp.ClientSession(headers=self._headers) as session:
-            try:
-                await self._rate_limit()
-                async with session.get(self.BASE_URL, params=params, timeout=10) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        return self._parse_vulnerabilities(data)
-                    elif resp.status == 403:
-                        logger.error("nvd_api_forbidden", msg="Invalid API key or rate limit exceeded")
-                    else:
-                        logger.warning("nvd_api_error", status=resp.status)
-            except Exception as e:
-                logger.error("nvd_api_request_failed", error=str(e))
+        try:
+            await self._rate_limit()
+            async with httpx.AsyncClient(headers=self._headers, timeout=10.0) as client:
+                resp = await client.get(self.BASE_URL, params=params)
+                if resp.status_code == 200:
+                    return self._parse_vulnerabilities(resp.json())
+                elif resp.status_code == 403:
+                    logger.error("nvd_api_forbidden", msg="Invalid API key or rate limit exceeded")
+                else:
+                    logger.warning("nvd_api_error", status=resp.status_code)
+        except Exception as e:
+            logger.error("nvd_api_request_failed", error=str(e))
         
         return []
 

@@ -149,25 +149,30 @@ class DiscoveryAgent:
                 return
 
             logger.info("enriching_device_risk", device_id=device_id, vendor=vendor)
-            
+
             cves = await self.cve_scanner.get_device_vulnerabilities(vendor)
-            
+
             if cves:
-                # Calculate simple risk score: average of top 3 CVSS scores
                 scores = sorted([c["cvss_score"] for c in cves], reverse=True)
                 top_scores = scores[:3]
                 risk_score = sum(top_scores) / len(top_scores) if top_scores else 0.0
-                
+
+                # Fetch the current record so we have a valid MAC for upsert
+                device = self.registry.get_device(device_id)
+                if not device:
+                    logger.warning("enrich_device_not_found", device_id=device_id)
+                    return
+
                 self.registry.upsert_device(
-                    mac="", # Not needed if device_id is provided
+                    mac=device.mac,
                     device_id=device_id,
                     cve_list=cves,
-                    risk_score=round(risk_score, 1)
+                    risk_score=round(risk_score, 1),
                 )
-                
-                logger.info("device_risk_enriched", 
-                            device_id=device_id, 
-                            risk_score=risk_score, 
+
+                logger.info("device_risk_enriched",
+                            device_id=device_id,
+                            risk_score=risk_score,
                             cve_count=len(cves))
         except Exception as e:
             logger.error("risk_enrichment_failed", device_id=device_id, error=str(e))

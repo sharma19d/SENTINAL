@@ -7,7 +7,7 @@ Provides REST endpoints and WebSocket streams for the Dashboard.
 import json
 import asyncio
 import redis.asyncio as redis
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import structlog
 
@@ -47,11 +47,47 @@ async def get_devices():
             "mac": d.mac,
             "ip": d.ip,
             "vendor": d.vendor,
-            "risk_score": d.risk_score,
+            "os_guess": d.os_guess,
+            "risk_score": d.risk_score or 0.0,
+            "open_ports": json.loads(d.open_ports or "[]"),
+            "cve_list": json.loads(d.cve_list or "[]"),
             "is_quarantined": bool(d.is_quarantined),
-            "last_seen": d.last_seen
+            "last_seen": d.last_seen.isoformat() if d.last_seen else None,
         } for d in devices
     ]
+
+
+@app.get("/api/devices/{device_id}")
+async def get_device(device_id: str):
+    d = registry.get_device(device_id)
+    if not d:
+        raise HTTPException(status_code=404, detail="Device not found")
+    threats = registry.get_device_threats(device_id)
+    return {
+        "device_id": d.device_id,
+        "mac": d.mac,
+        "ip": d.ip,
+        "vendor": d.vendor,
+        "os_guess": d.os_guess,
+        "firmware_ver": d.firmware_ver,
+        "risk_score": d.risk_score or 0.0,
+        "open_ports": json.loads(d.open_ports or "[]"),
+        "cve_list": json.loads(d.cve_list or "[]"),
+        "is_quarantined": bool(d.is_quarantined),
+        "last_seen": d.last_seen.isoformat() if d.last_seen else None,
+        "baseline_path": d.baseline_path,
+        "recent_threats": [
+            {
+                "event_id": e.event_id,
+                "tactic": e.tactic,
+                "technique_id": e.technique_id,
+                "severity": e.severity,
+                "summary": e.summary,
+                "timestamp": e.timestamp.isoformat() if e.timestamp else None,
+            } for e in threats[:10]
+        ],
+    }
+
 
 @app.get("/api/threats")
 async def get_threats(limit: int = 50):
@@ -62,20 +98,36 @@ async def get_threats(limit: int = 50):
             "device_id": e.device_id,
             "tactic": e.tactic,
             "technique_id": e.technique_id,
+            "confidence": e.confidence,
             "severity": e.severity,
             "summary": e.summary,
-            "timestamp": e.timestamp
+            "indicators": json.loads(e.indicators or "[]"),
+            "action_taken": e.action_taken,
+            "resolved": bool(e.resolved),
+            "timestamp": e.timestamp.isoformat() if e.timestamp else None,
         } for e in events
     ]
 
+
 @app.post("/api/actions/quarantine/{device_id}")
 async def quarantine_device(device_id: str):
-    # This manually triggers a quarantine action via Redis
     action = {
         "device_id": device_id,
         "action": "quarantine_device",
         "severity": 10,
-        "event_id": "manual-ui-action"
+        "event_id": "manual-ui-action",
+    }
+    await redis_client.publish("sentinel:actions", json.dumps(action))
+    return {"status": "action_dispatched", "device_id": device_id}
+
+
+@app.post("/api/actions/honeypot/{device_id}")
+async def redirect_to_honeypot(device_id: str):
+    action = {
+        "device_id": device_id,
+        "action": "redirect_to_honeypot",
+        "severity": 7,
+        "event_id": "manual-ui-action",
     }
     await redis_client.publish("sentinel:actions", json.dumps(action))
     return {"status": "action_dispatched", "device_id": device_id}
