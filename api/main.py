@@ -20,6 +20,7 @@ import structlog
 
 from sentinel.config.settings import settings as app_settings
 from sentinel.core.fingerprinting.registry import DeviceRegistry
+from intel.bus import IntelBus
 
 logger = structlog.get_logger(__name__)
 
@@ -33,6 +34,7 @@ app.add_middleware(
 )
 
 registry = DeviceRegistry(db_url=app_settings.db_url)
+intel_bus = IntelBus()
 redis_client = redis.Redis(
     host=app_settings.redis_host,
     port=app_settings.redis_port,
@@ -311,6 +313,19 @@ async def redirect_to_honeypot(device_id: str):
     }
     await redis_client.publish("sentinel:actions", json.dumps(action))
     return {"status": "action_dispatched", "device_id": device_id}
+
+
+# ── Threat Intelligence ──────────────────────────────────────────
+
+@app.get("/api/intel/{ip}")
+async def get_ip_intel(ip: str):
+    """Enrich an IP with AlienVault OTX and AbuseIPDB data."""
+    try:
+        data = await intel_bus.enrich_ip(ip)
+        return data
+    except Exception as e:
+        logger.error("intel_lookup_failed", ip=ip, error=str(e))
+        return {"ip": ip, "otx_pulse_count": 0, "otx_tags": [], "abuse_score": 0, "is_malicious": False}
 
 
 # ── Firewall Rules ─────────────────────────────────────────────────

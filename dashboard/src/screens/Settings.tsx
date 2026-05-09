@@ -214,9 +214,11 @@ export default function Settings() {
           { label: 'Ollama URL', value: settings.system.ollama_base_url },
           { label: 'LLM Model', value: settings.system.llm_model },
         ].map(({ label, value }) => (
-          <FieldRow key={label} label={label}>
-            <span className="font-mono text-xs text-outline">{value}</span>
-          </FieldRow>
+          <React.Fragment key={label}>
+            <FieldRow label={label}>
+              <span className="font-mono text-xs text-outline">{value}</span>
+            </FieldRow>
+          </React.Fragment>
         ))}
       </Section>
     </div>
