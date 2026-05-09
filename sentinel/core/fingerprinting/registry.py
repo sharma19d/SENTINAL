@@ -9,6 +9,7 @@ CRUD operations for device profiles and security alerts.
 from __future__ import annotations
 
 import json
+import uuid
 from datetime import datetime
 from typing import Any, Optional
 
@@ -77,6 +78,18 @@ class ThreatEventModel(Base):
         if isinstance(data["timestamp"], datetime):
             data["timestamp"] = data["timestamp"].isoformat()
         return data
+
+
+class FirewallRuleModel(Base):
+    __tablename__ = "firewall_rules"
+
+    rule_id = Column(String, primary_key=True)
+    protocol = Column(String, nullable=False)
+    target = Column(String, nullable=False)
+    action = Column(String, nullable=False)
+    enabled = Column(Integer, default=1)
+    description = Column(String, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class DeviceRegistry:
@@ -185,5 +198,53 @@ class DeviceRegistry:
             return session.query(ThreatEventModel).order_by(
                 ThreatEventModel.timestamp.desc()
             ).limit(limit).all()
+        finally:
+            session.close()
+
+    # ── Firewall Rule Operations ──────────────────────────────────
+
+    def get_firewall_rules(self) -> list[FirewallRuleModel]:
+        session = self.get_session()
+        try:
+            return session.query(FirewallRuleModel).order_by(FirewallRuleModel.created_at).all()
+        finally:
+            session.close()
+
+    def add_firewall_rule(self, protocol: str, target: str, action: str, description: str = "") -> FirewallRuleModel:
+        session = self.get_session()
+        try:
+            rule_id = f"FW-{uuid.uuid4().hex[:4].upper()}"
+            rule = FirewallRuleModel(
+                rule_id=rule_id, protocol=protocol, target=target,
+                action=action, description=description, enabled=1,
+            )
+            session.add(rule)
+            session.commit()
+            session.refresh(rule)
+            return rule
+        finally:
+            session.close()
+
+    def toggle_firewall_rule(self, rule_id: str) -> Optional[FirewallRuleModel]:
+        session = self.get_session()
+        try:
+            rule = session.query(FirewallRuleModel).filter(FirewallRuleModel.rule_id == rule_id).first()
+            if rule:
+                rule.enabled = 0 if rule.enabled else 1
+                session.commit()
+                session.refresh(rule)
+            return rule
+        finally:
+            session.close()
+
+    def delete_firewall_rule(self, rule_id: str) -> bool:
+        session = self.get_session()
+        try:
+            rule = session.query(FirewallRuleModel).filter(FirewallRuleModel.rule_id == rule_id).first()
+            if rule:
+                session.delete(rule)
+                session.commit()
+                return True
+            return False
         finally:
             session.close()
