@@ -153,3 +153,14 @@ data/
 models/
 *.pcap
 logs/
+
+# Node / Next.js / Vite build artifacts
+node_modules/
+dashboard/node_modules/
+dashboard/.next/
+dashboard/.turbo/
+dashboard/dist/
+dashboard/.cache/
+*.sst
+*.meta
+sentinel.zip
