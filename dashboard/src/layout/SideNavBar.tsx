@@ -29,6 +29,9 @@ export default function SideNavBar({ activeScreen, setActiveScreen }: SideNavBar
     { id: Screen.SETTINGS, label: 'Settings', icon: Settings },
   ];
 
+  const diagnosticsActive = activeScreen === Screen.DIAGNOSTICS;
+  const logsActive = activeScreen === Screen.LOGS;
+
   return (
     <nav className="w-[260px] flex-shrink-0 h-full border-r border-white/10 bg-white/5 backdrop-blur-3xl flex flex-col py-8 z-40">
       <div className="px-6 mb-12">
@@ -73,11 +76,23 @@ export default function SideNavBar({ activeScreen, setActiveScreen }: SideNavBar
         </button>
         
         <div className="flex flex-col gap-1 pt-4 border-t border-white/10">
-          <button className="flex items-center gap-3 text-outline hover:text-white px-2 py-2 transition-colors">
+          <button
+            onClick={() => setActiveScreen(Screen.DIAGNOSTICS)}
+            className={cn(
+              "flex items-center gap-3 px-2 py-2 transition-colors rounded",
+              diagnosticsActive ? "text-white bg-white/5" : "text-outline hover:text-white"
+            )}
+          >
             <Terminal className="w-4 h-4" />
             <span className="text-xs font-mono uppercase tracking-tight">Diagnostics</span>
           </button>
-          <button className="flex items-center gap-3 text-outline hover:text-white px-2 py-2 transition-colors">
+          <button
+            onClick={() => setActiveScreen(Screen.LOGS)}
+            className={cn(
+              "flex items-center gap-3 px-2 py-2 transition-colors rounded",
+              logsActive ? "text-white bg-white/5" : "text-outline hover:text-white"
+            )}
+          >
             <ListChecks className="w-4 h-4" />
             <span className="text-xs font-mono uppercase tracking-tight">Logs</span>
           </button>

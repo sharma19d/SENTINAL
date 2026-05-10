@@ -42,11 +42,21 @@ function cvssLabel(score: number): string {
   return 'LOW';
 }
 
-export default function Devices() {
+interface DevicesProps {
+  externalFilter?: string;
+}
+
+export default function Devices({ externalFilter = '' }: DevicesProps) {
   const [devices, setDevices] = useState<ApiDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (externalFilter.trim()) {
+      setFilter(externalFilter);
+    }
+  }, [externalFilter]);
 
   const loadDevices = useCallback(async () => {
     try {

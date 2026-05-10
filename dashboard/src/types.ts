@@ -4,6 +4,8 @@ export enum Screen {
   THREATS = 'threats',
   FIREWALL = 'firewall',
   HONEYPOTS = 'honeypots',
+  DIAGNOSTICS = 'diagnostics',
+  LOGS = 'logs',
   SETTINGS = 'settings',
 }
 

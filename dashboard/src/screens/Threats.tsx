@@ -38,10 +38,20 @@ function targetFromIndicators(indicators: Indicator[]): string {
   return '—';
 }
 
-export default function Threats() {
+interface ThreatsProps {
+  externalFilter?: string;
+}
+
+export default function Threats({ externalFilter = '' }: ThreatsProps) {
   const [threats, setThreats] = useState<ApiThreat[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    if (externalFilter.trim()) {
+      setFilter(externalFilter);
+    }
+  }, [externalFilter]);
 
   const loadThreats = useCallback(async () => {
     try {

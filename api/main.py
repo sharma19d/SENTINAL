@@ -8,12 +8,16 @@ import json
 import asyncio
 import os
 import glob
+import re
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 import redis.asyncio as redis
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from redis.exceptions import RedisError
+from sqlalchemy.exc import SQLAlchemyError
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import structlog
@@ -71,6 +75,9 @@ def save_ui_settings(data: dict):
 
 # ── Cowrie log parser ─────────────────────────────────────────────
 COWRIE_LOG_DIR = Path("deception/cowrie/log")
+LOGS_DIR = Path("logs")
+LOG_LINE_RE = re.compile(r"^(?P<timestamp>[\d\-:T.Z+ ]+)\s+\[(?P<level>[^\]]+)\]\s+(?P<message>.*)$")
+ANSI_ESCAPE_RE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
 
 def parse_cowrie_sessions() -> list[dict]:
     sessions: dict[str, dict] = {}
@@ -128,15 +135,49 @@ def parse_cowrie_sessions() -> list[dict]:
     result = sorted(sessions.values(), key=lambda s: s["start_time"], reverse=True)
     return result[:100]
 
+
+def _strip_ansi(value: str) -> str:
+    return ANSI_ESCAPE_RE.sub("", value)
+
+
+def _parse_log_line(line: str, line_no: int) -> dict:
+    cleaned = _strip_ansi(line.rstrip("\n"))
+    if not cleaned:
+        return {"line_no": line_no, "timestamp": None, "level": "info", "message": "", "raw": ""}
+
+    match = LOG_LINE_RE.match(cleaned)
+    if not match:
+        return {"line_no": line_no, "timestamp": None, "level": "info", "message": cleaned, "raw": cleaned}
+
+    return {
+        "line_no": line_no,
+        "timestamp": match.group("timestamp").strip() or None,
+        "level": match.group("level").strip().lower() or "info",
+        "message": match.group("message").strip(),
+        "raw": cleaned,
+    }
+
 # ── System metrics ─────────────────────────────────────────────────
+def _read_cpu_counters() -> tuple[int, int]:
+    with open("/proc/stat") as f:
+        parts = f.readline().split()
+    values = [int(x) for x in parts[1:]]
+    idle = values[3] + (values[4] if len(values) > 4 else 0)
+    total = sum(values)
+    return idle, total
+
+
 def read_cpu_percent() -> float:
     try:
-        with open("/proc/stat") as f:
-            line = f.readline()
-        parts = line.split()
-        total = sum(int(x) for x in parts[1:])
-        idle = int(parts[4])
-        return round((1 - idle / total) * 100, 1) if total else 0.0
+        idle1, total1 = _read_cpu_counters()
+        time.sleep(0.12)
+        idle2, total2 = _read_cpu_counters()
+        idle_delta = idle2 - idle1
+        total_delta = total2 - total1
+        if total_delta <= 0:
+            return 0.0
+        busy_pct = (1 - (idle_delta / total_delta)) * 100
+        return round(max(0.0, min(100.0, busy_pct)), 1)
     except Exception:
         return 0.0
 
@@ -147,10 +188,12 @@ def read_mem_info() -> dict:
             for line in f:
                 k, v = line.split(":")
                 info[k.strip()] = int(v.split()[0])
-        total_gb = round(info.get("MemTotal", 0) / 1024 / 1024, 1)
-        avail_gb = round(info.get("MemAvailable", 0) / 1024 / 1024, 1)
-        used_gb = round(total_gb - avail_gb, 1)
-        pct = round(used_gb / total_gb * 100, 1) if total_gb else 0.0
+        total_kb = info.get("MemTotal", 0)
+        avail_kb = info.get("MemAvailable", 0)
+        used_kb = max(total_kb - avail_kb, 0)
+        total_gb = round(total_kb / 1024 / 1024, 2)
+        used_gb = round(used_kb / 1024 / 1024, 2)
+        pct = round((used_kb / total_kb) * 100, 2) if total_kb else 0.0
         return {"total_gb": total_gb, "used_gb": used_gb, "percent": pct}
     except Exception:
         return {"total_gb": 0, "used_gb": 0, "percent": 0}
@@ -211,6 +254,86 @@ async def dashboard_stats():
         "quarantined": len(quarantined),
         "critical_devices": len(critical_devices),
         "recent_activity": activity,
+    }
+
+
+@app.get("/api/notifications")
+async def notifications(limit: int = Query(8, ge=1, le=50)):
+    events = registry.get_recent_threats(limit=100)
+    items = []
+    unread = 0
+
+    for event in events[:limit]:
+        is_unread = not bool(event.resolved)
+        if is_unread:
+            unread += 1
+
+        items.append({
+            "id": event.event_id,
+            "type": "threat",
+            "title": event.summary or "Threat detected",
+            "detail": event.tactic or event.action_taken or "Security event",
+            "severity": event.severity or 0,
+            "timestamp": event.timestamp.isoformat() if event.timestamp else None,
+            "unread": is_unread,
+        })
+
+    return {
+        "total": len(items),
+        "unread": unread,
+        "items": items,
+    }
+
+
+@app.get("/api/activity/pulse")
+async def activity_pulse():
+    cpu = read_cpu_percent()
+    mem = read_mem_info()
+    devices = registry.get_all_devices()
+    recent_threats = registry.get_recent_threats(limit=50)
+    active_threats = [t for t in recent_threats if not t.resolved]
+    recent_events = [
+        {
+            "id": t.event_id,
+            "message": t.summary or "Threat detected",
+            "severity": t.severity or 0,
+            "timestamp": t.timestamp.isoformat() if t.timestamp else None,
+        }
+        for t in recent_threats[:5]
+    ]
+
+    redis_ok = False
+    try:
+        redis_ok = bool(await redis_client.ping())
+    except RedisError:
+        redis_ok = False
+
+    cowrie_logs = list(COWRIE_LOG_DIR.glob("cowrie.json*")) if COWRIE_LOG_DIR.exists() else []
+    cowrie_ok = len(cowrie_logs) > 0
+
+    services = [
+        {"name": "api", "status": "healthy"},
+        {"name": "redis", "status": "healthy" if redis_ok else "critical"},
+        {"name": "cowrie", "status": "healthy" if cowrie_ok else "degraded"},
+    ]
+
+    if any(s["status"] == "critical" for s in services):
+        overall = "critical"
+    elif any(s["status"] == "degraded" for s in services):
+        overall = "degraded"
+    else:
+        overall = "healthy"
+
+    return {
+        "overall_status": overall,
+        "metrics": {
+            "cpu_percent": cpu,
+            "memory_percent": mem.get("percent", 0),
+            "total_devices": len(devices),
+            "active_threats": len(active_threats),
+        },
+        "services": services,
+        "recent_events": recent_events,
     }
 
 
@@ -287,6 +410,84 @@ async def get_threats(limit: int = 50):
             "timestamp": e.timestamp.isoformat() if e.timestamp else None,
         } for e in events
     ]
+
+
+def _build_indicator_text(indicators_raw: str) -> str:
+    try:
+        indicators = json.loads(indicators_raw or "[]")
+    except json.JSONDecodeError:
+        return ""
+
+    tokens: list[str] = []
+    for indicator in indicators:
+        if isinstance(indicator, str):
+            tokens.append(indicator)
+            continue
+        if isinstance(indicator, dict):
+            value = indicator.get("value")
+            kind = indicator.get("type")
+            if isinstance(kind, str):
+                tokens.append(kind)
+            if isinstance(value, str):
+                tokens.append(value)
+    return " ".join(tokens)
+
+
+@app.get("/api/search")
+async def global_search(
+    query: str = Query(..., min_length=1),
+    limit: int = Query(8, ge=1, le=50),
+):
+    needle = query.strip().lower()
+    if not needle:
+        return {"query": query, "total": 0, "devices": [], "threats": []}
+
+    matched_devices = []
+    for device in registry.get_all_devices():
+        fields = [
+            device.device_id or "",
+            device.mac or "",
+            device.ip or "",
+            device.vendor or "",
+            device.os_guess or "",
+        ]
+        if any(needle in field.lower() for field in fields):
+            matched_devices.append({
+                "device_id": device.device_id,
+                "mac": device.mac,
+                "ip": device.ip,
+                "vendor": device.vendor,
+                "os_guess": device.os_guess,
+                "risk_score": device.risk_score or 0.0,
+            })
+
+    matched_threats = []
+    for threat in registry.get_recent_threats(limit=300):
+        fields = [
+            threat.event_id or "",
+            threat.device_id or "",
+            threat.tactic or "",
+            threat.technique_id or "",
+            threat.summary or "",
+            _build_indicator_text(threat.indicators or ""),
+        ]
+        if any(needle in field.lower() for field in fields):
+            matched_threats.append({
+                "event_id": threat.event_id,
+                "device_id": threat.device_id,
+                "tactic": threat.tactic,
+                "technique_id": threat.technique_id,
+                "summary": threat.summary,
+                "severity": threat.severity or 0,
+                "timestamp": threat.timestamp.isoformat() if threat.timestamp else None,
+            })
+
+    return {
+        "query": query,
+        "total": len(matched_devices) + len(matched_threats),
+        "devices": matched_devices[:limit],
+        "threats": matched_threats[:limit],
+    }
 
 
 # ── Actions ──────────────────────────────────────────────────────
@@ -451,6 +652,148 @@ async def system_metrics():
         "memory": mem,
         "lstm_latency_ms": None,
         "llm_latency_ms": None,
+    }
+
+
+@app.get("/api/diagnostics")
+async def run_diagnostics():
+    now = datetime.utcnow().isoformat() + "Z"
+    checks = []
+
+    checks.append({
+        "name": "api",
+        "status": "healthy",
+        "ok": True,
+        "detail": "FastAPI backend is responding.",
+        "checked_at": now,
+    })
+
+    redis_ok = False
+    redis_detail = "Redis ping failed."
+    try:
+        redis_ok = bool(await redis_client.ping())
+        if redis_ok:
+            redis_detail = "Redis connection is healthy."
+    except RedisError as e:
+        redis_detail = f"Redis error: {e}"
+    checks.append({
+        "name": "redis",
+        "status": "healthy" if redis_ok else "critical",
+        "ok": redis_ok,
+        "detail": redis_detail,
+        "checked_at": now,
+    })
+
+    db_ok = True
+    db_detail = "SQLite registry query succeeded."
+    total_devices = 0
+    try:
+        devices = registry.get_all_devices()
+        total_devices = len(devices)
+        db_detail = f"SQLite registry reachable ({total_devices} devices indexed)."
+    except (OSError, ValueError, RuntimeError, SQLAlchemyError) as e:
+        db_ok = False
+        db_detail = f"Registry query failed: {e}"
+    checks.append({
+        "name": "registry",
+        "status": "healthy" if db_ok else "critical",
+        "ok": db_ok,
+        "detail": db_detail,
+        "checked_at": now,
+    })
+
+    cowrie_logs = list(COWRIE_LOG_DIR.glob("cowrie.json*")) if COWRIE_LOG_DIR.exists() else []
+    cowrie_ok = len(cowrie_logs) > 0
+    checks.append({
+        "name": "cowrie",
+        "status": "healthy" if cowrie_ok else "degraded",
+        "ok": cowrie_ok,
+        "detail": f"{len(cowrie_logs)} Cowrie log file(s) detected.",
+        "checked_at": now,
+    })
+
+    if any(c["status"] == "critical" for c in checks):
+        overall_status = "critical"
+    elif any(c["status"] == "degraded" for c in checks):
+        overall_status = "degraded"
+    else:
+        overall_status = "healthy"
+
+    ui = load_ui_settings()
+    metrics = {
+        "cpu_percent": read_cpu_percent(),
+        "memory": read_mem_info(),
+        "lstm_latency_ms": None,
+        "llm_latency_ms": None,
+    }
+
+    return {
+        "overall_status": overall_status,
+        "generated_at": now,
+        "checks": checks,
+        "system_metrics": metrics,
+        "context": {
+            "capture_interface": ui.get("capture_interface", app_settings.capture_interface),
+            "monitored_subnets": ui.get("monitored_subnets", "192.168.0.0/24"),
+            "total_devices": total_devices,
+        },
+    }
+
+
+@app.get("/api/logs")
+async def get_logs(
+    file: Optional[str] = None,
+    lines: int = Query(200, ge=20, le=2000),
+    level: Optional[str] = None,
+    query: Optional[str] = None,
+):
+    if not LOGS_DIR.exists():
+        return {"files": [], "active_file": None, "entries": []}
+
+    files = sorted(
+        [p for p in LOGS_DIR.glob("*.log") if p.is_file()],
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    file_index = {p.name: p for p in files}
+    selected_path = file_index.get(file) if file else (files[0] if files else None)
+
+    file_meta = [
+        {
+            "name": p.name,
+            "size_bytes": p.stat().st_size,
+            "modified_at": datetime.utcfromtimestamp(p.stat().st_mtime).isoformat() + "Z",
+        }
+        for p in files
+    ]
+
+    if not selected_path:
+        return {"files": file_meta, "active_file": None, "entries": []}
+
+    with selected_path.open("r", encoding="utf-8", errors="replace") as log_file:
+        all_lines = log_file.readlines()
+
+    start_idx = max(len(all_lines) - lines, 0)
+    parsed = [
+        _parse_log_line(line, start_idx + idx + 1)
+        for idx, line in enumerate(all_lines[start_idx:])
+    ]
+
+    normalized_level = level.strip().lower() if level else None
+    normalized_query = query.strip().lower() if query else None
+    if normalized_level:
+        parsed = [entry for entry in parsed if entry["level"] == normalized_level]
+    if normalized_query:
+        parsed = [
+            entry for entry in parsed
+            if normalized_query in entry["message"].lower() or normalized_query in entry["raw"].lower()
+        ]
+
+    parsed.reverse()
+    return {
+        "files": file_meta,
+        "active_file": selected_path.name,
+        "entries": parsed,
     }
 
 
