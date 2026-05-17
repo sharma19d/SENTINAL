@@ -4,12 +4,16 @@ SENTINEL — FastAPI Backend
 Provides REST endpoints and WebSocket streams for the Dashboard.
 """
 
+import hashlib
+import ipaddress
 import json
 import asyncio
 import os
 import glob
 import re
+import socket
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -167,10 +171,10 @@ def _read_cpu_counters() -> tuple[int, int]:
     return idle, total
 
 
-def read_cpu_percent() -> float:
+async def read_cpu_percent() -> float:
     try:
         idle1, total1 = _read_cpu_counters()
-        time.sleep(0.12)
+        await asyncio.sleep(0.12)
         idle2, total2 = _read_cpu_counters()
         idle_delta = idle2 - idle1
         total_delta = total2 - total1
@@ -198,12 +202,49 @@ def read_mem_info() -> dict:
     except Exception:
         return {"total_gb": 0, "used_gb": 0, "percent": 0}
 
+# ── Port scanning helpers ──────────────────────────────────────────
+COMMON_IOT_PORTS = [
+    21, 22, 23, 25, 53, 80, 110, 139, 443, 445,
+    554, 993, 995, 1883, 3306, 3389, 5900, 8080, 8443, 8554,
+]
+
+_scan_executor = ThreadPoolExecutor(max_workers=20, thread_name_prefix="port-scan")
+
+def _tcp_check(ip: str, port: int, timeout: float = 0.5) -> bool:
+    try:
+        with socket.create_connection((ip, port), timeout=timeout):
+            return True
+    except (socket.timeout, ConnectionRefusedError, OSError):
+        return False
+
+async def socket_scan(ip: str, ports: list[int] = COMMON_IOT_PORTS) -> list[int]:
+    loop = asyncio.get_event_loop()
+    results = await asyncio.gather(
+        *[loop.run_in_executor(_scan_executor, _tcp_check, ip, p) for p in ports]
+    )
+    return [port for port, is_open in zip(ports, results) if is_open]
+
+def normalize_open_ports(raw: list) -> list[int]:
+    result = []
+    for p in raw:
+        if isinstance(p, int):
+            result.append(p)
+        elif isinstance(p, dict) and isinstance(p.get("port"), int):
+            result.append(p["port"])
+    return result
+
+
 # ── Pydantic request models ────────────────────────────────────────
 class FirewallRuleCreate(BaseModel):
     protocol: str
     target: str
     action: str
     description: Optional[str] = ""
+
+class NodeDeployRequest(BaseModel):
+    ip: str
+    label: str
+    mac: Optional[str] = None
 
 class SettingsUpdate(BaseModel):
     anomaly_threshold: Optional[float] = None
@@ -287,7 +328,7 @@ async def notifications(limit: int = Query(8, ge=1, le=50)):
 
 @app.get("/api/activity/pulse")
 async def activity_pulse():
-    cpu = read_cpu_percent()
+    cpu = await read_cpu_percent()
     mem = read_mem_info()
     devices = registry.get_all_devices()
     recent_threats = registry.get_recent_threats(limit=50)
@@ -350,7 +391,7 @@ async def get_devices():
             "vendor": d.vendor,
             "os_guess": d.os_guess,
             "risk_score": d.risk_score or 0.0,
-            "open_ports": json.loads(d.open_ports or "[]"),
+            "open_ports": normalize_open_ports(json.loads(d.open_ports or "[]")),
             "cve_list": json.loads(d.cve_list or "[]"),
             "is_quarantined": bool(d.is_quarantined),
             "last_seen": d.last_seen.isoformat() if d.last_seen else None,
@@ -372,7 +413,7 @@ async def get_device(device_id: str):
         "os_guess": d.os_guess,
         "firmware_ver": d.firmware_ver,
         "risk_score": d.risk_score or 0.0,
-        "open_ports": json.loads(d.open_ports or "[]"),
+        "open_ports": normalize_open_ports(json.loads(d.open_ports or "[]")),
         "cve_list": json.loads(d.cve_list or "[]"),
         "is_quarantined": bool(d.is_quarantined),
         "last_seen": d.last_seen.isoformat() if d.last_seen else None,
@@ -504,6 +545,21 @@ async def quarantine_device(device_id: str):
     return {"status": "action_dispatched", "device_id": device_id}
 
 
+@app.post("/api/devices/{device_id}/scan")
+async def scan_device_ports(device_id: str):
+    """Run a TCP connect scan on common IoT ports for a device."""
+    d = registry.get_device(device_id)
+    if not d:
+        raise HTTPException(status_code=404, detail="Device not found")
+    ip = d.ip or ""
+    if not ip or ip in ("0.0.0.0", "255.255.255.255") or ip.startswith("224."):
+        raise HTTPException(status_code=400, detail=f"Device IP {ip!r} is not scannable")
+
+    open_ports = await socket_scan(ip)
+    registry.upsert_device(mac=d.mac, device_id=device_id, open_ports=open_ports)
+    return {"device_id": device_id, "ip": ip, "open_ports": open_ports, "ports_found": len(open_ports)}
+
+
 @app.post("/api/actions/honeypot/{device_id}")
 async def redirect_to_honeypot(device_id: str):
     action = {
@@ -514,6 +570,40 @@ async def redirect_to_honeypot(device_id: str):
     }
     await redis_client.publish("sentinel:actions", json.dumps(action))
     return {"status": "action_dispatched", "device_id": device_id}
+
+
+# ── Node Deployment ───────────────────────────────────────────────
+
+@app.post("/api/nodes/deploy")
+async def deploy_node(body: NodeDeployRequest):
+    """Register a new monitored node into the device registry."""
+    try:
+        ipaddress.ip_address(body.ip)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid IP address: {body.ip!r}")
+
+    if not body.label.strip():
+        raise HTTPException(status_code=400, detail="Node label must not be empty")
+
+    # Derive a stable MAC from the IP if caller didn't supply one
+    if body.mac:
+        mac = body.mac.strip().lower()
+    else:
+        digest = hashlib.md5(body.ip.encode()).hexdigest()
+        mac = ":".join(digest[i:i+2] for i in range(0, 12, 2))
+
+    device = registry.upsert_device(
+        mac=mac,
+        ip=body.ip,
+        vendor=body.label.strip(),
+    )
+    return {
+        "device_id": device.device_id,
+        "ip": device.ip,
+        "mac": device.mac,
+        "label": device.vendor,
+        "message": f"Node '{body.label}' registered at {body.ip}",
+    }
 
 
 # ── Threat Intelligence ──────────────────────────────────────────
@@ -645,7 +735,7 @@ async def update_settings(body: SettingsUpdate):
 
 @app.get("/api/system/metrics")
 async def system_metrics():
-    cpu = read_cpu_percent()
+    cpu = await read_cpu_percent()
     mem = read_mem_info()
     return {
         "cpu_percent": cpu,
@@ -721,7 +811,7 @@ async def run_diagnostics():
 
     ui = load_ui_settings()
     metrics = {
-        "cpu_percent": read_cpu_percent(),
+        "cpu_percent": await read_cpu_percent(),
         "memory": read_mem_info(),
         "lstm_latency_ms": None,
         "llm_latency_ms": None,
@@ -807,13 +897,16 @@ async def websocket_endpoint(websocket: WebSocket):
     logger.info("websocket_connected")
     try:
         while True:
-            message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
+            message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=0.5)
             if message:
-                await websocket.send_json({
-                    "channel": message["channel"],
-                    "data": json.loads(message["data"])
-                })
-            await asyncio.sleep(0.01)
+                try:
+                    await websocket.send_json({
+                        "channel": message["channel"],
+                        "data": json.loads(message["data"])
+                    })
+                except Exception:
+                    break
+            await asyncio.sleep(0.1)
     except WebSocketDisconnect:
         logger.info("websocket_disconnected")
     except Exception as e:

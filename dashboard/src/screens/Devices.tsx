@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef, memo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Monitor, Camera, Laptop, Router, Cpu, Wifi, ShieldAlert, Lock, Unlock, RefreshCw, ChevronDown, ExternalLink } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { fetchDevices, quarantineDevice, createEventSocket, ApiDevice } from '../lib/api';
+import { fetchDevices, quarantineDevice, scanDevicePorts, createEventSocket, ApiDevice } from '../lib/api';
 
 function getDeviceIcon(device: ApiDevice) {
   const v = (device.vendor || '').toLowerCase();
@@ -46,11 +46,14 @@ interface DevicesProps {
   externalFilter?: string;
 }
 
+const WS_RELOAD_COOLDOWN_MS = 15_000;
+
 export default function Devices({ externalFilter = '' }: DevicesProps) {
   const [devices, setDevices] = useState<ApiDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const lastWsReload = useRef<number>(0);
 
   useEffect(() => {
     if (externalFilter.trim()) {
@@ -68,25 +71,35 @@ export default function Devices({ externalFilter = '' }: DevicesProps) {
 
   useEffect(() => {
     loadDevices();
-    const ws = createEventSocket((channel, data: any) => {
+    const ws = createEventSocket((channel) => {
       if (channel === 'sentinel:anomaly' || channel === 'sentinel:actions') {
-        loadDevices();
+        const now = Date.now();
+        if (now - lastWsReload.current >= WS_RELOAD_COOLDOWN_MS) {
+          lastWsReload.current = now;
+          loadDevices();
+        }
       }
     });
     return () => ws.close();
   }, [loadDevices]);
 
-  const handleQuarantine = async (e: React.MouseEvent, deviceId: string) => {
+  const handleQuarantine = useCallback(async (e: React.MouseEvent, deviceId: string) => {
     e.stopPropagation();
     await quarantineDevice(deviceId);
     setDevices(prev => prev.map(d =>
       d.device_id === deviceId ? { ...d, is_quarantined: !d.is_quarantined } : d
     ));
-  };
+  }, []);
 
-  const toggleExpand = (deviceId: string) => {
+  const handlePortsUpdate = useCallback((deviceId: string, ports: number[]) => {
+    setDevices(prev => prev.map(d =>
+      d.device_id === deviceId ? { ...d, open_ports: ports } : d
+    ));
+  }, []);
+
+  const toggleExpand = useCallback((deviceId: string) => {
     setExpandedId(prev => prev === deviceId ? null : deviceId);
-  };
+  }, []);
 
   const filtered = devices.filter(d =>
     !filter || (d.ip || '').includes(filter) || (d.vendor || '').toLowerCase().includes(filter.toLowerCase()) || (d.mac || '').includes(filter)
@@ -150,8 +163,9 @@ export default function Devices({ externalFilter = '' }: DevicesProps) {
                   device={device}
                   index={idx}
                   expanded={expandedId === device.device_id}
-                  onToggle={() => toggleExpand(device.device_id)}
+                  onToggle={toggleExpand}
                   onQuarantine={handleQuarantine}
+                  onPortsUpdate={handlePortsUpdate}
                 />
               ))
             )}
@@ -166,9 +180,21 @@ const DeviceRow: React.FC<{
   device: ApiDevice;
   index: number;
   expanded: boolean;
-  onToggle: () => void;
+  onToggle: (id: string) => void;
   onQuarantine: (e: React.MouseEvent, id: string) => void;
-}> = ({ device, index, expanded, onToggle, onQuarantine }) => {
+  onPortsUpdate: (deviceId: string, ports: number[]) => void;
+}> = memo(({ device, index, expanded, onToggle, onQuarantine, onPortsUpdate }) => {
+  const [scanning, setScanning] = useState(false);
+
+  const handleScan = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setScanning(true);
+    try {
+      const result = await scanDevicePorts(device.device_id);
+      onPortsUpdate(device.device_id, result.open_ports);
+    } catch { /* backend offline or IP not scannable */ }
+    finally { setScanning(false); }
+  };
   const isHighRisk = device.risk_score >= 7;
   const isMediumRisk = device.risk_score >= 4 && device.risk_score < 7;
 
@@ -186,7 +212,7 @@ const DeviceRow: React.FC<{
       {/* Main row — clickable */}
       <div
         className="grid grid-cols-[2.5fr_2fr_2fr_1.5fr_1fr_auto] gap-4 items-center p-3 cursor-pointer relative"
-        onClick={onToggle}
+        onClick={() => onToggle(device.device_id)}
       >
         {isHighRisk && <div className="absolute left-0 top-0 bottom-0 w-1 bg-white glow-white rounded-l-xl" />}
 
@@ -286,11 +312,21 @@ const DeviceRow: React.FC<{
             <div className="border-t border-white/5 p-6 bg-black/40 flex flex-col gap-6">
 
               {/* Open Ports */}
-              {device.open_ports.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-display font-bold text-outline uppercase tracking-widest mb-3">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10px] font-display font-bold text-outline uppercase tracking-widest">
                     Open Ports ({device.open_ports.length})
                   </p>
+                  <button
+                    onClick={handleScan}
+                    disabled={scanning}
+                    className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-display font-bold uppercase tracking-wider border border-white/20 rounded text-outline hover:text-white hover:border-white/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <RefreshCw className={cn('w-3 h-3', scanning && 'animate-spin')} />
+                    {scanning ? 'Scanning…' : 'Scan Ports'}
+                  </button>
+                </div>
+                {device.open_ports.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {device.open_ports.map(port => (
                       <span
@@ -302,8 +338,12 @@ const DeviceRow: React.FC<{
                       </span>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <p className="text-xs text-outline font-mono">
+                    {scanning ? 'Running TCP scan on common IoT ports…' : 'No open ports detected. Click Scan Ports to run an active check.'}
+                  </p>
+                )}
+              </div>
 
               {/* CVE List */}
               {device.cve_list.length > 0 ? (
@@ -374,7 +414,7 @@ const DeviceRow: React.FC<{
       </AnimatePresence>
     </motion.div>
   );
-};
+});
 
 function portLabel(port: number): string {
   const known: Record<number, string> = {

@@ -33,7 +33,7 @@ export default function App() {
   const renderScreen = () => {
     const externalFilter = activeScreen === searchScreen ? searchFilter : '';
     switch (activeScreen) {
-      case Screen.DASHBOARD: return <Dashboard />;
+      case Screen.DASHBOARD: return <Dashboard onNavigate={setActiveScreen} />;
       case Screen.DEVICES:   return <Devices externalFilter={externalFilter} />;
       case Screen.THREATS:   return <Threats externalFilter={externalFilter} />;
       case Screen.FIREWALL:  return <Firewall />;

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { AlertCircle, CheckCircle, ShieldAlert, RefreshCw, Wifi, Shield, Router } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { Screen } from '../types';
 import {
   fetchDashboardStats, fetchDevices, createEventSocket,
   DashboardStats, ApiDevice, ActivityItem,
@@ -23,7 +24,11 @@ function networkHealth(stats: DashboardStats | null, devices: ApiDevice[]): numb
   return Math.max(0, Math.round(100 - criticalRatio * 40 - threatRatio * 30));
 }
 
-export default function Dashboard() {
+interface DashboardProps {
+  onNavigate?: (screen: Screen) => void;
+}
+
+export default function Dashboard({ onNavigate }: DashboardProps) {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [devices, setDevices] = useState<ApiDevice[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
@@ -112,7 +117,11 @@ export default function Dashboard() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-6">
-              <div className="glass-panel-heavy rounded-xl p-6 relative overflow-hidden border-2 border-white/40 ring-1 ring-white/10 glow-white">
+              <div
+                className="glass-panel-heavy rounded-xl p-6 relative overflow-hidden border-2 border-white/40 ring-1 ring-white/10 glow-white cursor-pointer hover:border-white/70 transition-all duration-200"
+                onClick={() => onNavigate?.(Screen.THREATS)}
+                title="View all threats"
+              >
                 <div className="absolute -right-4 -top-4 w-16 h-16 bg-white/20 rounded-full blur-xl" />
                 <h2 className="text-[10px] font-display font-bold text-white uppercase tracking-widest mb-2">Active Threats</h2>
                 <div className="flex items-end gap-2">
@@ -127,7 +136,11 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="glass-panel rounded-xl p-6 border border-white/10 ring-1 ring-white/5">
+              <div
+                className="glass-panel rounded-xl p-6 border border-white/10 ring-1 ring-white/5 cursor-pointer hover:border-white/30 transition-all duration-200"
+                onClick={() => onNavigate?.(Screen.DEVICES)}
+                title="View all devices"
+              >
                 <h2 className="text-[10px] font-display font-bold text-outline uppercase tracking-widest mb-2">Protected Nodes</h2>
                 <div className="flex items-end gap-2">
                   <span className="text-4xl font-sans font-extrabold text-white leading-none tracking-tight">
