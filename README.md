@@ -400,6 +400,18 @@ Key endpoints:
 
 Full interactive docs: **http://localhost:8000/docs**
 
+<img width="1464" height="923" alt="Screenshot 2026-05-22 at 9 55 56 AM" src="https://github.com/user-attachments/assets/e53dc7c1-eb45-4985-8f1e-4df320389aac" />
+<img width="1464" height="923" alt="Screenshot 2026-05-22 at 9 56 07 AM" src="https://github.com/user-attachments/assets/895332ff-58d0-40f2-8fe9-aed77147ded1" />
+<img width="1464" height="923" alt="Screenshot 2026-05-22 at 9 56 13 AM" src="https://github.com/user-attachments/assets/54e39e10-f69f-4728-b8ce-f84e79caed7b" />
+<img width="1464" height="923" alt="Screenshot 2026-05-22 at 9 56 18 AM" src="https://github.com/user-attachments/assets/ce898248-9124-43c4-aa10-279cdf9fa1bf" />
+<img width="1464" height="923" alt="Screenshot 2026-05-22 at 9 56 25 AM" src="https://github.com/user-attachments/assets/7aec4bad-181b-4ee0-a50f-6ed92296196a" />
+<img width="1464" height="923" alt="Screenshot 2026-05-22 at 9 56 34 AM" src="https://github.com/user-attachments/assets/97a93979-e785-4d53-a478-47121d32235d" />
+<img width="1464" height="923" alt="Screenshot 2026-05-22 at 9 56 51 AM" src="https://github.com/user-attachments/assets/d7885881-5b52-4c43-903d-2b144fba1dc5" />
+<img width="1464" height="923" alt="Screenshot 2026-05-22 at 9 55 45 AM" src="https://github.com/user-attachments/assets/14cf2ed5-f04d-4098-9c5a-fb72d480d002" />
+<img width="1464" height="923" alt="Screenshot 2026-05-22 at 9 55 33 AM" src="https://github.com/user-attachments/assets/b2f5e6a4-aa52-4dfc-a340-adfa546375ae" />
+<img width="1464" height="923" alt="Screenshot 2026-05-22 at 9 55 40 AM" src="https://github.com/user-attachments/assets/ea94e53b-1420-41bf-a276-583be0399b0c" />
+
+
 ---
 
 ## License
