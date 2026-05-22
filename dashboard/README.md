@@ -1,20 +1,13 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# SENTINEL Dashboard
 
-# Run and deploy your AI Studio app
+React 18 + Vite frontend for the SENTINEL IoT security system.
 
-This contains everything you need to run your app locally.
+## Run
 
-View your app in AI Studio: https://ai.studio/apps/8eaf9d16-d424-41ee-ae9b-e6836af79fd7
+```bash
+npm install
+npm run dev      # dev server → http://localhost:3000
+npm run build    # production build → dist/
+```
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+See the [root README](../README.md) for the full system setup.
