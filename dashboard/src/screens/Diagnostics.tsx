@@ -27,7 +27,7 @@ export default function Diagnostics() {
   useEffect(() => { run(); }, [run]);
 
   return (
-    <div className="p-10 flex flex-col gap-8">
+    <div className="p-4 md:p-10 flex flex-col gap-6 md:gap-8">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight">Diagnostics</h2>

@@ -108,27 +108,27 @@ export default function Devices({ externalFilter = '' }: DevicesProps) {
   const critical = devices.filter(d => d.risk_score >= 7).length;
 
   return (
-    <div className="p-10 flex flex-col gap-8">
-      <div className="flex justify-between items-end">
+    <div className="p-4 md:p-10 flex flex-col gap-6 md:gap-8">
+      <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-end">
         <div>
-          <h2 className="text-3xl font-bold text-white tracking-tight">Device Registry</h2>
-          <p className="text-sm text-outline mt-1">Real-time asset discovery and risk analysis · Click a row to expand CVE details</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Device Registry</h2>
+          <p className="text-xs md:text-sm text-outline mt-1">Real-time asset discovery and risk analysis · Tap a row to expand CVE details</p>
         </div>
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-wrap gap-3 items-center">
           <input
             type="text"
             placeholder="Filter by IP, vendor, MAC…"
             value={filter}
             onChange={e => setFilter(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm font-mono text-white placeholder:text-outline focus:outline-none focus:border-white/30 w-56"
+            className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm font-mono text-white placeholder:text-outline focus:outline-none focus:border-white/30 flex-1 min-w-[160px] md:w-56"
           />
-          <div className="void-card rounded-lg px-6 py-4 flex flex-col">
-            <span className="text-[10px] font-display font-bold text-outline uppercase tracking-widest mb-1">Total Devices</span>
-            <span className="text-2xl font-mono text-white font-bold leading-none">{devices.length}</span>
+          <div className="void-card rounded-lg px-4 py-3 flex flex-col">
+            <span className="text-[10px] font-display font-bold text-outline uppercase tracking-widest mb-1">Total</span>
+            <span className="text-xl font-mono text-white font-bold leading-none">{devices.length}</span>
           </div>
-          <div className="void-card rounded-lg px-6 py-4 flex flex-col border-white/30 glow-white">
-            <span className="text-[10px] font-display font-bold text-white uppercase tracking-widest mb-1">Critical Risk</span>
-            <span className="text-2xl font-mono text-white font-bold leading-none">{critical}</span>
+          <div className="void-card rounded-lg px-4 py-3 flex flex-col border-white/30 glow-white">
+            <span className="text-[10px] font-display font-bold text-white uppercase tracking-widest mb-1">Critical</span>
+            <span className="text-xl font-mono text-white font-bold leading-none">{critical}</span>
           </div>
           <button onClick={loadDevices} className="text-outline hover:text-white transition-colors p-2">
             <RefreshCw className="w-4 h-4" />
@@ -142,7 +142,7 @@ export default function Devices({ externalFilter = '' }: DevicesProps) {
         </div>
       ) : (
         <div className="w-full flex flex-col gap-2">
-          <div className="grid grid-cols-[2.5fr_2fr_2fr_1.5fr_1fr_auto] gap-4 px-6 py-3 border-b border-white/5">
+          <div className="hidden md:grid grid-cols-[2.5fr_2fr_2fr_1.5fr_1fr_auto] gap-4 px-6 py-3 border-b border-white/5">
             <span className="text-[10px] font-display font-bold text-outline uppercase tracking-widest">Asset Identity</span>
             <span className="text-[10px] font-display font-bold text-outline uppercase tracking-widest">Network Locator</span>
             <span className="text-[10px] font-display font-bold text-outline uppercase tracking-widest text-center">Risk Vector</span>
@@ -209,9 +209,58 @@ const DeviceRow: React.FC<{
         'bg-white/[0.02] hover:bg-white/[0.04]'
       )}
     >
-      {/* Main row — clickable */}
+      {/* Mobile card layout */}
       <div
-        className="grid grid-cols-[2.5fr_2fr_2fr_1.5fr_1fr_auto] gap-4 items-center p-3 cursor-pointer relative"
+        className="md:hidden flex items-start gap-3 p-3 cursor-pointer relative"
+        onClick={() => onToggle(device.device_id)}
+      >
+        {isHighRisk && <div className="absolute left-0 top-0 bottom-0 w-1 bg-white glow-white rounded-l-xl" />}
+        <div className={cn(
+          'w-10 h-10 rounded-lg bg-black border border-white/10 flex items-center justify-center flex-shrink-0',
+          isHighRisk ? 'text-white' : 'text-outline'
+        )}>
+          {getDeviceIcon(device)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <span className={cn('text-sm font-bold truncate', isHighRisk ? 'text-white' : 'text-on-surface')}>
+              {deviceLabel(device)}
+            </span>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className={cn(
+                'text-[10px] font-mono font-bold',
+                isHighRisk ? 'text-white' : isMediumRisk ? 'text-white/70' : 'text-outline'
+              )}>
+                {device.risk_score.toFixed(1)}
+              </span>
+              <ChevronDown className={cn('w-4 h-4 text-outline transition-transform duration-200', expanded && 'rotate-180')} />
+            </div>
+          </div>
+          <span className="text-[10px] font-mono text-outline">{device.ip || '—'} · {device.mac}</span>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-[10px] font-mono text-white/60">{device.open_ports.length} ports</span>
+            {device.cve_list.length > 0 && (
+              <span className="text-[10px] font-mono text-white font-bold">{device.cve_list.length} CVEs</span>
+            )}
+            <button
+              onClick={(e) => onQuarantine(e, device.device_id)}
+              className={cn(
+                'ml-auto flex items-center gap-1 px-2 py-1 rounded text-[10px] font-display font-bold uppercase tracking-wider transition-all',
+                device.is_quarantined
+                  ? 'bg-white text-black'
+                  : 'border border-white/20 text-outline'
+              )}
+            >
+              {device.is_quarantined ? <Lock className="w-3 h-3 fill-current" /> : <Unlock className="w-3 h-3" />}
+              {device.is_quarantined ? 'Quarantined' : 'Quarantine'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop table row */}
+      <div
+        className="hidden md:grid grid-cols-[2.5fr_2fr_2fr_1.5fr_1fr_auto] gap-4 items-center p-3 cursor-pointer relative"
         onClick={() => onToggle(device.device_id)}
       >
         {isHighRisk && <div className="absolute left-0 top-0 bottom-0 w-1 bg-white glow-white rounded-l-xl" />}
@@ -400,12 +449,12 @@ const DeviceRow: React.FC<{
               )}
 
               {/* Last seen */}
-              <div className="pt-2 border-t border-white/5 flex justify-between items-center">
+              <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row sm:justify-between gap-1">
                 <span className="text-[10px] font-mono text-outline uppercase tracking-wider">
                   Last seen: {device.last_seen ? new Date(device.last_seen).toUTCString() : '—'}
                 </span>
-                <span className="text-[10px] font-mono text-outline uppercase tracking-wider">
-                  Device ID: {device.device_id}
+                <span className="text-[10px] font-mono text-outline uppercase tracking-wider truncate">
+                  ID: {device.device_id}
                 </span>
               </div>
             </div>

@@ -16,7 +16,7 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
 
 function FieldRow({ label, description, children }: { label: string; description?: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-8 py-3 border-b border-white/5 last:border-0">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-8 py-3 border-b border-white/5 last:border-0">
       <div className="flex-1">
         <p className="text-sm font-medium text-on-surface">{label}</p>
         {description && <p className="text-[11px] text-outline mt-0.5 leading-relaxed">{description}</p>}
@@ -99,7 +99,7 @@ export default function Settings() {
   const hasDraft = Object.keys(draft).length > 0;
 
   return (
-    <div className="p-10 flex flex-col gap-8 max-w-4xl mx-auto w-full">
+    <div className="p-4 md:p-10 flex flex-col gap-6 md:gap-8 max-w-4xl mx-auto w-full">
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight">Settings</h2>

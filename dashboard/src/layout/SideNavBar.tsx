@@ -21,6 +21,8 @@ import { deployNode } from '../lib/api';
 interface SideNavBarProps {
   activeScreen: Screen;
   setActiveScreen: (screen: Screen) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 interface DeployForm {
@@ -31,7 +33,7 @@ interface DeployForm {
 
 type DeployState = 'idle' | 'loading' | 'success' | 'error';
 
-export default function SideNavBar({ activeScreen, setActiveScreen }: SideNavBarProps) {
+export default function SideNavBar({ activeScreen, setActiveScreen, isOpen = false, onClose }: SideNavBarProps) {
   const [showDeploy, setShowDeploy] = useState(false);
   const [form, setForm] = useState<DeployForm>({ ip: '', label: '', mac: '' });
   const [deployState, setDeployState] = useState<DeployState>('idle');
@@ -93,7 +95,11 @@ export default function SideNavBar({ activeScreen, setActiveScreen }: SideNavBar
 
   return (
     <>
-      <nav className="w-[260px] flex-shrink-0 h-full border-r border-white/10 bg-white/5 backdrop-blur-3xl flex flex-col py-8 z-40">
+      <nav className={cn(
+        'w-[260px] flex-shrink-0 h-full border-r border-white/10 bg-white/5 backdrop-blur-3xl flex flex-col py-8 z-40',
+        'fixed md:relative transition-transform duration-300 ease-in-out',
+        isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      )}>
         <div className="px-6 mb-12">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-full border border-white/20 overflow-hidden glow-white flex-shrink-0">
@@ -165,7 +171,7 @@ export default function SideNavBar({ activeScreen, setActiveScreen }: SideNavBar
       {/* Deploy Node Modal */}
       {showDeploy && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="w-[440px] bg-black border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="w-[calc(100vw-2rem)] max-w-[440px] bg-black border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
               <div>

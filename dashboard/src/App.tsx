@@ -16,11 +16,18 @@ export default function App() {
   const [activeScreen, setActiveScreen] = useState<Screen>(Screen.DASHBOARD);
   const [searchFilter, setSearchFilter] = useState('');
   const [searchScreen, setSearchScreen] = useState<Screen | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleSearchNavigate = (screen: Screen, query: string) => {
     setActiveScreen(screen);
     setSearchScreen(screen);
     setSearchFilter(query);
+    setSidebarOpen(false);
+  };
+
+  const handleNavigate = (screen: Screen) => {
+    setActiveScreen(screen);
+    setSidebarOpen(false);
   };
 
   useEffect(() => {
@@ -33,7 +40,7 @@ export default function App() {
   const renderScreen = () => {
     const externalFilter = activeScreen === searchScreen ? searchFilter : '';
     switch (activeScreen) {
-      case Screen.DASHBOARD: return <Dashboard onNavigate={setActiveScreen} />;
+      case Screen.DASHBOARD: return <Dashboard onNavigate={handleNavigate} />;
       case Screen.DEVICES:   return <Devices externalFilter={externalFilter} />;
       case Screen.THREATS:   return <Threats externalFilter={externalFilter} />;
       case Screen.FIREWALL:  return <Firewall />;
@@ -47,15 +54,31 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-full bg-black text-on-surface overflow-hidden font-sans">
-      <SideNavBar activeScreen={activeScreen} setActiveScreen={setActiveScreen} />
-      
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <SideNavBar
+        activeScreen={activeScreen}
+        setActiveScreen={handleNavigate}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
       <div className="flex-1 flex flex-col min-w-0 relative">
-        <TopNavBar onNavigateToResult={handleSearchNavigate} />
-        
+        <TopNavBar
+          onNavigateToResult={handleSearchNavigate}
+          onMenuToggle={() => setSidebarOpen(o => !o)}
+        />
+
         <main className="flex-1 overflow-y-auto custom-scrollbar relative z-10 pb-[40px]">
           {renderScreen()}
         </main>
-        
+
         <Footer />
       </div>
     </div>

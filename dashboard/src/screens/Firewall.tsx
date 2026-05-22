@@ -58,11 +58,11 @@ export default function Firewall() {
   };
 
   return (
-    <div className="p-10 flex flex-col gap-10">
-      <div className="flex justify-between items-end">
+    <div className="p-4 md:p-10 flex flex-col gap-6 md:gap-10">
+      <div className="flex flex-wrap justify-between items-start gap-3">
         <div>
-          <h2 className="text-3xl font-bold text-white tracking-tight">Security Controls & Firewall</h2>
-          <p className="text-sm text-outline mt-1 font-sans">Active defensive posture management and nftables rule configuration.</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Security Controls & Firewall</h2>
+          <p className="text-xs md:text-sm text-outline mt-1 font-sans">Active defensive posture management and nftables rule configuration.</p>
         </div>
         <div className="flex items-center gap-3">
           <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}
@@ -74,7 +74,7 @@ export default function Firewall() {
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-8 items-stretch">
+      <div className="grid grid-cols-12 gap-4 md:gap-8 items-stretch">
         {/* Firewall Rules Table */}
         <div className="col-span-12 lg:col-span-8 flex flex-col gap-8">
           <section className="glass-panel rounded-2xl p-6 flex flex-col">
@@ -93,7 +93,7 @@ export default function Firewall() {
             </div>
 
             {showNewRule && (
-              <div className="mb-4 p-4 bg-white/5 border border-white/10 rounded-xl flex gap-3 items-end">
+              <div className="mb-4 p-4 bg-white/5 border border-white/10 rounded-xl flex flex-wrap gap-3 items-end">
                 <div className="flex flex-col gap-1">
                   <label className="text-[9px] font-display font-bold text-outline uppercase tracking-widest">Protocol</label>
                   <input value={newRule.protocol} onChange={e => setNewRule(p => ({ ...p, protocol: e.target.value }))}

@@ -67,7 +67,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const dashOffset = circumference * (1 - health / 100);
 
   return (
-    <div className="p-10 flex flex-col gap-8">
+    <div className="p-4 md:p-10 flex flex-col gap-6 md:gap-8">
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded border border-white/20 glow-white">
           <motion.div
@@ -87,9 +87,9 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           Connecting to backend…
         </div>
       ) : (
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-12 gap-4 md:gap-6">
           {/* Left Column */}
-          <div className="col-span-12 lg:col-span-4 flex flex-col gap-6">
+          <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 md:gap-6">
             {/* Network Health Gauge */}
             <div className="void-card rounded-xl p-8 flex flex-col items-center justify-center relative overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-10 transition-opacity" />
@@ -184,7 +184,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           </div>
 
           {/* Right Column — Network Topology */}
-          <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
+          <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 md:gap-6">
             <div className="void-card rounded-xl flex flex-col min-h-[500px] p-6 overflow-hidden relative">
               <div className="flex justify-between items-start mb-4">
                 <div>

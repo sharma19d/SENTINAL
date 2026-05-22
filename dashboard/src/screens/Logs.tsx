@@ -37,18 +37,18 @@ export default function Logs() {
   }, [loadLogs]);
 
   return (
-    <div className="p-10 flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-10 flex flex-col gap-4 md:gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-3xl font-bold text-white tracking-tight">Service Logs</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Service Logs</h2>
           <p className="text-sm text-outline mt-1">Live operational logs from SENTINEL services.</p>
         </div>
         <button
           onClick={loadLogs}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-black text-xs font-display font-bold uppercase tracking-wider hover:bg-white/90 transition-all"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-black text-xs font-display font-bold uppercase tracking-wider hover:bg-white/90 transition-all flex-shrink-0"
         >
           <RefreshCw className="w-4 h-4" />
-          Refresh Logs
+          Refresh
         </button>
       </div>
 
@@ -103,9 +103,9 @@ export default function Logs() {
             ) : (
               data.entries.map((entry) => (
                 <div key={`${entry.line_no}-${entry.raw}`} className="px-5 py-2 border-b border-white/5 hover:bg-white/[0.02]">
-                  <div className="flex items-start gap-3 text-xs font-mono">
-                    <span className="text-outline w-16 text-right shrink-0">{entry.line_no}</span>
-                    <span className="text-outline shrink-0">{entry.timestamp || '—'}</span>
+                  <div className="flex items-start gap-2 md:gap-3 text-xs font-mono">
+                    <span className="hidden sm:block text-outline w-16 text-right shrink-0">{entry.line_no}</span>
+                    <span className="hidden sm:block text-outline shrink-0">{entry.timestamp || '—'}</span>
                     <span
                       className={`shrink-0 uppercase ${
                         entry.level === 'error' ? 'text-white' : entry.level === 'warning' ? 'text-white/80' : 'text-outline'

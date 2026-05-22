@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Search, Bell, Activity, User } from 'lucide-react';
+import { Search, Bell, Activity, User, Menu } from 'lucide-react';
 import { Screen } from '../types';
 import {
   ApiActivityPulse,
@@ -12,9 +12,10 @@ import {
 
 interface TopNavBarProps {
   onNavigateToResult: (screen: Screen, query: string) => void;
+  onMenuToggle?: () => void;
 }
 
-export default function TopNavBar({ onNavigateToResult }: TopNavBarProps) {
+export default function TopNavBar({ onNavigateToResult, onMenuToggle }: TopNavBarProps) {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ApiSearchResponse | null>(null);
@@ -187,8 +188,17 @@ export default function TopNavBar({ onNavigateToResult }: TopNavBarProps) {
   const unreadCount = notifications?.unread || 0;
 
   return (
-    <header className="h-[72px] w-full sticky top-0 z-50 bg-black/40 backdrop-blur-3xl border-b border-white/10 flex items-center justify-between px-10">
-      <div className="flex-1 max-w-md">
+    <header className="h-[56px] md:h-[72px] w-full sticky top-0 z-50 bg-black/40 backdrop-blur-3xl border-b border-white/10 flex items-center justify-between px-4 md:px-10 gap-3">
+      {/* Hamburger — mobile only */}
+      <button
+        onClick={onMenuToggle}
+        className="md:hidden text-outline hover:text-white transition-colors flex-shrink-0 p-1"
+        aria-label="Open menu"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
+      <div className="flex-1 max-w-xs sm:max-w-md">
         <div className="relative group" ref={searchRef}>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline group-focus-within:text-white transition-colors" />
           <input 
@@ -228,8 +238,8 @@ export default function TopNavBar({ onNavigateToResult }: TopNavBarProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-6">
-        <div className="flex gap-4">
+      <div className="flex items-center gap-3 md:gap-6">
+        <div className="flex gap-3 md:gap-4">
           <div className="relative" ref={notifRef}>
             <button onClick={toggleNotifications} className="relative text-outline hover:text-white transition-colors">
               <Bell className="w-5 h-5" />
@@ -240,7 +250,7 @@ export default function TopNavBar({ onNavigateToResult }: TopNavBarProps) {
               )}
             </button>
             {notifOpen && (
-              <div className="absolute top-[calc(100%+10px)] right-0 w-[360px] rounded-lg border border-white/10 bg-black/95 backdrop-blur-xl overflow-hidden shadow-xl z-50">
+              <div className="absolute top-[calc(100%+10px)] right-0 w-[calc(100vw-2rem)] max-w-[360px] rounded-lg border border-white/10 bg-black/95 backdrop-blur-xl overflow-hidden shadow-xl z-50">
                 <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
                   <span className="text-xs font-display font-bold text-white uppercase tracking-wider">Notifications</span>
                   <span className="text-[10px] font-mono text-outline">{notifications?.total || 0} events</span>
@@ -276,7 +286,7 @@ export default function TopNavBar({ onNavigateToResult }: TopNavBarProps) {
               <Activity className="w-5 h-5" />
             </button>
             {activityOpen && (
-              <div className="absolute top-[calc(100%+10px)] right-0 w-[360px] rounded-lg border border-white/10 bg-black/95 backdrop-blur-xl overflow-hidden shadow-xl z-50">
+              <div className="absolute top-[calc(100%+10px)] right-0 w-[calc(100vw-2rem)] max-w-[360px] rounded-lg border border-white/10 bg-black/95 backdrop-blur-xl overflow-hidden shadow-xl z-50">
                 <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
                   <span className="text-xs font-display font-bold text-white uppercase tracking-wider">Activity Pulse</span>
                   <span className="text-[10px] font-mono text-outline uppercase">
@@ -336,9 +346,9 @@ export default function TopNavBar({ onNavigateToResult }: TopNavBarProps) {
           </div>
         </div>
         
-        <div className="h-6 w-px bg-white/10" />
-        
-        <div className="flex items-center gap-3">
+        <div className="hidden sm:block h-6 w-px bg-white/10" />
+
+        <div className="hidden sm:flex items-center gap-3">
           <span className="text-[10px] font-display font-bold text-outline border border-white/10 rounded px-1.5 py-0.5 uppercase">SA</span>
           <div className="w-8 h-8 rounded-full border border-white/20 bg-white/5 flex items-center justify-center p-1 grayscale group hover:grayscale-0 transition-all cursor-pointer">
             <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center">
