@@ -1,5 +1,6 @@
 <div align="center">
-<img width="1200" height="475" alt="SENTINEL Banner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+<img width="1464" height="923" alt="Screenshot 2026-05-22 at 9 55 33 AM" src="https://github.com/user-attachments/assets/e03464b0-b1cc-4ef4-88fd-e2522af97e8b" />
+
 
 # SENTINEL
 ### Agentic AI IoT Security System
