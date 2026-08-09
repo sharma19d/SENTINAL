@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { Screen } from './types';
 import SideNavBar from './layout/SideNavBar';
 import TopNavBar from './layout/TopNavBar';
 import Footer from './layout/Footer';
+import SplashScreen from './layout/SplashScreen';
 import Dashboard from './screens/Dashboard';
 import Devices from './screens/Devices';
 import Threats from './screens/Threats';
@@ -13,6 +15,7 @@ import Logs from './screens/Logs';
 import Settings from './screens/Settings';
 
 export default function App() {
+  const [booting, setBooting] = useState(true);
   const [activeScreen, setActiveScreen] = useState<Screen>(Screen.DASHBOARD);
   const [searchFilter, setSearchFilter] = useState('');
   const [searchScreen, setSearchScreen] = useState<Screen | null>(null);
@@ -81,6 +84,10 @@ export default function App() {
 
         <Footer />
       </div>
+
+      <AnimatePresence>
+        {booting && <SplashScreen key="splash" onDone={() => setBooting(false)} />}
+      </AnimatePresence>
     </div>
   );
 }

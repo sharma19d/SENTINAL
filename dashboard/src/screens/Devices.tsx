@@ -51,6 +51,8 @@ const WS_RELOAD_COOLDOWN_MS = 15_000;
 export default function Devices({ externalFilter = '' }: DevicesProps) {
   const [devices, setDevices] = useState<ApiDevice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState(false);
   const [filter, setFilter] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const lastWsReload = useRef<number>(0);
@@ -62,11 +64,18 @@ export default function Devices({ externalFilter = '' }: DevicesProps) {
   }, [externalFilter]);
 
   const loadDevices = useCallback(async () => {
+    setRefreshing(true);
+    setRefreshError(false);
     try {
       const d = await fetchDevices();
       setDevices(d);
-    } catch { /* backend offline */ }
-    finally { setLoading(false); }
+    } catch {
+      setRefreshError(true);
+      setTimeout(() => setRefreshError(false), 3000);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -130,8 +139,15 @@ export default function Devices({ externalFilter = '' }: DevicesProps) {
             <span className="text-[10px] font-display font-bold text-white uppercase tracking-widest mb-1">Critical</span>
             <span className="text-xl font-mono text-white font-bold leading-none">{critical}</span>
           </div>
-          <button onClick={loadDevices} className="text-outline hover:text-white transition-colors p-2">
-            <RefreshCw className="w-4 h-4" />
+          {refreshError && (
+            <span className="text-[10px] font-mono text-white/70 uppercase tracking-wide">Refresh failed</span>
+          )}
+          <button
+            onClick={loadDevices}
+            disabled={refreshing}
+            className="text-outline hover:text-white transition-colors p-2 disabled:opacity-50"
+          >
+            <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
           </button>
         </div>
       </div>
@@ -185,15 +201,26 @@ const DeviceRow: React.FC<{
   onPortsUpdate: (deviceId: string, ports: number[]) => void;
 }> = memo(({ device, index, expanded, onToggle, onQuarantine, onPortsUpdate }) => {
   const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   const handleScan = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setScanning(true);
+    setScanError(null);
     try {
       const result = await scanDevicePorts(device.device_id);
       onPortsUpdate(device.device_id, result.open_ports);
-    } catch { /* backend offline or IP not scannable */ }
-    finally { setScanning(false); }
+    } catch (err: any) {
+      let detail = 'Scan failed — backend unreachable.';
+      const msg: string = err?.message || '';
+      const jsonStart = msg.indexOf('{');
+      if (jsonStart !== -1) {
+        try { detail = JSON.parse(msg.slice(jsonStart)).detail || detail; } catch { /* keep default */ }
+      }
+      setScanError(detail);
+    } finally {
+      setScanning(false);
+    }
   };
   const isHighRisk = device.risk_score >= 7;
   const isMediumRisk = device.risk_score >= 4 && device.risk_score < 7;
@@ -217,13 +244,19 @@ const DeviceRow: React.FC<{
         {isHighRisk && <div className="absolute left-0 top-0 bottom-0 w-1 bg-white glow-white rounded-l-xl" />}
         <div className={cn(
           'w-10 h-10 rounded-lg bg-black border border-white/10 flex items-center justify-center flex-shrink-0',
+          !device.is_online && 'opacity-40',
           isHighRisk ? 'text-white' : 'text-outline'
         )}>
           {getDeviceIcon(device)}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <span className={cn('text-sm font-bold truncate', isHighRisk ? 'text-white' : 'text-on-surface')}>
+            <span className={cn(
+              'text-sm font-bold truncate flex items-center gap-1.5',
+              !device.is_online && 'opacity-50',
+              isHighRisk ? 'text-white' : 'text-on-surface'
+            )}>
+              <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', device.is_online ? 'bg-white glow-white' : 'bg-outline/40')} />
               {deviceLabel(device)}
             </span>
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -236,7 +269,9 @@ const DeviceRow: React.FC<{
               <ChevronDown className={cn('w-4 h-4 text-outline transition-transform duration-200', expanded && 'rotate-180')} />
             </div>
           </div>
-          <span className="text-[10px] font-mono text-outline">{device.ip || '—'} · {device.mac}</span>
+          <span className="text-[10px] font-mono text-outline">
+            {device.ip || '—'} · {device.mac} · <span className={device.is_online ? 'text-white/70' : 'text-outline'}>{device.is_online ? 'Online' : 'Offline'}</span>
+          </span>
           <div className="flex items-center gap-2 mt-1.5">
             <span className="text-[10px] font-mono text-white/60">{device.open_ports.length} ports</span>
             {device.cve_list.length > 0 && (
@@ -269,16 +304,25 @@ const DeviceRow: React.FC<{
         <div className="flex items-center gap-4 pl-2">
           <div className={cn(
             'w-12 h-12 rounded-lg bg-black border border-white/10 flex items-center justify-center',
+            !device.is_online && 'opacity-40',
             isHighRisk ? 'text-white' : 'text-outline'
           )}>
             {getDeviceIcon(device)}
           </div>
           <div className="flex flex-col min-w-0">
-            <span className={cn('text-sm font-bold truncate', isHighRisk ? 'text-white' : 'text-on-surface')}>
+            <span className={cn(
+              'text-sm font-bold truncate flex items-center gap-1.5',
+              !device.is_online && 'opacity-50',
+              isHighRisk ? 'text-white' : 'text-on-surface'
+            )}>
+              <span
+                className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', device.is_online ? 'bg-white glow-white' : 'bg-outline/40')}
+                title={device.is_online ? 'Online' : 'Offline'}
+              />
               {deviceLabel(device)}
             </span>
             <span className="text-[10px] font-mono text-outline uppercase truncate tracking-tight">
-              {device.os_guess || 'Unknown OS'}
+              {device.os_guess || 'Unknown OS'} · {device.is_online ? 'Online' : 'Offline'}
             </span>
           </div>
         </div>
@@ -375,7 +419,11 @@ const DeviceRow: React.FC<{
                     {scanning ? 'Scanning…' : 'Scan Ports'}
                   </button>
                 </div>
-                {device.open_ports.length > 0 ? (
+                {scanError ? (
+                  <p className="text-xs text-white/80 font-mono bg-white/5 border border-white/20 rounded-lg px-3 py-2">
+                    {scanError}
+                  </p>
+                ) : device.open_ports.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {device.open_ports.map(port => (
                       <span

@@ -62,9 +62,22 @@ done
 # ── 3. Packet Capture (Layer 1, requires sudo) ───────────────────
 echo -e "\n${YELLOW}[3/7] Starting Packet Capture on wlan0...${NC}"
 
+# The capture engine runs as root. A plain pkill can't signal it, so without
+# escalating + verifying, every run.sh left the previous engine alive and
+# started another one on top — they then all write to the same registry.
 pkill -f "sentinel.core.capture.main" 2>/dev/null || true
+sleep 0.5
 echo "charon" | sudo -S pkill -f "sentinel.core.capture.main" 2>/dev/null || true
 sleep 1
+if pgrep -f "sentinel.core.capture.main" >/dev/null 2>&1; then
+  echo "charon" | sudo -S pkill -9 -f "sentinel.core.capture.main" 2>/dev/null || true
+  sleep 1
+fi
+STALE=$(pgrep -cf "sentinel.core.capture.main" 2>/dev/null || echo 0)
+if [ "$STALE" -gt 0 ]; then
+  echo -e "  ${RED}✗ $STALE old capture process(es) survived. Run: sudo pkill -9 -f sentinel.core.capture.main${NC}"
+  exit 1
+fi
 
 # sudo env explicitly passes PYTHONPATH through to the root process
 echo "charon" | sudo -S env PYTHONPATH="$PROJECT_ROOT" "$PYTHON" -m sentinel.core.capture.main \

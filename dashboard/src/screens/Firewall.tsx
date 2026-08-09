@@ -14,10 +14,14 @@ export default function Firewall() {
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [autoQuarantine, setAutoQuarantine] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState(false);
   const [showNewRule, setShowNewRule] = useState(false);
   const [newRule, setNewRule] = useState({ protocol: 'TCP/22', target: '0.0.0.0/0', action: 'DROP', description: '' });
 
   const loadAll = useCallback(async () => {
+    setRefreshing(true);
+    setRefreshError(false);
     try {
       const [r, h, m, s] = await Promise.all([
         fetchFirewallRules(),
@@ -29,8 +33,13 @@ export default function Firewall() {
       setHoneypots(h);
       setMetrics(m);
       setAutoQuarantine(s.auto_quarantine);
-    } catch { /* backend offline */ }
-    finally { setLoading(false); }
+    } catch {
+      setRefreshError(true);
+      setTimeout(() => setRefreshError(false), 3000);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
   useEffect(() => { loadAll(); }, [loadAll]);
@@ -68,8 +77,15 @@ export default function Firewall() {
           <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}
             className="w-2.5 h-2.5 rounded-full bg-white glow-white" />
           <span className="text-[11px] font-mono text-white uppercase tracking-widest font-bold">System Armed</span>
-          <button onClick={loadAll} className="text-outline hover:text-white transition-colors p-2 ml-2">
-            <RefreshCw className="w-4 h-4" />
+          {refreshError && (
+            <span className="text-[10px] font-mono text-white/70 uppercase tracking-wide">Refresh failed</span>
+          )}
+          <button
+            onClick={loadAll}
+            disabled={refreshing}
+            className="text-outline hover:text-white transition-colors p-2 ml-2 disabled:opacity-50"
+          >
+            <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
           </button>
         </div>
       </div>

@@ -33,15 +33,24 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const [devices, setDevices] = useState<ApiDevice[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState(false);
 
   const loadData = useCallback(async () => {
+    setRefreshing(true);
+    setRefreshError(false);
     try {
       const [s, d] = await Promise.all([fetchDashboardStats(), fetchDevices()]);
       setStats(s);
       setDevices(d);
       setActivity(s.recent_activity);
-    } catch { /* backend offline */ }
-    finally { setLoading(false); }
+    } catch {
+      setRefreshError(true);
+      setTimeout(() => setRefreshError(false), 3000);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -77,9 +86,18 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           />
           <span className="text-[11px] font-mono text-white uppercase tracking-widest">System Protected</span>
         </div>
-        <button onClick={loadData} className="text-outline hover:text-white transition-colors p-2">
-          <RefreshCw className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-3">
+          {refreshError && (
+            <span className="text-[10px] font-mono text-white/70 uppercase tracking-wide">Refresh failed</span>
+          )}
+          <button
+            onClick={loadData}
+            disabled={refreshing}
+            className="text-outline hover:text-white transition-colors p-2 disabled:opacity-50"
+          >
+            <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -255,13 +273,14 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                       <div
                         className={cn(
                           'w-10 h-10 rounded-lg border flex items-center justify-center',
+                          !d.is_online && 'opacity-35',
                           isHigh ? 'bg-white/10 border-white glow-white' : isMed ? 'bg-white/5 border-white/40' : 'bg-black border-white/10'
                         )}
-                        title={`${d.ip} — Risk ${d.risk_score.toFixed(1)}`}
+                        title={`${d.ip} — Risk ${d.risk_score.toFixed(1)} — ${d.is_online ? 'Online' : 'Offline'}`}
                       >
                         <Wifi className={cn('w-4 h-4', isHigh ? 'text-white' : isMed ? 'text-white/60' : 'text-outline')} />
                       </div>
-                      <p className="text-[8px] font-mono text-outline text-center mt-1 leading-tight max-w-[60px] truncate">{d.ip}</p>
+                      <p className={cn('text-[8px] font-mono text-center mt-1 leading-tight max-w-[60px] truncate', d.is_online ? 'text-outline' : 'text-outline/40')}>{d.ip}</p>
                     </motion.div>
                   );
                 })}

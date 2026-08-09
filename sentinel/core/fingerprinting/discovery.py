@@ -25,6 +25,43 @@ from sentinel.core.fingerprinting.registry import DeviceRegistry
 logger = structlog.get_logger(__name__)
 
 
+def is_real_device_mac(mac: Optional[str]) -> bool:
+    """
+    True only for MACs that can belong to an actual network interface.
+
+    Ethernet reserves the least-significant bit of the first octet as the
+    individual/group flag. When it is set the frame is multicast or
+    broadcast, which means the address identifies a *destination group*,
+    not a physical device:
+
+        ff:ff:ff:ff:ff:ff   broadcast
+        01:00:5e:xx:xx:xx   IPv4 multicast
+        33:33:xx:xx:xx:xx   IPv6 multicast
+
+    Without this check every mDNS/SSDP/ARP broadcast created a bogus
+    "device" row in the registry, inflating the device count on the
+    dashboard with entries that can never be scanned or quarantined.
+    """
+    if not mac:
+        return False
+
+    parts = mac.strip().lower().split(":")
+    if len(parts) != 6:
+        return False
+
+    try:
+        first_octet = int(parts[0], 16)
+    except ValueError:
+        return False
+
+    if first_octet & 0x01:          # group (multicast/broadcast) bit set
+        return False
+    if all(p == "00" for p in parts):  # 00:00:00:00:00:00
+        return False
+
+    return True
+
+
 class DiscoveryAgent:
     """
     Orchestrator for device discovery and fingerprinting.
@@ -92,7 +129,7 @@ class DiscoveryAgent:
     async def _handle_discovery_event(self, data: dict):
         """Process an ARP, mDNS, SSDP, or DHCP discovery event."""
         mac = data.get("mac_address")
-        if not mac:
+        if not is_real_device_mac(mac):
             return
 
         ip = data.get("ip_address")
@@ -133,13 +170,13 @@ class DiscoveryAgent:
         src_mac = flow.get("src_mac")
         src_ip = flow.get("src_ip")
         
-        if src_mac:
+        if is_real_device_mac(src_mac):
             self.registry.upsert_device(src_mac, ip=src_ip)
-            
+
         # Also update destination device if it's local
         dst_mac = flow.get("dst_mac")
         dst_ip = flow.get("dst_ip")
-        if dst_mac:
+        if is_real_device_mac(dst_mac):
             self.registry.upsert_device(dst_mac, ip=dst_ip)
 
     async def _enrich_device_risk(self, device_id: str, vendor: str):

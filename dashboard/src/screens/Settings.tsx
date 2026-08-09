@@ -54,15 +54,24 @@ export default function Settings() {
   const [settings, setSettings] = useState<SentinelSettings | null>(null);
   const [draft, setDraft] = useState<Partial<SentinelSettings>>({});
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const loadSettings = useCallback(async () => {
+    setRefreshing(true);
+    setRefreshError(false);
     try {
       const s = await fetchSettings();
       setSettings(s);
       setDraft({});
-    } catch { /* backend offline */ }
-    finally { setLoading(false); }
+    } catch {
+      setRefreshError(true);
+      setTimeout(() => setRefreshError(false), 3000);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
   useEffect(() => { loadSettings(); }, [loadSettings]);
@@ -106,8 +115,15 @@ export default function Settings() {
           <p className="text-sm text-outline mt-1">Configure SENTINEL AI thresholds, alerts, and network parameters</p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={loadSettings} className="text-outline hover:text-white transition-colors p-2">
-            <RefreshCw className="w-4 h-4" />
+          {refreshError && (
+            <span className="text-[10px] font-mono text-white/70 uppercase tracking-wide">Refresh failed</span>
+          )}
+          <button
+            onClick={loadSettings}
+            disabled={refreshing}
+            className="text-outline hover:text-white transition-colors p-2 disabled:opacity-50"
+          >
+            <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
           </button>
           <button
             onClick={handleSave}

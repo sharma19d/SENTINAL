@@ -210,6 +210,81 @@ class CaptureEngine:
             )
             self.redis_publisher.publish_discovery_event(event)
 
+    async def _arp_sweep_loop(self) -> None:
+        """
+        Periodically ARP-sweep the local /24 subnet to actively discover
+        devices that are connected but stay silent on broadcast/multicast
+        traffic between events (e.g. phones, which typically only send
+        ARP/DHCP broadcasts once at join time and otherwise communicate
+        with the router over unicast frames a normal Wi-Fi station can't
+        see). Passive capture alone can miss devices entirely or lose
+        track of them the moment they go quiet; this loop actively
+        confirms who is really on the network right now.
+
+        Also re-publishes a discovery event for every device that answers,
+        so `last_seen` in the registry stays fresh for genuinely-connected
+        devices — this is what lets the dashboard reliably distinguish a
+        device that disconnected from one that is just idle.
+        """
+        if not self.config.arp_sweep_enabled:
+            return
+
+        from scapy.layers.l2 import ARP, Ether
+        from scapy.sendrecv import srp
+        from scapy.arch import get_if_addr
+
+        try:
+            local_ip = get_if_addr(self.config.capture_interface)
+        except Exception:
+            local_ip = None
+
+        if not local_ip or local_ip == "0.0.0.0":
+            self.logger.warning(
+                "arp_sweep_disabled",
+                reason="could_not_determine_local_ip",
+                interface=self.config.capture_interface,
+            )
+            return
+
+        subnet = ".".join(local_ip.split(".")[:3]) + ".0/24"
+        self.logger.info("arp_sweep_starting", subnet=subnet, interval=self.config.arp_sweep_interval)
+
+        while not self._shutdown_event.is_set():
+            try:
+                loop = asyncio.get_event_loop()
+                answered, _ = await loop.run_in_executor(
+                    None,
+                    lambda: srp(
+                        Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=subnet),
+                        timeout=3,
+                        iface=self.config.capture_interface,
+                        verbose=False,
+                    ),
+                )
+
+                for _, reply in answered:
+                    mac = reply.hwsrc
+                    ip = reply.psrc
+                    event = DiscoveryEvent(
+                        event_type="arp_sweep",
+                        timestamp=time.time(),
+                        mac_address=mac,
+                        ip_address=ip,
+                        vendor=mac_to_vendor(mac),
+                        arp_operation="reply",
+                    )
+                    if self.use_redis:
+                        self.redis_publisher.publish_discovery_event(event)
+
+                self.logger.info("arp_sweep_complete", devices_found=len(answered))
+            except Exception as e:
+                self.logger.error("arp_sweep_failed", error=str(e))
+
+            try:
+                await asyncio.wait_for(self._shutdown_event.wait(), timeout=self.config.arp_sweep_interval)
+            except asyncio.TimeoutError:
+                pass
+
     async def _stats_loop(self) -> None:
         """Periodically publish capture statistics."""
         while not self._shutdown_event.is_set():
@@ -264,6 +339,11 @@ class CaptureEngine:
         )
         self._stats_task = asyncio.create_task(self._stats_loop())
 
+        # Active ARP sweep only makes sense against a live interface
+        arp_sweep_task = None
+        if pcap_file is None:
+            arp_sweep_task = asyncio.create_task(self._arp_sweep_loop())
+
         self.logger.info(
             "engine_running",
             interface=self.config.capture_interface,
@@ -279,6 +359,8 @@ class CaptureEngine:
 
         cleanup_task.cancel()
         self._stats_task.cancel()
+        if arp_sweep_task:
+            arp_sweep_task.cancel()
 
         stats = self.sniffer.stop()
         self.protocol_analyzer.stop()

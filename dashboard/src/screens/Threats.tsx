@@ -45,6 +45,8 @@ interface ThreatsProps {
 export default function Threats({ externalFilter = '' }: ThreatsProps) {
   const [threats, setThreats] = useState<ApiThreat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState(false);
   const [filter, setFilter] = useState('');
 
   useEffect(() => {
@@ -54,11 +56,18 @@ export default function Threats({ externalFilter = '' }: ThreatsProps) {
   }, [externalFilter]);
 
   const loadThreats = useCallback(async () => {
+    setRefreshing(true);
+    setRefreshError(false);
     try {
       const t = await fetchThreats(50);
       setThreats(t);
-    } catch { /* backend offline */ }
-    finally { setLoading(false); }
+    } catch {
+      setRefreshError(true);
+      setTimeout(() => setRefreshError(false), 3000);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -100,8 +109,15 @@ export default function Threats({ externalFilter = '' }: ThreatsProps) {
               className="bg-transparent border-none text-sm text-white placeholder:text-outline/50 focus:ring-0 p-0 w-full font-mono uppercase tracking-tight"
             />
           </div>
-          <button onClick={loadThreats} className="text-outline hover:text-white transition-colors p-2 flex-shrink-0">
-            <RefreshCw className="w-4 h-4" />
+          {refreshError && (
+            <span className="text-[10px] font-mono text-white/70 uppercase tracking-wide flex-shrink-0">Refresh failed</span>
+          )}
+          <button
+            onClick={loadThreats}
+            disabled={refreshing}
+            className="text-outline hover:text-white transition-colors p-2 flex-shrink-0 disabled:opacity-50"
+          >
+            <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
           </button>
         </div>
       </div>

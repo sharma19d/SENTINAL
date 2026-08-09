@@ -102,3 +102,16 @@ class CaptureConfig(BaseSettings):
         default=10,
         description="Seconds between publishing capture stats to Redis.",
     )
+
+    # ── Active Discovery ─────────────────────────────────────────
+    arp_sweep_enabled: bool = Field(
+        default=True,
+        description="Periodically ARP-sweep the local subnet to actively "
+        "discover devices that stay silent on broadcast/multicast traffic "
+        "(e.g. phones between reconnects), instead of only waiting for "
+        "passive ARP/mDNS/SSDP/DHCP packets.",
+    )
+    arp_sweep_interval: int = Field(
+        default=45,
+        description="Seconds between active ARP subnet sweeps.",
+    )

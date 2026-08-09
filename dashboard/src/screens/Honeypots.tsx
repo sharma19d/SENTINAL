@@ -35,6 +35,8 @@ export default function Honeypots() {
   const [sessions, setSessions] = useState<HoneypotSession[]>([]);
   const [status, setStatus] = useState<HoneypotStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [searchIp, setSearchIp] = useState('');
   const [serviceFilter, setServiceFilter] = useState<ServiceFilter>('all');
@@ -42,13 +44,20 @@ export default function Honeypots() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const loadData = useCallback(async () => {
+    setRefreshing(true);
+    setRefreshError(false);
     try {
       const [s, st] = await Promise.all([fetchHoneypotSessions(), fetchHoneypotStatus()]);
       setSessions(s);
       setStatus(st);
       setLastUpdated(new Date());
-    } catch { /* backend offline */ }
-    finally { setLoading(false); }
+    } catch {
+      setRefreshError(true);
+      setTimeout(() => setRefreshError(false), 3000);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -118,8 +127,15 @@ export default function Honeypots() {
             transition={{ duration: 2, repeat: Infinity }}
             className="w-2 h-2 rounded-full bg-white"
           />
-          <button onClick={loadData} className="text-outline hover:text-white transition-colors p-2">
-            <RefreshCw className="w-4 h-4" />
+          {refreshError && (
+            <span className="text-[10px] font-mono text-white/70 uppercase tracking-wide">Refresh failed</span>
+          )}
+          <button
+            onClick={loadData}
+            disabled={refreshing}
+            className="text-outline hover:text-white transition-colors p-2 disabled:opacity-50"
+          >
+            <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
           </button>
         </div>
       </div>

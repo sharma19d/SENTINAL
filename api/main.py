@@ -14,7 +14,7 @@ import re
 import socket
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -234,6 +234,25 @@ def normalize_open_ports(raw: list) -> list[int]:
     return result
 
 
+# A device is considered online if it has been seen (passively or via the
+# active ARP sweep in Layer 1) within this window. The ARP sweep runs every
+# ~45s by default, so a genuinely-connected device's last_seen is refreshed
+# well within this threshold; a device that actually disconnected falls
+# outside it and is shown as offline instead of lingering forever.
+DEVICE_ONLINE_THRESHOLD = timedelta(minutes=5)
+
+# An unresolved threat older than this is history, not an active incident.
+# Without a window, test/seed events from months ago are still reported as
+# "active threats" forever because nothing ever marks them resolved.
+THREAT_ACTIVE_WINDOW = timedelta(hours=24)
+
+
+def compute_is_online(last_seen: Optional[datetime]) -> bool:
+    if not last_seen:
+        return False
+    return (datetime.utcnow() - last_seen) <= DEVICE_ONLINE_THRESHOLD
+
+
 # ── Pydantic request models ────────────────────────────────────────
 class FirewallRuleCreate(BaseModel):
     protocol: str
@@ -271,9 +290,18 @@ async def health():
 
 @app.get("/api/dashboard/stats")
 async def dashboard_stats():
-    devices = registry.get_all_devices()
+    all_devices = registry.get_all_devices()
+    # Headline counts describe the network as it is *now*, not every device
+    # ever recorded — otherwise the dashboard keeps counting hardware from
+    # networks the appliance is no longer attached to.
+    devices = [d for d in all_devices if compute_is_online(d.last_seen)]
+
     recent_threats = registry.get_recent_threats(limit=100)
-    active_threats = [t for t in recent_threats if not t.resolved]
+    threat_cutoff = datetime.utcnow() - THREAT_ACTIVE_WINDOW
+    active_threats = [
+        t for t in recent_threats
+        if not t.resolved and t.timestamp and t.timestamp >= threat_cutoff
+    ]
     quarantined = [d for d in devices if d.is_quarantined]
     critical_devices = [d for d in devices if (d.risk_score or 0) >= 7.0]
 
@@ -291,6 +319,7 @@ async def dashboard_stats():
 
     return {
         "total_devices": len(devices),
+        "known_devices": len(all_devices),
         "active_threats": len(active_threats),
         "quarantined": len(quarantined),
         "critical_devices": len(critical_devices),
@@ -395,6 +424,7 @@ async def get_devices():
             "cve_list": json.loads(d.cve_list or "[]"),
             "is_quarantined": bool(d.is_quarantined),
             "last_seen": d.last_seen.isoformat() if d.last_seen else None,
+            "is_online": compute_is_online(d.last_seen),
         } for d in devices
     ]
 
@@ -417,6 +447,7 @@ async def get_device(device_id: str):
         "cve_list": json.loads(d.cve_list or "[]"),
         "is_quarantined": bool(d.is_quarantined),
         "last_seen": d.last_seen.isoformat() if d.last_seen else None,
+        "is_online": compute_is_online(d.last_seen),
         "baseline_path": d.baseline_path,
         "recent_threats": [
             {
@@ -552,8 +583,22 @@ async def scan_device_ports(device_id: str):
     if not d:
         raise HTTPException(status_code=404, detail="Device not found")
     ip = d.ip or ""
-    if not ip or ip in ("0.0.0.0", "255.255.255.255") or ip.startswith("224."):
-        raise HTTPException(status_code=400, detail=f"Device IP {ip!r} is not scannable")
+    if not ip:
+        raise HTTPException(status_code=400, detail="Device has no known IP address to scan")
+
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"{ip!r} is not a valid IP address")
+
+    if addr.is_multicast:
+        raise HTTPException(status_code=400, detail=f"{ip} is a multicast address, not a scannable device")
+    if addr.is_unspecified:
+        raise HTTPException(status_code=400, detail=f"{ip} is an unspecified address, not a scannable device")
+    if addr.is_link_local:
+        raise HTTPException(status_code=400, detail=f"{ip} is a link-local address, not a scannable device")
+    if ip == "255.255.255.255" or ip.endswith(".255"):
+        raise HTTPException(status_code=400, detail=f"{ip} is a broadcast address, not a scannable device")
 
     open_ports = await socket_scan(ip)
     registry.upsert_device(mac=d.mac, device_id=device_id, open_ports=open_ports)
