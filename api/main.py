@@ -12,6 +12,7 @@ import os
 import glob
 import re
 import socket
+import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
@@ -28,6 +29,7 @@ import structlog
 
 from sentinel.config.settings import settings as app_settings
 from sentinel.core.fingerprinting.registry import DeviceRegistry
+from sentinel.core.network_identity import detect_current_network, ip_in_subnet
 from intel.bus import IntelBus
 
 logger = structlog.get_logger(__name__)
@@ -57,6 +59,7 @@ DEFAULT_UI_SETTINGS = {
     "threat_confidence_cutoff": 0.70,
     "auto_quarantine": True,
     "auto_honeypot": False,
+    "auto_block_honeypot": True,
     "min_severity_alert": 7,
     "alert_enabled": True,
     "capture_interface": app_settings.capture_interface,
@@ -79,9 +82,53 @@ def save_ui_settings(data: dict):
 
 # ── Cowrie log parser ─────────────────────────────────────────────
 COWRIE_LOG_DIR = Path("deception/cowrie/log")
+OPENCANARY_LOG = Path("deception/opencanary/opencanary.log")
+HONEYPOT_CONTAINERS = {"cowrie": "sentinel-cowrie", "opencanary": "sentinel-opencanary"}
 LOGS_DIR = Path("logs")
 LOG_LINE_RE = re.compile(r"^(?P<timestamp>[\d\-:T.Z+ ]+)\s+\[(?P<level>[^\]]+)\]\s+(?P<message>.*)$")
 ANSI_ESCAPE_RE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
+
+def container_running(name: str) -> Optional[bool]:
+    """
+    Whether a honeypot container is running.
+
+    Returns None when Docker cannot be queried at all (not installed, or no
+    permission) — that is genuinely "unknown", and must not be reported as
+    running. Honeypots sit on a macvlan network the host usually cannot
+    reach directly, so a TCP probe from here is not a reliable liveness
+    check; container state is.
+    """
+    try:
+        result = subprocess.run(
+            ["docker", "inspect", "-f", "{{.State.Running}}", name],
+            capture_output=True, text=True, timeout=3, check=False,
+        )
+        if result.returncode != 0:
+            # Container absent — Docker answered, so this is a real "no".
+            if "No such object" in (result.stderr or ""):
+                return False
+            return None
+        return result.stdout.strip() == "true"
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        return None
+
+
+def honeypot_state(container: str, has_activity: bool) -> str:
+    """
+    Report honeypot state honestly.
+
+    ONLINE  — container confirmed running
+    STANDBY — deployed and has produced activity, but not currently running
+    OFFLINE — confirmed not running
+    UNKNOWN — Docker could not be queried; state cannot be asserted
+    """
+    running = container_running(container)
+    if running is True:
+        return "ONLINE"
+    if running is False:
+        return "STANDBY" if has_activity else "OFFLINE"
+    return "STANDBY" if has_activity else "UNKNOWN"
+
 
 def parse_cowrie_sessions() -> list[dict]:
     sessions: dict[str, dict] = {}
@@ -241,6 +288,39 @@ def normalize_open_ports(raw: list) -> list[int]:
 # outside it and is shown as offline instead of lingering forever.
 DEVICE_ONLINE_THRESHOLD = timedelta(minutes=5)
 
+# ── Current network ───────────────────────────────────────────────
+# Detection shells out to `ip`, so it is cached briefly rather than run on
+# every request. The TTL is short because the appliance can be moved to a
+# different network at any moment and the dashboard must follow it.
+_NETWORK_CACHE_TTL = 15.0
+_network_cache: dict = {"identity": None, "checked_at": 0.0}
+
+
+def current_network():
+    """Network the appliance is attached to right now, or None if no uplink."""
+    now = time.monotonic()
+    if (now - _network_cache["checked_at"]) > _NETWORK_CACHE_TTL:
+        identity = detect_current_network()
+        previous = _network_cache["identity"]
+        if identity and (previous is None or identity.network_id != previous.network_id):
+            logger.info(
+                "api_network_changed",
+                network_id=identity.network_id,
+                subnet=identity.subnet,
+            )
+            try:
+                registry.record_network(identity)
+            except SQLAlchemyError as e:
+                logger.error("record_network_failed", error=str(e))
+        _network_cache["identity"] = identity
+        _network_cache["checked_at"] = now
+    return _network_cache["identity"]
+
+
+def current_network_id() -> Optional[str]:
+    identity = current_network()
+    return identity.network_id if identity else None
+
 # An unresolved threat older than this is history, not an active incident.
 # Without a window, test/seed events from months ago are still reported as
 # "active threats" forever because nothing ever marks them resolved.
@@ -270,6 +350,7 @@ class SettingsUpdate(BaseModel):
     threat_confidence_cutoff: Optional[float] = None
     auto_quarantine: Optional[bool] = None
     auto_honeypot: Optional[bool] = None
+    auto_block_honeypot: Optional[bool] = None
     min_severity_alert: Optional[int] = None
     alert_enabled: Optional[bool] = None
     capture_interface: Optional[str] = None
@@ -290,13 +371,14 @@ async def health():
 
 @app.get("/api/dashboard/stats")
 async def dashboard_stats():
-    all_devices = registry.get_all_devices()
-    # Headline counts describe the network as it is *now*, not every device
-    # ever recorded — otherwise the dashboard keeps counting hardware from
-    # networks the appliance is no longer attached to.
+    net_id = current_network_id()
+    # Scope to the current network first: hardware from a network we are no
+    # longer attached to must not be counted at all.
+    all_devices = registry.get_devices_for_network(net_id)
+    # Then to devices seen recently — the rest are on this network but offline.
     devices = [d for d in all_devices if compute_is_online(d.last_seen)]
 
-    recent_threats = registry.get_recent_threats(limit=100)
+    recent_threats = registry.get_recent_threats(limit=100, network_id=net_id)
     threat_cutoff = datetime.utcnow() - THREAT_ACTIVE_WINDOW
     active_threats = [
         t for t in recent_threats
@@ -329,7 +411,7 @@ async def dashboard_stats():
 
 @app.get("/api/notifications")
 async def notifications(limit: int = Query(8, ge=1, le=50)):
-    events = registry.get_recent_threats(limit=100)
+    events = registry.get_recent_threats(limit=100, network_id=current_network_id())
     items = []
     unread = 0
 
@@ -359,8 +441,9 @@ async def notifications(limit: int = Query(8, ge=1, le=50)):
 async def activity_pulse():
     cpu = await read_cpu_percent()
     mem = read_mem_info()
-    devices = registry.get_all_devices()
-    recent_threats = registry.get_recent_threats(limit=50)
+    net_id = current_network_id()
+    devices = registry.get_devices_for_network(net_id)
+    recent_threats = registry.get_recent_threats(limit=50, network_id=net_id)
     active_threats = [t for t in recent_threats if not t.resolved]
     recent_events = [
         {
@@ -409,9 +492,35 @@ async def activity_pulse():
 
 # ── Devices ──────────────────────────────────────────────────────
 
+@app.get("/api/network/current")
+async def get_current_network():
+    """The network the appliance is attached to, plus every network it knows."""
+    identity = current_network()
+    known = []
+    for n in registry.list_networks():
+        row = n.to_dict()
+        row["is_current"] = identity is not None and n.network_id == identity.network_id
+        known.append(row)
+
+    return {
+        "current": identity.to_dict() if identity else None,
+        "known_networks": known,
+    }
+
+
 @app.get("/api/devices")
-async def get_devices():
-    devices = registry.get_all_devices()
+async def get_devices(scope: str = Query("current", pattern="^(current|all)$")):
+    """
+    Devices on the current network by default.
+
+    `scope=all` returns every device ever recorded, including those from
+    other networks — useful for history, but they are not reachable now.
+    """
+    if scope == "all":
+        devices = registry.get_all_devices()
+    else:
+        devices = registry.get_devices_for_network(current_network_id())
+
     return [
         {
             "device_id": d.device_id,
@@ -464,9 +573,81 @@ async def get_device(device_id: str):
 
 # ── Threats ──────────────────────────────────────────────────────
 
+@app.get("/api/detection/status")
+async def detection_status():
+    """
+    Warm-up state of the anomaly detection pipeline.
+
+    A device yields no anomaly score until its sliding window is full, so an
+    empty threat list is ambiguous on its own. This reports whether detection
+    is still warming up or is actually running and finding nothing.
+    """
+    try:
+        raw = await redis_client.hgetall(app_settings.anomaly_status_key)
+    except RedisError:
+        raw = {}
+
+    if not raw:
+        return {
+            "worker_online": False,
+            "state": "offline",
+            "detail": "Anomaly detection worker is not reporting. Threat analysis is not running.",
+            "devices_seen": 0,
+            "devices_ready": 0,
+            "packets_processed": 0,
+            "window_size": 0,
+            "progress": 0.0,
+        }
+
+    def _num(key, cast=float, default=0):
+        try:
+            return cast(raw.get(key, default))
+        except (TypeError, ValueError):
+            return default
+
+    devices_seen = _num("devices_seen", int)
+    devices_ready = _num("devices_ready", int)
+    window_size = _num("window_size", int)
+    packets = _num("packets_processed", int)
+
+    progress = (devices_ready / devices_seen) if devices_seen else 0.0
+
+    if devices_seen == 0:
+        state = "waiting"
+        detail = "Waiting for traffic. No packets seen yet on this network."
+    elif devices_ready == 0:
+        state = "warming_up"
+        detail = (
+            f"Building traffic baselines — 0 of {devices_seen} device(s) ready. "
+            f"Each needs {window_size} packets before analysis can begin."
+        )
+    elif devices_ready < devices_seen:
+        state = "warming_up"
+        detail = (
+            f"Analysing {devices_ready} of {devices_seen} device(s). "
+            "The rest are still building their baseline."
+        )
+    else:
+        state = "active"
+        detail = f"Actively analysing all {devices_seen} device(s)."
+
+    return {
+        "worker_online": True,
+        "state": state,
+        "detail": detail,
+        "devices_seen": devices_seen,
+        "devices_ready": devices_ready,
+        "packets_processed": packets,
+        "window_size": window_size,
+        "progress": round(progress, 3),
+    }
+
+
 @app.get("/api/threats")
-async def get_threats(limit: int = 50):
-    events = registry.get_recent_threats(limit=limit)
+async def get_threats(limit: int = 50,
+                      scope: str = Query("current", pattern="^(current|all)$")):
+    net_id = None if scope == "all" else current_network_id()
+    events = registry.get_recent_threats(limit=limit, network_id=net_id)
     return [
         {
             "event_id": e.event_id,
@@ -514,8 +695,10 @@ async def global_search(
     if not needle:
         return {"query": query, "total": 0, "devices": [], "threats": []}
 
+    net_id = current_network_id()
+
     matched_devices = []
-    for device in registry.get_all_devices():
+    for device in registry.get_devices_for_network(net_id):
         fields = [
             device.device_id or "",
             device.mac or "",
@@ -534,7 +717,7 @@ async def global_search(
             })
 
     matched_threats = []
-    for threat in registry.get_recent_threats(limit=300):
+    for threat in registry.get_recent_threats(limit=300, network_id=net_id):
         fields = [
             threat.event_id or "",
             threat.device_id or "",
@@ -667,8 +850,9 @@ async def get_ip_intel(ip: str):
 # ── Firewall Rules ─────────────────────────────────────────────────
 
 @app.get("/api/firewall/rules")
-async def get_firewall_rules():
-    rules = registry.get_firewall_rules()
+async def get_firewall_rules(scope: str = Query("current", pattern="^(current|all)$")):
+    net_id = None if scope == "all" else current_network_id()
+    rules = registry.get_firewall_rules(network_id=net_id)
     return [
         {
             "rule_id": r.rule_id,
@@ -678,17 +862,27 @@ async def get_firewall_rules():
             "enabled": bool(r.enabled),
             "description": r.description or "",
             "created_at": r.created_at.isoformat() if r.created_at else None,
+            "network_id": r.network_id,
         } for r in rules
     ]
 
 
 @app.post("/api/firewall/rules")
 async def create_firewall_rule(body: FirewallRuleCreate):
+    # Scope the rule to the current network only when its target is a
+    # specific address inside this subnet. Broad targets (0.0.0.0/0 and
+    # similar) stay network-agnostic so they keep applying everywhere.
+    identity = current_network()
+    scoped_network_id = None
+    if identity and ip_in_subnet(body.target.split("/")[0], identity.subnet):
+        scoped_network_id = identity.network_id
+
     rule = registry.add_firewall_rule(
         protocol=body.protocol,
         target=body.target,
         action=body.action,
         description=body.description or "",
+        network_id=scoped_network_id,
     )
     return {
         "rule_id": rule.rule_id,
@@ -731,19 +925,35 @@ async def honeypot_status():
     successful = [s for s in sessions if s["success"]]
     unique_ips = len({s["src_ip"] for s in sessions})
 
+    # Honeypot addresses were hardcoded to a 192.168.0.x network. Derive them
+    # from the current subnet instead, so they stay meaningful after the
+    # appliance moves to a different network.
+    identity = current_network()
+    cowrie_ip, canary_ip = "unassigned", "unassigned"
+    if identity:
+        try:
+            hosts = ipaddress.ip_network(identity.subnet, strict=False)
+            cowrie_ip = str(hosts.network_address + 201)
+            canary_ip = str(hosts.network_address + 202)
+        except ValueError:
+            pass
+
     return {
         "cowrie": {
             "name": "Cowrie (SSH/Telnet)",
-            "ip": "192.168.0.201",
-            "status": "ONLINE" if cowrie_logs else "STANDBY",
+            "ip": cowrie_ip,
+            "status": honeypot_state(HONEYPOT_CONTAINERS["cowrie"], bool(cowrie_logs)),
             "total_sessions": len(sessions),
             "successful_logins": len(successful),
             "unique_attackers": unique_ips,
         },
         "opencanary": {
             "name": "OpenCanary",
-            "ip": "192.168.0.202",
-            "status": "ONLINE",
+            "ip": canary_ip,
+            # Previously hardcoded to ONLINE regardless of reality, which
+            # reported a honeypot as protecting the network even when it had
+            # never been deployed.
+            "status": honeypot_state(HONEYPOT_CONTAINERS["opencanary"], OPENCANARY_LOG.exists()),
             "services": ["SMB", "HTTP", "FTP"],
         },
     }
@@ -754,6 +964,17 @@ async def honeypot_status():
 @app.get("/api/settings")
 async def get_settings():
     ui = load_ui_settings()
+    identity = current_network()
+
+    # Reflect the live network rather than the stored default: a subnet
+    # saved while on another network is misleading once we have moved.
+    if identity:
+        ui = {
+            **ui,
+            "monitored_subnets": identity.subnet,
+            "capture_interface": identity.interface,
+        }
+
     return {
         **ui,
         "system": {
@@ -764,6 +985,7 @@ async def get_settings():
             "ollama_base_url": app_settings.ollama_base_url,
             "llm_model": app_settings.llm_model,
         },
+        "network": identity.to_dict() if identity else None,
     }
 
 

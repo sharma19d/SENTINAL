@@ -21,6 +21,7 @@ from sentinel.core.capture.models import DiscoveryEvent, FlowEvent, FlowEventTyp
 from sentinel.core.fingerprinting.cve import CVEScanner
 from sentinel.core.fingerprinting.oui import get_vendor
 from sentinel.core.fingerprinting.registry import DeviceRegistry
+from sentinel.core.network_identity import detect_current_network, ip_in_subnet
 
 logger = structlog.get_logger(__name__)
 
@@ -70,12 +71,38 @@ class DiscoveryAgent:
     and updates the Device Registry with enriched metadata.
     """
 
+    # How often to re-check which network we're attached to. The appliance
+    # can be moved between networks while running, so this must not be
+    # resolved once at startup and cached forever.
+    NETWORK_REFRESH_SECONDS = 30
+
     def __init__(self):
         self.registry = DeviceRegistry(settings.db_url)
         self.cve_scanner = CVEScanner()
         self.redis_client: Optional[redis.Redis] = None
         self._running = False
         self._tasks = []
+        self._network = None
+        self._network_checked_at = 0.0
+
+    def _current_network(self):
+        """Current network identity, refreshed periodically."""
+        import time
+
+        now = time.monotonic()
+        if self._network is None or (now - self._network_checked_at) > self.NETWORK_REFRESH_SECONDS:
+            identity = detect_current_network()
+            if identity and (self._network is None or identity.network_id != self._network.network_id):
+                logger.info(
+                    "network_changed",
+                    network_id=identity.network_id,
+                    subnet=identity.subnet,
+                    gateway=identity.gateway_ip,
+                )
+                self.registry.record_network(identity)
+            self._network = identity
+            self._network_checked_at = now
+        return self._network
 
     async def start(self):
         """Start the discovery agent's event loop with retry logic."""
@@ -137,12 +164,25 @@ class DiscoveryAgent:
         
         logger.info("discovery_event_received", type=event_type, mac=mac, ip=ip)
 
+        network = self._current_network()
+        if network is None:
+            # No usable uplink — recording a device with no network would
+            # make it indistinguishable from one on the current network.
+            return
+
+        # An IPv4 address outside the current subnet belongs to a network we
+        # are not attached to (stale broadcast, or a leftover in-flight
+        # event after a network switch), so it must not be filed here.
+        if ip and ":" not in ip and not ip_in_subnet(ip, network.subnet):
+            return
+
         # 1. Basic update/create
         vendor = data.get("vendor") or get_vendor(mac)
-        
+
         device_update = {
             "ip": ip,
             "vendor": vendor,
+            "network_id": network.network_id,
         }
 
         # 2. Enrich from specific protocol metadata
@@ -170,14 +210,22 @@ class DiscoveryAgent:
         src_mac = flow.get("src_mac")
         src_ip = flow.get("src_ip")
         
-        if is_real_device_mac(src_mac):
-            self.registry.upsert_device(src_mac, ip=src_ip)
+        network = self._current_network()
+        if network is None:
+            return
 
-        # Also update destination device if it's local
         dst_mac = flow.get("dst_mac")
         dst_ip = flow.get("dst_ip")
-        if is_real_device_mac(dst_mac):
-            self.registry.upsert_device(dst_mac, ip=dst_ip)
+
+        # Only endpoints inside the current subnet are devices *on* this
+        # network; the other side of an internet flow is a remote host and
+        # must never be registered as local hardware.
+        for mac, ip in ((src_mac, src_ip), (dst_mac, dst_ip)):
+            if not is_real_device_mac(mac):
+                continue
+            if not ip_in_subnet(ip, network.subnet):
+                continue
+            self.registry.upsert_device(mac, ip=ip, network_id=network.network_id)
 
     async def _enrich_device_risk(self, device_id: str, vendor: str):
         """Background task to fetch CVEs and calculate risk score."""

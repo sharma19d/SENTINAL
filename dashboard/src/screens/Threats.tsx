@@ -2,7 +2,10 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertCircle, ShieldOff, Search, CheckCircle2, Gavel, ShieldCheck, RefreshCw, Globe, ChevronDown } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { fetchThreats, fetchIntel, createEventSocket, ApiThreat, IntelData } from '../lib/api';
+import {
+  fetchThreats, fetchIntel, fetchDetectionStatus, createEventSocket,
+  ApiThreat, IntelData, ApiDetectionStatus,
+} from '../lib/api';
 
 function formatTime(iso: string | null): string {
   if (!iso) return '—';
@@ -48,6 +51,7 @@ export default function Threats({ externalFilter = '' }: ThreatsProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState(false);
   const [filter, setFilter] = useState('');
+  const [detection, setDetection] = useState<ApiDetectionStatus | null>(null);
 
   useEffect(() => {
     if (externalFilter.trim()) {
@@ -68,6 +72,22 @@ export default function Threats({ externalFilter = '' }: ThreatsProps) {
       setLoading(false);
       setRefreshing(false);
     }
+  }, []);
+
+  // Detection pipeline state, polled so the empty-state message reflects
+  // whether analysis is still warming up rather than always claiming the
+  // network is clean.
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setDetection(await fetchDetectionStatus());
+      } catch {
+        setDetection(null);
+      }
+    };
+    load();
+    const interval = window.setInterval(load, 5000);
+    return () => window.clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -127,11 +147,15 @@ export default function Threats({ externalFilter = '' }: ThreatsProps) {
           Loading threat feed…
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <CheckCircle2 className="w-10 h-10 text-outline" />
-          <p className="text-outline font-mono text-sm">
-            {threats.length === 0 ? 'No threats detected. Network is clean.' : 'No threats match the filter.'}
-          </p>
+        <div className="flex flex-col items-center justify-center h-64 gap-4 px-6">
+          {threats.length > 0 ? (
+            <>
+              <CheckCircle2 className="w-10 h-10 text-outline" />
+              <p className="text-outline font-mono text-sm">No threats match the filter.</p>
+            </>
+          ) : (
+            <DetectionEmptyState detection={detection} />
+          )}
         </div>
       ) : (
         <div className="relative mt-4">
@@ -146,6 +170,79 @@ export default function Threats({ externalFilter = '' }: ThreatsProps) {
     </div>
   );
 }
+
+/**
+ * Empty-state for the threat feed.
+ *
+ * An empty list means two very different things depending on pipeline state:
+ * detection may still be building per-device baselines, or it may be fully
+ * active and genuinely finding nothing. Showing "network is clean" in both
+ * cases hides the difference, so the real state is surfaced instead.
+ */
+const DetectionEmptyState: React.FC<{ detection: ApiDetectionStatus | null }> = ({ detection }) => {
+  if (!detection || !detection.worker_online) {
+    return (
+      <>
+        <ShieldOff className="w-10 h-10 text-outline" />
+        <p className="text-white font-mono text-sm text-center">Threat analysis is not running</p>
+        <p className="text-outline font-mono text-xs text-center max-w-md">
+          {detection?.detail || 'The anomaly detection worker is not reporting. Start it with bash run.sh.'}
+        </p>
+      </>
+    );
+  }
+
+  if (detection.state === 'active') {
+    return (
+      <>
+        <CheckCircle2 className="w-10 h-10 text-white" />
+        <p className="text-white font-mono text-sm text-center">No threats detected — network is clean</p>
+        <p className="text-outline font-mono text-xs text-center">
+          Actively analysing {detection.devices_seen} device{detection.devices_seen === 1 ? '' : 's'} ·{' '}
+          {detection.packets_processed.toLocaleString()} packets processed
+        </p>
+      </>
+    );
+  }
+
+  // waiting / warming_up — analysis has not covered every device yet
+  const pct = Math.round(detection.progress * 100);
+  return (
+    <>
+      <motion.div
+        animate={{ opacity: [1, 0.4, 1] }}
+        transition={{ duration: 1.6, repeat: Infinity }}
+      >
+        <Gavel className="w-10 h-10 text-outline" />
+      </motion.div>
+
+      <p className="text-white font-mono text-sm text-center">
+        {detection.state === 'waiting' ? 'Waiting for network traffic…' : 'Building traffic baselines…'}
+      </p>
+
+      <div className="w-full max-w-xs flex flex-col gap-2">
+        <div className="h-[3px] bg-white/10 rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-white rounded-full"
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.4 }}
+          />
+        </div>
+        <div className="flex justify-between text-[10px] font-mono text-outline uppercase tracking-wider">
+          <span>{detection.devices_ready} / {detection.devices_seen} devices ready</span>
+          <span>{pct}%</span>
+        </div>
+      </div>
+
+      <p className="text-outline font-mono text-xs text-center max-w-md leading-relaxed">
+        {detection.detail}
+      </p>
+      <p className="text-outline/60 font-mono text-[10px] text-center">
+        {detection.packets_processed.toLocaleString()} packets processed
+      </p>
+    </>
+  );
+};
 
 const ThreatCard: React.FC<{ threat: ApiThreat; index: number }> = ({ threat, index }) => {
   const isCritical = (threat.severity || 0) >= 9;

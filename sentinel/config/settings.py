@@ -28,6 +28,10 @@ class SentinelSettings(BaseSettings):
     redis_db: int = Field(default=0)
     redis_password: str = Field(default="")
 
+    # Redis hash the anomaly worker publishes its warm-up progress to, so the
+    # dashboard can distinguish "still building baselines" from "no threats".
+    anomaly_status_key: str = Field(default="sentinel:anomaly:status")
+
     # --- Threat Intelligence ---
     nvd_api_key: Optional[str] = Field(default=None)
     abuseipdb_api_key: Optional[str] = Field(default=None)

@@ -6,6 +6,8 @@ and runs LSTM inference to detect anomalies.
 """
 
 import json
+import time
+
 import redis
 import structlog
 import numpy as np
@@ -39,18 +41,53 @@ class AnomalyWorker:
         # State
         self.window_size = window_size
         self.windows: Dict[str, deque] = {} # device_id -> deque of features
-        
+
         # Channels
         self.packet_channel = "sentinel:packets"
         self.anomaly_channel = "sentinel:anomaly"
+
+        # Warm-up telemetry. A device produces no anomaly score until its
+        # sliding window is full, so "no threats" is ambiguous until then:
+        # it may mean the network is clean, or simply that detection has not
+        # started for that device yet. Publishing this state lets the UI
+        # tell the two apart instead of always claiming the network is clean.
+        self.status_key = app_settings.anomaly_status_key
+        self.started_at = time.time()
+        self.packets_processed = 0
+        self._last_status_push = 0.0
+        self._status_interval = 2.0
+
+    def _push_status(self, force: bool = False) -> None:
+        """Publish warm-up progress to Redis for the dashboard."""
+        now = time.time()
+        if not force and (now - self._last_status_push) < self._status_interval:
+            return
+        self._last_status_push = now
+
+        ready = sum(1 for w in self.windows.values() if len(w) == self.window_size)
+        try:
+            self.redis_client.hset(self.status_key, mapping={
+                "started_at": self.started_at,
+                "updated_at": now,
+                "window_size": self.window_size,
+                "devices_seen": len(self.windows),
+                "devices_ready": ready,
+                "packets_processed": self.packets_processed,
+                "threshold": getattr(self.detector, "threshold", 0.0),
+            })
+            # Expire so a dead worker stops looking alive to the dashboard.
+            self.redis_client.expire(self.status_key, 30)
+        except Exception as e:
+            logger.debug("status_push_failed", error=str(e))
 
     def run(self):
         """Main loop to process packets."""
         try:
             self.pubsub.subscribe(self.packet_channel)
-            logger.info("anomaly_worker_started", 
+            logger.info("anomaly_worker_started",
                          channel=self.packet_channel,
                          window_size=self.window_size)
+            self._push_status(force=True)
             
             for message in self.pubsub.listen():
                 if message["type"] == "message":
@@ -87,7 +124,9 @@ class AnomalyWorker:
                 self.windows[device_id] = deque(maxlen=self.window_size)
             
             self.windows[device_id].append(features)
-            
+            self.packets_processed += 1
+            self._push_status()
+
             # 3. Predict only if window is full
             if len(self.windows[device_id]) == self.window_size:
                 feature_seq = np.array(list(self.windows[device_id]))

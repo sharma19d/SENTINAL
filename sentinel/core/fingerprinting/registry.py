@@ -41,6 +41,10 @@ class DeviceModel(Base):
     last_seen = Column(DateTime, default=datetime.utcnow)
     baseline_path = Column(String)
     is_quarantined = Column(Integer, default=0)
+    # Gateway MAC of the network this device was observed on. A device is
+    # only meaningful on its own network — without this the registry mixes
+    # hardware from every network the appliance has ever been attached to.
+    network_id = Column(String, index=True)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert model to dictionary, parsing JSON fields."""
@@ -70,6 +74,7 @@ class ThreatEventModel(Base):
     action_taken = Column(String)
     timestamp = Column(DateTime, default=datetime.utcnow)
     resolved = Column(Integer, default=0)
+    network_id = Column(String, index=True)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert model to dictionary."""
@@ -90,6 +95,30 @@ class FirewallRuleModel(Base):
     enabled = Column(Integer, default=1)
     description = Column(String, default="")
     created_at = Column(DateTime, default=datetime.utcnow)
+    # NULL means the rule is network-agnostic (e.g. target 0.0.0.0/0) and
+    # applies everywhere; a value scopes it to one network's address space.
+    network_id = Column(String, index=True)
+
+
+class NetworkModel(Base):
+    """Every network the appliance has been attached to, keyed by gateway MAC."""
+
+    __tablename__ = "networks"
+
+    network_id = Column(String, primary_key=True)   # gateway MAC
+    label = Column(String, default="")
+    gateway_ip = Column(String)
+    subnet = Column(String)
+    interface = Column(String)
+    first_seen = Column(DateTime, default=datetime.utcnow)
+    last_seen = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self) -> dict[str, Any]:
+        data = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        for key in ("first_seen", "last_seen"):
+            if isinstance(data[key], datetime):
+                data[key] = data[key].isoformat()
+        return data
 
 
 class DeviceRegistry:
@@ -101,11 +130,88 @@ class DeviceRegistry:
     def __init__(self, db_url: str = "sqlite:///data/sentinel.db"):
         self.engine = create_engine(db_url, connect_args={"check_same_thread": False})
         Base.metadata.create_all(self.engine)
+        self._migrate_network_columns()
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+
+    def _migrate_network_columns(self) -> None:
+        """
+        Add `network_id` to pre-existing tables.
+
+        `create_all` only creates missing *tables*; it never alters an
+        existing one, so databases created before network scoping was
+        introduced would keep silently dropping the column on write.
+        Existing rows are intentionally left with network_id = NULL,
+        meaning "recorded before networks were tracked" — they are
+        excluded from current-network views rather than being guessed
+        into the wrong network.
+        """
+        from sqlalchemy import inspect, text
+
+        inspector = inspect(self.engine)
+        targets = {
+            "devices": "network_id",
+            "threat_events": "network_id",
+            "firewall_rules": "network_id",
+        }
+
+        with self.engine.begin() as conn:
+            for table, column in targets.items():
+                if not inspector.has_table(table):
+                    continue
+                existing = {c["name"] for c in inspector.get_columns(table)}
+                if column in existing:
+                    continue
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} VARCHAR"))
+                conn.execute(
+                    text(f"CREATE INDEX IF NOT EXISTS ix_{table}_{column} ON {table} ({column})")
+                )
 
     def get_session(self) -> Session:
         """Create a new database session."""
         return self.SessionLocal()
+
+    # ── Network Operations ───────────────────────────────────────
+
+    def record_network(self, identity) -> None:
+        """Upsert the network the appliance is currently attached to."""
+        session = self.get_session()
+        try:
+            network = session.query(NetworkModel).filter(
+                NetworkModel.network_id == identity.network_id
+            ).first()
+
+            if not network:
+                network = NetworkModel(
+                    network_id=identity.network_id,
+                    label=f"{identity.subnet} via {identity.gateway_ip}",
+                )
+                session.add(network)
+
+            network.gateway_ip = identity.gateway_ip
+            network.subnet = identity.subnet
+            network.interface = identity.interface
+            network.last_seen = datetime.utcnow()
+            session.commit()
+        finally:
+            session.close()
+
+    def list_networks(self) -> list[NetworkModel]:
+        session = self.get_session()
+        try:
+            return session.query(NetworkModel).order_by(NetworkModel.last_seen.desc()).all()
+        finally:
+            session.close()
+
+    def get_devices_for_network(self, network_id: Optional[str]) -> list[DeviceModel]:
+        """Devices belonging to one network. None returns every device."""
+        session = self.get_session()
+        try:
+            query = session.query(DeviceModel)
+            if network_id is not None:
+                query = query.filter(DeviceModel.network_id == network_id)
+            return query.all()
+        finally:
+            session.close()
 
     # ── Device Operations ────────────────────────────────────────
 
@@ -191,11 +297,19 @@ class DeviceRegistry:
         finally:
             session.close()
 
-    def get_recent_threats(self, limit: int = 50) -> list[ThreatEventModel]:
-        """List the most recent threat events across all devices."""
+    def get_recent_threats(self, limit: int = 50,
+                           network_id: Optional[str] = None) -> list[ThreatEventModel]:
+        """
+        Most recent threat events. When `network_id` is given, only events
+        recorded on that network are returned — a threat seen on a previous
+        network says nothing about the one currently attached.
+        """
         session = self.get_session()
         try:
-            return session.query(ThreatEventModel).order_by(
+            query = session.query(ThreatEventModel)
+            if network_id is not None:
+                query = query.filter(ThreatEventModel.network_id == network_id)
+            return query.order_by(
                 ThreatEventModel.timestamp.desc()
             ).limit(limit).all()
         finally:
@@ -203,20 +317,34 @@ class DeviceRegistry:
 
     # ── Firewall Rule Operations ──────────────────────────────────
 
-    def get_firewall_rules(self) -> list[FirewallRuleModel]:
+    def get_firewall_rules(self, network_id: Optional[str] = None) -> list[FirewallRuleModel]:
+        """
+        Firewall rules. When `network_id` is given, returns rules scoped to
+        that network plus network-agnostic ones (network_id IS NULL), since
+        a rule targeting 0.0.0.0/0 applies wherever the appliance is.
+        """
         session = self.get_session()
         try:
-            return session.query(FirewallRuleModel).order_by(FirewallRuleModel.created_at).all()
+            query = session.query(FirewallRuleModel)
+            if network_id is not None:
+                query = query.filter(
+                    (FirewallRuleModel.network_id == network_id)
+                    | (FirewallRuleModel.network_id.is_(None))
+                )
+            return query.order_by(FirewallRuleModel.created_at).all()
         finally:
             session.close()
 
-    def add_firewall_rule(self, protocol: str, target: str, action: str, description: str = "") -> FirewallRuleModel:
+    def add_firewall_rule(self, protocol: str, target: str, action: str,
+                          description: str = "",
+                          network_id: Optional[str] = None) -> FirewallRuleModel:
         session = self.get_session()
         try:
             rule_id = f"FW-{uuid.uuid4().hex[:4].upper()}"
             rule = FirewallRuleModel(
                 rule_id=rule_id, protocol=protocol, target=target,
                 action=action, description=description, enabled=1,
+                network_id=network_id,
             )
             session.add(rule)
             session.commit()

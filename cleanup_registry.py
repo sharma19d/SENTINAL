@@ -84,6 +84,10 @@ def main() -> int:
                         help="Actually delete (default is dry-run)")
     parser.add_argument("--stale-days", type=int, default=30,
                         help="Treat devices unseen for this many days as stale (default: 30)")
+    parser.add_argument("--adopt-current", action="store_true",
+                        help="Assign untagged devices whose IP is inside the current "
+                             "subnet to the current network (one-time backfill for "
+                             "records created before network tracking existed)")
     args = parser.parse_args()
 
     if not DB_PATH.exists():
@@ -140,7 +144,65 @@ def main() -> int:
 
     print(f"  Removed {len(ids)} devices and {seed_threats} threat events.")
     print(f"  Registry now holds {devices_left} devices, {threats_left} threat events.\n")
+
+    if args.adopt_current:
+        adopted = adopt_current_network(DB_PATH)
+        print(f"  Adopted {adopted} untagged device(s) into the current network.\n")
+
     return 0
+
+
+def adopt_current_network(db_path: Path) -> int:
+    """
+    Tag untagged devices that sit inside the current subnet.
+
+    Only devices with network_id IS NULL and an IP inside the currently
+    attached subnet are adopted — anything from a different address range
+    is left untagged rather than guessed into the wrong network.
+    """
+    import ipaddress
+    import sys as _sys
+
+    _sys.path.insert(0, str(db_path.parent.parent))
+    from sentinel.core.network_identity import detect_current_network
+
+    identity = detect_current_network()
+    if identity is None:
+        print("  No network detected — skipping adoption.")
+        return 0
+
+    network = ipaddress.ip_network(identity.subnet, strict=False)
+
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT device_id, ip FROM devices WHERE network_id IS NULL")
+
+    to_adopt = []
+    for device_id, ip in cur.fetchall():
+        if not ip:
+            continue
+        try:
+            if ipaddress.ip_address(ip) in network:
+                to_adopt.append(device_id)
+        except ValueError:
+            continue
+
+    if to_adopt:
+        cur.executemany(
+            "UPDATE devices SET network_id = ? WHERE device_id = ?",
+            [(identity.network_id, d) for d in to_adopt],
+        )
+        # Threats inherit their device's network
+        cur.execute(
+            "UPDATE threat_events SET network_id = ("
+            "  SELECT network_id FROM devices WHERE devices.device_id = threat_events.device_id"
+            ") WHERE network_id IS NULL"
+        )
+        conn.commit()
+
+    conn.close()
+    print(f"  Current network: {identity.network_id} ({identity.subnet})")
+    return len(to_adopt)
 
 
 if __name__ == "__main__":

@@ -115,3 +115,10 @@ class CaptureConfig(BaseSettings):
         default=45,
         description="Seconds between active ARP subnet sweeps.",
     )
+    arp_sweep_max_hosts: int = Field(
+        default=1024,
+        description="Skip the active sweep when the local subnet contains more "
+        "addresses than this (e.g. a campus /16). Sweeping a very large "
+        "network is slow and resembles reconnaissance; passive discovery "
+        "still runs. Raise only for networks you are authorised to scan.",
+    )

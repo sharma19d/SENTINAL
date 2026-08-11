@@ -99,6 +99,13 @@ class ClassifierWorker:
                     "timestamp": anomaly["timestamp"]
                 }
                 
+                # A threat is only meaningful on the network its device
+                # belongs to, so inherit the device's network rather than
+                # re-detecting it here — that also keeps the tag correct for
+                # events still in flight when the appliance changes network.
+                device = self.registry.get_device(device_id)
+                network_id = device.network_id if device else None
+
                 # Save to DB
                 self.registry.add_threat_event(
                     event_id=event_id,
@@ -108,7 +115,8 @@ class ClassifierWorker:
                     confidence=classification.get("confidence"),
                     severity=classification.get("severity"),
                     summary=classification.get("summary"),
-                    indicators=[anomaly["dst_ip"]]
+                    indicators=[anomaly["dst_ip"]],
+                    network_id=network_id,
                 )
                 
                 # Publish to Redis

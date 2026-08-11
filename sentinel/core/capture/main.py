@@ -229,25 +229,53 @@ class CaptureEngine:
         if not self.config.arp_sweep_enabled:
             return
 
+        import ipaddress
+
         from scapy.layers.l2 import ARP, Ether
         from scapy.sendrecv import srp
-        from scapy.arch import get_if_addr
 
-        try:
-            local_ip = get_if_addr(self.config.capture_interface)
-        except Exception:
-            local_ip = None
+        from sentinel.core.network_identity import detect_current_network
 
-        if not local_ip or local_ip == "0.0.0.0":
+        identity = detect_current_network()
+        if identity is None:
             self.logger.warning(
                 "arp_sweep_disabled",
-                reason="could_not_determine_local_ip",
+                reason="no_network_detected",
                 interface=self.config.capture_interface,
             )
             return
 
-        subnet = ".".join(local_ip.split(".")[:3]) + ".0/24"
-        self.logger.info("arp_sweep_starting", subnet=subnet, interval=self.config.arp_sweep_interval)
+        # Use the interface's real prefix length rather than assuming /24.
+        # Enterprise and campus networks are frequently /16 or /20, where a
+        # hardcoded /24 would only ever probe a fraction of the address space.
+        try:
+            network = ipaddress.ip_network(identity.subnet, strict=False)
+        except ValueError:
+            self.logger.warning("arp_sweep_disabled", reason="bad_subnet", subnet=identity.subnet)
+            return
+
+        # A sweep is an active probe of every host in range, so refuse to run
+        # it across very large networks: tens of thousands of ARP requests
+        # every interval is slow, noisy, and looks like reconnaissance to any
+        # monitored network. Passive discovery still runs in that case.
+        if network.num_addresses > self.config.arp_sweep_max_hosts:
+            self.logger.warning(
+                "arp_sweep_disabled",
+                reason="subnet_too_large",
+                subnet=str(network),
+                hosts=network.num_addresses,
+                limit=self.config.arp_sweep_max_hosts,
+                msg="Relying on passive discovery only for this network.",
+            )
+            return
+
+        subnet = str(network)
+        self.logger.info(
+            "arp_sweep_starting",
+            subnet=subnet,
+            hosts=network.num_addresses,
+            interval=self.config.arp_sweep_interval,
+        )
 
         while not self._shutdown_event.is_set():
             try:

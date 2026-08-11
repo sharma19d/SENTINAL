@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Search, Bell, Activity, User, Menu } from 'lucide-react';
+import { Search, Bell, Activity, User, Menu, Wifi, WifiOff } from 'lucide-react';
 import { Screen } from '../types';
 import {
   ApiActivityPulse,
+  ApiNetworkResponse,
   ApiNotificationsResponse,
   ApiSearchResponse,
   fetchActivityPulse,
+  fetchCurrentNetwork,
   fetchGlobalSearch,
   fetchNotifications,
 } from '../lib/api';
@@ -23,6 +25,7 @@ export default function TopNavBar({ onNavigateToResult, onMenuToggle }: TopNavBa
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [notifOpen, setNotifOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
+  const [network, setNetwork] = useState<ApiNetworkResponse | null>(null);
   const [notifications, setNotifications] = useState<ApiNotificationsResponse | null>(null);
   const [activityPulse, setActivityPulse] = useState<ApiActivityPulse | null>(null);
   const [notifLoading, setNotifLoading] = useState(false);
@@ -159,6 +162,21 @@ export default function TopNavBar({ onNavigateToResult, onMenuToggle }: TopNavBa
     loadNotifications();
   }, []);
 
+  // The appliance can be moved to a different network while the dashboard
+  // is open, so this is polled rather than read once at mount.
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setNetwork(await fetchCurrentNetwork());
+      } catch {
+        setNetwork(null);
+      }
+    };
+    load();
+    const interval = window.setInterval(load, 15000);
+    return () => window.clearInterval(interval);
+  }, []);
+
   const toggleNotifications = () => {
     const next = !notifOpen;
     setNotifOpen(next);
@@ -239,6 +257,25 @@ export default function TopNavBar({ onNavigateToResult, onMenuToggle }: TopNavBa
       </div>
 
       <div className="flex items-center gap-3 md:gap-6">
+        {/* Which network the dashboard is currently reporting on */}
+        <div
+          className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-md border border-white/10 bg-white/[0.03]"
+          title={
+            network?.current
+              ? `Gateway ${network.current.gateway_ip} (${network.current.gateway_mac}) on ${network.current.interface}`
+              : 'No network detected'
+          }
+        >
+          {network?.current ? (
+            <Wifi className="w-3.5 h-3.5 text-white/70" />
+          ) : (
+            <WifiOff className="w-3.5 h-3.5 text-outline" />
+          )}
+          <span className="text-[10px] font-mono uppercase tracking-tight text-white/70">
+            {network?.current ? network.current.subnet : 'No network'}
+          </span>
+        </div>
+
         <div className="flex gap-3 md:gap-4">
           <div className="relative" ref={notifRef}>
             <button onClick={toggleNotifications} className="relative text-outline hover:text-white transition-colors">
