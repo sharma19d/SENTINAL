@@ -29,6 +29,7 @@ import structlog
 
 from sentinel.config.settings import settings as app_settings
 from sentinel.core.fingerprinting.registry import DeviceRegistry
+from sentinel.core.firewall.host_firewall import HostFirewall
 from sentinel.core.network_identity import detect_current_network, ip_in_subnet
 from intel.bus import IntelBus
 
@@ -44,6 +45,7 @@ app.add_middleware(
 )
 
 registry = DeviceRegistry(db_url=app_settings.db_url)
+host_firewall = HostFirewall()
 intel_bus = IntelBus()
 redis_client = redis.Redis(
     host=app_settings.redis_host,
@@ -128,6 +130,14 @@ def honeypot_state(container: str, has_activity: bool) -> str:
     if running is False:
         return "STANDBY" if has_activity else "OFFLINE"
     return "STANDBY" if has_activity else "UNKNOWN"
+
+
+def _looks_like_ip(value: str) -> bool:
+    try:
+        ipaddress.ip_address(value)
+        return True
+    except ValueError:
+        return False
 
 
 def parse_cowrie_sessions() -> list[dict]:
@@ -665,6 +675,61 @@ async def get_threats(limit: int = 50,
     ]
 
 
+@app.get("/api/threats/{event_id}")
+async def get_threat_detail(event_id: str):
+    """
+    Full evidence for one event — backs the "View Logs / Investigate" panel.
+    Includes everything stored plus, for honeypot-sourced events, the captured
+    credentials and commands recovered from the Cowrie session log.
+    """
+    e = registry.get_threat(event_id)
+    if e is None:
+        raise HTTPException(status_code=404, detail="threat event not found")
+
+    indicators = json.loads(e.indicators or "[]")
+    detail = {
+        "event_id": e.event_id,
+        "device_id": e.device_id,
+        "tactic": e.tactic,
+        "technique_id": e.technique_id,
+        "confidence": e.confidence,
+        "severity": e.severity,
+        "summary": e.summary,
+        "indicators": indicators,
+        "action_taken": e.action_taken,
+        "resolved": bool(e.resolved),
+        "network_id": e.network_id,
+        "timestamp": e.timestamp.isoformat() if e.timestamp else None,
+        "captured_credentials": [],
+        "commands": [],
+    }
+
+    # Honeypot events carry the attacker IP as the source indicator; pull the
+    # matching Cowrie session so the analyst sees exactly what was attempted.
+    src_ip = next((i for i in indicators if isinstance(i, str) and _looks_like_ip(i)), None)
+    if src_ip and (e.device_id or "").startswith("honeypot:"):
+        for s in parse_cowrie_sessions():
+            if s.get("src_ip") == src_ip:
+                detail["captured_credentials"].extend(
+                    f"{a.get('username','')}:{a.get('password','')}"
+                    for a in s.get("login_attempts", [])
+                )
+                detail["commands"].extend(s.get("commands", []))
+        # De-dup while keeping order
+        detail["captured_credentials"] = list(dict.fromkeys(detail["captured_credentials"]))[:20]
+        detail["commands"] = detail["commands"][:50]
+
+    return detail
+
+
+@app.post("/api/threats/{event_id}/acknowledge")
+async def acknowledge_threat(event_id: str, resolved: bool = True):
+    """Mark a threat acknowledged/resolved (analyst has triaged it)."""
+    if not registry.set_threat_resolved(event_id, resolved):
+        raise HTTPException(status_code=404, detail="threat event not found")
+    return {"event_id": event_id, "resolved": resolved}
+
+
 def _build_indicator_text(indicators_raw: str) -> str:
     try:
         indicators = json.loads(indicators_raw or "[]")
@@ -849,10 +914,18 @@ async def get_ip_intel(ip: str):
 
 # ── Firewall Rules ─────────────────────────────────────────────────
 
+def _rule_is_block(rule) -> bool:
+    """A rule enforces a drop only when its action denies traffic."""
+    return (rule.action or "").upper() in ("DROP", "DENY", "BLOCK", "REJECT")
+
+
 @app.get("/api/firewall/rules")
 async def get_firewall_rules(scope: str = Query("current", pattern="^(current|all)$")):
     net_id = None if scope == "all" else current_network_id()
     rules = registry.get_firewall_rules(network_id=net_id)
+    # One nft read for the whole list, so each rule can report whether it is
+    # actually enforced on the host or only recorded logically.
+    enforced_ips = host_firewall.blocked_ips()
     return [
         {
             "rule_id": r.rule_id,
@@ -863,6 +936,7 @@ async def get_firewall_rules(scope: str = Query("current", pattern="^(current|al
             "description": r.description or "",
             "created_at": r.created_at.isoformat() if r.created_at else None,
             "network_id": r.network_id,
+            "enforced": (r.target.split("/")[0] in enforced_ips) if r.target else False,
         } for r in rules
     ]
 
@@ -884,6 +958,15 @@ async def create_firewall_rule(body: FirewallRuleCreate):
         description=body.description or "",
         network_id=scoped_network_id,
     )
+
+    # Apply the real nftables drop for enabled block rules. The safety guard
+    # inside HostFirewall refuses self/gateway/broad targets and, in that case,
+    # the rule is kept as a logical record with the reason surfaced to the UI.
+    enforced, note = False, "logical rule (no drop action)"
+    if bool(rule.enabled) and _rule_is_block(rule):
+        result = host_firewall.block(rule.target)
+        enforced, note = result.enforced, result.note
+
     return {
         "rule_id": rule.rule_id,
         "protocol": rule.protocol,
@@ -892,6 +975,8 @@ async def create_firewall_rule(body: FirewallRuleCreate):
         "enabled": bool(rule.enabled),
         "description": rule.description or "",
         "created_at": rule.created_at.isoformat() if rule.created_at else None,
+        "enforced": enforced,
+        "enforcement_note": note,
     }
 
 
@@ -900,15 +985,38 @@ async def toggle_firewall_rule(rule_id: str):
     rule = registry.toggle_firewall_rule(rule_id)
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")
-    return {"rule_id": rule.rule_id, "enabled": bool(rule.enabled)}
+
+    # Enabling re-applies the drop; disabling removes it from the host so the
+    # target regains connectivity, matching what the toggle shows in the UI.
+    enforced, note = False, ""
+    if _rule_is_block(rule):
+        result = host_firewall.block(rule.target) if rule.enabled else host_firewall.unblock(rule.target)
+        enforced, note = result.enforced, result.note
+
+    return {"rule_id": rule.rule_id, "enabled": bool(rule.enabled),
+            "enforced": enforced, "enforcement_note": note}
 
 
 @app.delete("/api/firewall/rules/{rule_id}")
 async def delete_firewall_rule(rule_id: str):
+    # Look up the rule first so we know which host rule to tear down. Removing
+    # the nftables drop BEFORE dropping the DB row means an unblock genuinely
+    # restores the target's traffic rather than orphaning a live drop.
+    rule = registry.get_firewall_rule(rule_id)
+    if not rule:
+        raise HTTPException(status_code=404, detail="Rule not found")
+
+    unblocked = host_firewall.unblock(rule.target) if _rule_is_block(rule) else None
+
     deleted = registry.delete_firewall_rule(rule_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Rule not found")
-    return {"status": "deleted", "rule_id": rule_id}
+    return {
+        "status": "deleted",
+        "rule_id": rule_id,
+        "enforcement_removed": bool(unblocked and unblocked.enforced),
+        "enforcement_note": unblocked.note if unblocked else "logical rule (no drop action)",
+    }
 
 
 # ── Honeypots ─────────────────────────────────────────────────────

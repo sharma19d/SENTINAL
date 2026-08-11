@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AlertCircle, ShieldOff, Search, CheckCircle2, Gavel, ShieldCheck, RefreshCw, Globe, ChevronDown } from 'lucide-react';
+import { AlertCircle, ShieldOff, Search, CheckCircle2, Gavel, ShieldCheck, RefreshCw, Globe, ChevronDown, FileText, Check, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import {
   fetchThreats, fetchIntel, fetchDetectionStatus, createEventSocket,
-  ApiThreat, IntelData, ApiDetectionStatus,
+  fetchThreatDetail, acknowledgeThreat,
+  ApiThreat, IntelData, ApiDetectionStatus, ApiThreatDetail,
 } from '../lib/api';
 
 function formatTime(iso: string | null): string {
@@ -256,6 +257,14 @@ const ThreatCard: React.FC<{ threat: ApiThreat; index: number }> = ({ threat, in
   const [intel, setIntel] = useState<IntelData | null>(null);
   const [intelLoading, setIntelLoading] = useState(false);
 
+  const [showLogs, setShowLogs] = useState(false);
+  const [detail, setDetail] = useState<ApiThreatDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState(false);
+
+  const [resolved, setResolved] = useState(threat.resolved);
+  const [acking, setAcking] = useState(false);
+
   const loadIntel = async () => {
     if (intel) { setShowIntel(v => !v); return; }
     const ip = src !== '—' ? src : null;
@@ -267,6 +276,30 @@ const ThreatCard: React.FC<{ threat: ApiThreat; index: number }> = ({ threat, in
       setIntel(data);
     } catch { /* offline */ }
     finally { setIntelLoading(false); }
+  };
+
+  const loadLogs = async () => {
+    if (detail) { setShowLogs(v => !v); return; }
+    setDetailLoading(true);
+    setDetailError(false);
+    setShowLogs(true);
+    try {
+      setDetail(await fetchThreatDetail(threat.event_id));
+    } catch {
+      setDetailError(true);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const acknowledge = async () => {
+    if (resolved || acking) return;
+    setAcking(true);
+    try {
+      await acknowledgeThreat(threat.event_id, true);
+      setResolved(true);
+    } catch { /* leave unacknowledged on failure */ }
+    finally { setAcking(false); }
   };
 
   return (
@@ -337,15 +370,25 @@ const ThreatCard: React.FC<{ threat: ApiThreat; index: number }> = ({ threat, in
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 md:pt-6 border-t border-white/10">
-            <div className={cn('flex items-center gap-2', isCritical ? 'text-white' : 'text-outline')}>
-              {isCritical ? <ShieldOff className="w-4 h-4" /> : threat.resolved ? <ShieldCheck className="w-4 h-4" /> : <Gavel className="w-4 h-4" />}
+            <div className={cn('flex items-center gap-2', resolved ? 'text-white' : isCritical ? 'text-white' : 'text-outline')}>
+              {resolved ? <ShieldCheck className="w-4 h-4" /> : isCritical ? <ShieldOff className="w-4 h-4" /> : <Gavel className="w-4 h-4" />}
               <span className="text-[11px] font-mono uppercase tracking-wider">
-                {threat.action_taken || (threat.resolved ? 'Resolved' : 'Pending')}
+                {resolved ? 'Acknowledged' : (threat.action_taken || 'Pending')}
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button className="px-4 py-2 text-xs font-bold font-display uppercase tracking-wider text-white border border-white/20 rounded-lg hover:bg-white/10 transition-all">
-                Acknowledge
+              <button
+                onClick={acknowledge}
+                disabled={resolved || acking}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 text-xs font-bold font-display uppercase tracking-wider rounded-lg transition-all',
+                  resolved
+                    ? 'border border-white/10 text-outline cursor-default'
+                    : 'text-white border border-white/20 hover:bg-white/10 disabled:opacity-50'
+                )}
+              >
+                {acking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : resolved ? <Check className="w-3.5 h-3.5" /> : null}
+                {resolved ? 'Acknowledged' : 'Acknowledge'}
               </button>
               <button
                 onClick={loadIntel}
@@ -355,13 +398,18 @@ const ThreatCard: React.FC<{ threat: ApiThreat; index: number }> = ({ threat, in
                 IP Intel
                 <ChevronDown className={cn('w-3 h-3 transition-transform', showIntel && 'rotate-180')} />
               </button>
-              <button className={cn(
-                'px-4 py-2 text-xs font-bold font-display uppercase tracking-wider rounded-lg transition-all',
-                isCritical
-                  ? 'bg-white text-black hover:bg-white/90 shadow-[0_0_15px_rgba(255,255,255,0.2)]'
-                  : 'border border-white/20 text-white hover:bg-white/10'
-              )}>
+              <button
+                onClick={loadLogs}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 text-xs font-bold font-display uppercase tracking-wider rounded-lg transition-all',
+                  isCritical
+                    ? 'bg-white text-black hover:bg-white/90 shadow-[0_0_15px_rgba(255,255,255,0.2)]'
+                    : 'border border-white/20 text-white hover:bg-white/10'
+                )}
+              >
+                <FileText className="w-3.5 h-3.5" />
                 {isCritical ? 'Investigate' : 'View Logs'}
+                <ChevronDown className={cn('w-3 h-3 transition-transform', showLogs && 'rotate-180')} />
               </button>
             </div>
           </div>
@@ -438,7 +486,93 @@ const ThreatCard: React.FC<{ threat: ApiThreat; index: number }> = ({ threat, in
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Logs / evidence panel */}
+        <AnimatePresence>
+          {showLogs && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden border-t border-white/10"
+            >
+              <div className="p-6 bg-black/50 flex flex-col gap-4">
+                <p className="text-[10px] font-display font-bold text-outline uppercase tracking-widest">
+                  Event Evidence — {threat.event_id}
+                </p>
+
+                {detailLoading ? (
+                  <p className="text-sm font-mono text-outline animate-pulse">Loading event log…</p>
+                ) : detailError ? (
+                  <p className="text-sm font-mono text-outline">Could not load event detail.</p>
+                ) : detail ? (
+                  <>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <LogField label="Technique" value={detail.technique_id || '—'} />
+                      <LogField label="Tactic" value={detail.tactic || '—'} />
+                      <LogField label="Confidence" value={detail.confidence != null ? `${(detail.confidence * 100).toFixed(0)}%` : 'N/A'} />
+                      <LogField label="Action Taken" value={detail.action_taken || 'None'} />
+                      <LogField label="Device" value={detail.device_id || '—'} />
+                      <LogField label="Severity" value={`SEV ${String(detail.severity || 0).padStart(2, '0')}`} />
+                    </div>
+
+                    {detail.indicators.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-display font-bold text-outline uppercase tracking-widest mb-2">Indicators</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {detail.indicators.map((i, idx) => (
+                            <span key={idx} className="px-2 py-0.5 bg-white/5 border border-white/10 rounded text-[11px] font-mono text-white/70">
+                              {typeof i === 'string' ? i : `${i.type || ''}${i.type ? ':' : ''}${i.value || ''}`}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {detail.captured_credentials.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-display font-bold text-outline uppercase tracking-widest mb-2">
+                          Captured Credentials ({detail.captured_credentials.length})
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {detail.captured_credentials.map((c, idx) => (
+                            <span key={idx} className="px-2 py-0.5 bg-white/5 border border-white/10 rounded text-[11px] font-mono text-white/70">
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {detail.commands.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-display font-bold text-outline uppercase tracking-widest mb-2">
+                          Attacker Commands ({detail.commands.length})
+                        </p>
+                        <pre className="bg-black/60 border border-white/10 rounded-lg p-3 text-[11px] font-mono text-white/70 overflow-x-auto whitespace-pre-wrap">
+{detail.commands.map(c => `$ ${c}`).join('\n')}
+                        </pre>
+                      </div>
+                    )}
+
+                    {detail.indicators.length === 0 && detail.captured_credentials.length === 0 && detail.commands.length === 0 && (
+                      <p className="text-sm font-mono text-outline">No additional evidence recorded for this event.</p>
+                    )}
+                  </>
+                ) : null}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );
 }
+
+const LogField: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="flex flex-col gap-1">
+    <p className="text-[10px] font-display font-bold text-outline uppercase tracking-widest">{label}</p>
+    <p className="text-sm font-mono text-white/80 break-all">{value}</p>
+  </div>
+);

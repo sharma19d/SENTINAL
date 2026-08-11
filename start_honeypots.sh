@@ -79,17 +79,62 @@ echo -e "  ${MODE_REASON}"
 
 # ── Ensure Cowrie can write its logs ─────────────────────────────
 # deception/ is root-owned in a fresh checkout, so the bind-mounted log
-# directory is unwritable and Cowrie produces no sessions at all.
+# directory is unwritable *by the container* and Cowrie produces no sessions
+# at all. Testing `-w` here was wrong: run.sh is often invoked with sudo, so
+# root always passes the test and the fix was skipped — while cowrie inside
+# the container runs as uid 1000 and still could not write. Make the mount
+# world-writable unconditionally; it holds only honeypot logs.
 LOG_DIR="$PROJECT_ROOT/deception/cowrie/log"
-if [ ! -d "$LOG_DIR" ] || [ ! -w "$LOG_DIR" ]; then
-  echo -e "  Fixing honeypot log permissions…"
-  sudo mkdir -p "$LOG_DIR" "$PROJECT_ROOT/deception/opencanary"
-  sudo chown -R "$(id -u):$(id -g)" "$PROJECT_ROOT/deception"
+CANARY_DIR="$PROJECT_ROOT/deception/opencanary"
+SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo"
+$SUDO mkdir -p "$LOG_DIR" "$CANARY_DIR" 2>/dev/null || true
+$SUDO chmod 777 "$LOG_DIR" "$CANARY_DIR" 2>/dev/null || true
+
+# ── Ensure Cowrie emits JSON ─────────────────────────────────────
+# The parsers (API + honeypot monitor) read cowrie.json. Without an
+# [output_jsonlog] section Cowrie only writes its plain-text log, so every
+# attack was captured by the honeypot and then dropped on the floor: no
+# sessions in the Honeypots tab, no threat events, no auto-block.
+COWRIE_CFG="$PROJECT_ROOT/deception/cowrie/cowrie.cfg"
+if [ -f "$COWRIE_CFG" ] && ! grep -q '^\[output_jsonlog\]' "$COWRIE_CFG"; then
+  echo -e "  Enabling Cowrie JSON logging…"
+  $SUDO tee -a "$COWRIE_CFG" >/dev/null <<'CFGEOF'
+
+[output_jsonlog]
+enabled = true
+logfile = ${honeypot:log_path}/cowrie.json
+CFGEOF
 fi
+
+# ── Locate Cowrie's install root inside the image ────────────────
+# The mounts were hardcoded to /home/cowrie/cowrie-git, but the official
+# cowrie/cowrie image installs to /cowrie/cowrie-git. Docker happily creates
+# the wrong path, so the container started "successfully" while Cowrie ran on
+# its built-in defaults and wrote logs to an unmounted directory — the honeypot
+# captured every attack and the host saw nothing. Ask the image where it lives
+# instead of guessing.
+COWRIE_HOME="$($DOCKER inspect -f '{{.Config.WorkingDir}}' cowrie/cowrie:latest 2>/dev/null || true)"
+case "$COWRIE_HOME" in
+  /*cowrie-git) ;;                      # looks right, keep it
+  *) COWRIE_HOME="/cowrie/cowrie-git" ;;  # image not pulled yet / odd value
+esac
+echo -e "  Cowrie install root: ${CYAN}$COWRIE_HOME${NC}"
 
 # ── Generate compose file ────────────────────────────────────────
 # Written at runtime with absolute paths and the live subnet, so nothing is
 # hardcoded to one network the way deception/docker-compose.yml was.
+#
+# A previous `sudo bash run.sh` leaves this file owned by root, and a later
+# non-root run then fails to overwrite it — `cat >` prints "Permission denied"
+# but the script continues and Docker silently starts the STALE compose file,
+# so config changes appear to have no effect. Clear it first, and abort the
+# honeypot step outright if it is still not writable.
+[ -e "$GENERATED_COMPOSE" ] && [ ! -w "$GENERATED_COMPOSE" ] && $SUDO rm -f "$GENERATED_COMPOSE"
+if ! : > "$GENERATED_COMPOSE" 2>/dev/null; then
+  echo -e "  ${RED}✗ Cannot write $GENERATED_COMPOSE — skipping honeypots.${NC}"
+  echo -e "    Fix: sudo rm -f $GENERATED_COMPOSE"
+  exit 0
+fi
 if [ "$HONEYPOT_MODE" = "bridge" ]; then
   cat > "$GENERATED_COMPOSE" <<EOF
 services:
@@ -101,8 +146,8 @@ services:
       - "2222:2222"
       - "2223:2223"
     volumes:
-      - $PROJECT_ROOT/deception/cowrie/cowrie.cfg:/home/cowrie/cowrie-git/etc/cowrie.cfg:ro
-      - $PROJECT_ROOT/deception/cowrie/log:/home/cowrie/cowrie-git/var/log/cowrie
+      - $PROJECT_ROOT/deception/cowrie/cowrie.cfg:${COWRIE_HOME}/etc/cowrie.cfg:ro
+      - $PROJECT_ROOT/deception/cowrie/log:${COWRIE_HOME}/var/log/cowrie
     environment:
       - TZ=UTC
 
@@ -137,8 +182,8 @@ services:
       honeypot-net:
         ipv4_address: ${BASE}.201
     volumes:
-      - $PROJECT_ROOT/deception/cowrie/cowrie.cfg:/home/cowrie/cowrie-git/etc/cowrie.cfg:ro
-      - $PROJECT_ROOT/deception/cowrie/log:/home/cowrie/cowrie-git/var/log/cowrie
+      - $PROJECT_ROOT/deception/cowrie/cowrie.cfg:${COWRIE_HOME}/etc/cowrie.cfg:ro
+      - $PROJECT_ROOT/deception/cowrie/log:${COWRIE_HOME}/var/log/cowrie
     environment:
       - TZ=UTC
 
@@ -198,6 +243,27 @@ for c in sentinel-cowrie sentinel-opencanary; do
     echo -e "  ${RED}✗ $c not running${NC}  (logs: $DOCKER logs $c)"
   fi
 done
+
+# ── Verify Cowrie actually loaded our config ─────────────────────
+# A running container proves nothing: with a bad mount path Cowrie starts
+# happily on its built-in defaults and logs where the host cannot see. Our
+# cowrie.cfg enables telnet and JSON output, neither of which the stock
+# config does — so their absence is a precise signal the mount is wrong.
+# The image ships no shell, so this is checked from the host: compare the
+# container's mount destination against the image's own working directory.
+if $DOCKER inspect -f '{{.State.Running}}' sentinel-cowrie 2>/dev/null | grep -q true; then
+  IMG_HOME="$($DOCKER inspect -f '{{.Config.WorkingDir}}' cowrie/cowrie:latest 2>/dev/null || true)"
+  # One destination per line and an exact (-F -x) match: a substring test
+  # passes the broken /home/cowrie/cowrie-git path, since it *ends with* the
+  # correct /cowrie/cowrie-git one.
+  MOUNTED="$($DOCKER inspect -f '{{range .Mounts}}{{println .Destination}}{{end}}' sentinel-cowrie 2>/dev/null || true)"
+  if [ -n "$IMG_HOME" ] && ! printf '%s\n' "$MOUNTED" | grep -Fxq "$IMG_HOME/etc/cowrie.cfg"; then
+    echo -e "  ${RED}✗ Config is mounted outside Cowrie's install root ($IMG_HOME)${NC}"
+    echo -e "    Cowrie will run on defaults and capture nothing the host can see."
+  else
+    echo -e "  ${GREEN}✓ Cowrie config mounted at $COWRIE_HOME/etc/cowrie.cfg${NC}"
+  fi
+fi
 
 if [ "$HONEYPOT_MODE" = "bridge" ]; then
   HOST_IP="$(ip -4 -o addr show "$IFACE" | awk '{print $4}' | cut -d/ -f1 | head -1)"

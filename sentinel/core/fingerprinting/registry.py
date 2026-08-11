@@ -297,6 +297,35 @@ class DeviceRegistry:
         finally:
             session.close()
 
+    def get_threat(self, event_id: str) -> Optional[ThreatEventModel]:
+        """Fetch a single threat event by id, or None if it does not exist."""
+        session = self.get_session()
+        try:
+            return session.query(ThreatEventModel).filter(
+                ThreatEventModel.event_id == event_id
+            ).first()
+        finally:
+            session.close()
+
+    def set_threat_resolved(self, event_id: str, resolved: bool = True) -> bool:
+        """
+        Mark a threat acknowledged/resolved. Returns True if the event existed.
+        Acknowledging is an analyst confirming they have triaged the event; it
+        does not undo any automated action (e.g. an auto-block stays in place).
+        """
+        session = self.get_session()
+        try:
+            event = session.query(ThreatEventModel).filter(
+                ThreatEventModel.event_id == event_id
+            ).first()
+            if event is None:
+                return False
+            event.resolved = 1 if resolved else 0
+            session.commit()
+            return True
+        finally:
+            session.close()
+
     def get_recent_threats(self, limit: int = 50,
                            network_id: Optional[str] = None) -> list[ThreatEventModel]:
         """
@@ -350,6 +379,16 @@ class DeviceRegistry:
             session.commit()
             session.refresh(rule)
             return rule
+        finally:
+            session.close()
+
+    def get_firewall_rule(self, rule_id: str) -> Optional[FirewallRuleModel]:
+        """Fetch a single firewall rule by id, or None if it does not exist."""
+        session = self.get_session()
+        try:
+            return session.query(FirewallRuleModel).filter(
+                FirewallRuleModel.rule_id == rule_id
+            ).first()
         finally:
             session.close()
 

@@ -7,8 +7,8 @@ services:
       - "2222:2222"
       - "2223:2223"
     volumes:
-      - /home/charon/Desktop/SENTINAL/deception/cowrie/cowrie.cfg:/home/cowrie/cowrie-git/etc/cowrie.cfg:ro
-      - /home/charon/Desktop/SENTINAL/deception/cowrie/log:/home/cowrie/cowrie-git/var/log/cowrie
+      - /home/charon/Desktop/SENTINAL/deception/cowrie/cowrie.cfg:/cowrie/cowrie-git/etc/cowrie.cfg:ro
+      - /home/charon/Desktop/SENTINAL/deception/cowrie/log:/cowrie/cowrie-git/var/log/cowrie
     environment:
       - TZ=UTC
 

@@ -36,6 +36,7 @@ import structlog
 
 from sentinel.config.settings import settings as app_settings
 from sentinel.core.fingerprinting.registry import DeviceRegistry
+from sentinel.core.firewall.host_firewall import HostFirewall
 from sentinel.core.network_identity import detect_current_network
 
 logger = structlog.get_logger(__name__)
@@ -60,6 +61,7 @@ class HoneypotMonitor:
             decode_responses=True,
         )
         self.registry = DeviceRegistry(app_settings.db_url)
+        self.host_firewall = HostFirewall()
         self.poll_interval = poll_interval
 
         self.threat_channel = "sentinel:threat"
@@ -253,6 +255,12 @@ class HoneypotMonitor:
                 description=f"Auto-blocked honeypot attacker (event {event_id}, sev {severity})",
                 network_id=network_id,
             )
+            # Actually enforce the drop on the host. The guard inside
+            # HostFirewall refuses to block our own address or the gateway —
+            # important because in bridge mode the honeypot shares the host IP,
+            # so a self-directed test would otherwise try to block the host.
+            enforcement = self.host_firewall.block(src_ip)
+
             # Tell the responder / dashboard an action was taken.
             self.redis_client.publish(self.action_channel, json.dumps({
                 "event_id": event_id,
@@ -260,8 +268,14 @@ class HoneypotMonitor:
                 "target": src_ip,
                 "rule_id": rule.rule_id,
                 "source": "honeypot",
+                "enforced": enforcement.enforced,
+                "enforcement_note": enforcement.note,
             }))
-            logger.warning("honeypot_attacker_blocked", src_ip=src_ip, rule_id=rule.rule_id)
+            logger.warning(
+                "honeypot_attacker_blocked",
+                src_ip=src_ip, rule_id=rule.rule_id,
+                enforced=enforcement.enforced, note=enforcement.note,
+            )
         except Exception as e:
             logger.error("honeypot_block_failed", src_ip=src_ip, error=str(e))
 

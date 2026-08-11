@@ -28,14 +28,14 @@
 - Presenting everything through a Next.js PWA dashboard with live alerts
 
 **Final target hardware:** Raspberry Pi 5 (8GB RAM) — inline bridge between ISP router and home switch.
-**Current development:** PC/laptop (Linux or WSL2 Ubuntu) — full stack runs identically.
+**Current development:** ARM64 laptop (Kali Linux) — the full stack runs here, but Pi 5 hardware validation (LLM performance, inline enforcement) is **pending**; laptop results are not treated as Pi-5-equivalent.
 
 ---
 
 ## 3. Development Strategy
 
 ### PC-First Approach
-Everything is built and tested on a laptop first. The codebase is designed to be 99% identical on PC and Pi 5.
+Everything is built and tested on a laptop first. The codebase is ARM64-native and designed to be near-identical on laptop and Pi 5 — but "identical" is a *design goal*, not a verified fact: the Pi 5 differs in RAM, thermals, no GPU, and inline (bridged) networking, so on-hardware validation is still required.
 
 | What | PC (dev) | Pi 5 (deploy) |
 |------|----------|---------------|
@@ -46,11 +46,15 @@ Everything is built and tested on a laptop first. The codebase is designed to be
 | nftables rules | Same syntax | Same syntax |
 | All Python/Node code | Identical | Identical |
 
-### Pi Porting Delta (only these 4 things change)
-1. Add netplan bridge config (single YAML file)
-2. `ollama run gemma4:e2b` instead of `gemma4:e4b`
+### Pi Porting Delta (configuration changes)
+1. Add netplan bridge config (single YAML file), capture on `br0`
+2. `ollama run gemma4:e2b` instead of `gemma4:e4b` — **measure latency/RAM on-device**
 3. Recompile llama.cpp for ARM64
 4. Docker pulls ARM64 images automatically
+5. Honeypots switch from `bridge` to `macvlan` mode (own LAN IPs, needs the inline Ethernet path)
+6. Inline placement makes forward-chain firewall drops actually cut a device off the internet (on the laptop only host-directed blocks are real)
+
+> These are the known deltas; **performance and inline behaviour are unverified until run on a real Pi 5.**
 
 ---
 
@@ -196,15 +200,12 @@ Each honeypot gets its own virtual IP via **macvlan** — they appear as real se
 ### Agent 3 — Response Planner
 
 - **Input:** classified threat from Redis `threat:classified`
-- **Policy tree (YAML-defined):**
-  - Severity 9–10 → quarantine device + push dashboard alert (requires user confirmation via UI)
-  - Severity 6–8 → redirect device traffic to honeypot + push alert
+- **Policy tree (YAML-defined, `sentinel/config/policy.yaml`):**
+  - Severity 9–10 → `block_ip` + `quarantine_device` + critical alert
+  - Severity 6–8 → `block_ip` + high alert
   - Severity 1–5 → log event + passive monitor
-- **Actions via FastAPI internal endpoints:**
-  - `POST /internal/firewall/block/{ip}`
-  - `POST /internal/firewall/redirect/{ip}/{honeypot}`
-  - `POST /internal/alert/push`
-- **Security gate:** any severity 8+ action requires explicit confirmation via dashboard WebSocket ACK before execution — prevents LLM prompt injection from silently blocking devices
+- **Enforcement (implemented):** the responder worker applies blocks directly via `HostFirewall` (real `nftables` DROP + a registry rule visible in the Firewall tab), then publishes the action + applied-rule status on `sentinel:actions`.
+- **Security gate:** `block_ip`/`quarantine_device` auto-execute only when **Auto-Quarantine** mode is on; **Manual Approval** mode holds them for a human. A hard self/gateway/loopback/CIDR guard in `HostFirewall` blocks unsafe targets regardless of the LLM's output (prompt-injection safety net). See §12.
 
 ### Orchestration
 
@@ -373,15 +374,16 @@ rules:
     severity_min: 9
     severity_max: 10
     actions:
-      - quarantine_device        # requires dashboard confirmation
+      - block_ip                 # real nftables DROP via HostFirewall
+      - quarantine_device
       - push_alert_critical
-    require_confirmation: true
+    require_confirmation: false   # runtime gate is the Auto-Quarantine switch
 
   - name: high_threat
     severity_min: 6
     severity_max: 8
     actions:
-      - redirect_to_honeypot     # automatic, no confirmation needed
+      - block_ip                 # auto-block the attacker's source IP
       - push_alert_high
     require_confirmation: false
 
@@ -390,9 +392,12 @@ rules:
     severity_max: 5
     actions:
       - log_event
-              - passive_monitor
+      - passive_monitor
     require_confirmation: false
 ```
+
+> To make critical actions require an explicit human ACK again, set
+> `require_confirmation: true` on `critical_threat`.
 
 ---
 
@@ -415,7 +420,7 @@ rules:
 
 - **No training from scratch for the LLM** — use Gemma 4 pre-trained via Ollama, prompt engineering only (optional LoRA fine-tune on Colab)
 - **LSTM must be trained locally** — it learns this specific home network's baseline, not a generic dataset
-- **Security gate is mandatory** — LLM output must never directly trigger severity 8+ firewall actions without dashboard user confirmation (prevents prompt injection attacks)
+- **Security gate is a runtime switch (updated)** — the current build auto-applies `block_ip` for high/critical threats (severity ≥ 6) when the dashboard's **Auto-Quarantine** mode is on, and holds them for human confirmation in **Manual Approval** mode. This is a deliberate change from the original "confirmation mandatory for severity 8+" rule, made to give the prevention system real automatic blocking. Two safeguards mitigate the prompt-injection risk that motivated the original rule: (1) a hard **self-lockout guard** in `HostFirewall` that refuses to block the appliance's own host, the gateway, loopback, or broad CIDRs regardless of what the LLM says; (2) Manual Approval mode restores the mandatory human-in-the-loop when desired. *If the FYP writeup requires mandatory confirmation for critical actions, set `require_confirmation: true` for `critical_threat` in `policy.yaml`.*
 - **All processing is on-device** — no mandatory cloud dependency; cloud sync is optional and privacy-first (anonymised IoC sharing only)
 - **Honeypot IPs use macvlan** — each honeypot has its own virtual IP, looks like a real device on the network
 - **Same codebase PC and Pi** — do not write PC-specific code; use config flags for any differences

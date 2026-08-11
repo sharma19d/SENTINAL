@@ -1,20 +1,28 @@
 rules:
+  # Critical: an unambiguous, high-confidence attack. Block the attacker's IP
+  # automatically (a prevention system must stop it without waiting), and also
+  # quarantine the affected device. Auto-execution is gated at runtime by the
+  # dashboard's Auto-Quarantine / Manual Approval switch, so this can still be
+  # held for human confirmation by flipping that toggle.
   - name: critical_threat
     severity_min: 9
     severity_max: 10
     actions:
+      - block_ip
       - quarantine_device
       - push_alert_critical
-    require_confirmation: true
+    require_confirmation: false
 
+  # High: likely malicious. Auto-block the source IP and raise a high alert.
   - name: high_threat
     severity_min: 6
     severity_max: 8
     actions:
-      - redirect_to_honeypot
+      - block_ip
       - push_alert_high
     require_confirmation: false
 
+  # Medium/low: observe only — no enforcement, just record and keep watching.
   - name: medium_low_threat
     severity_min: 1
     severity_max: 5

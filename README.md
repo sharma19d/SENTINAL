@@ -21,13 +21,16 @@ A 7-layer, multi-agent AI security appliance that discovers, monitors, and activ
 SENTINEL is a plug-and-play network security appliance that sits **transparently between your router and your devices** as a Layer 2 bridge. It requires zero reconfiguration on your router or devices and gives you full visibility and automated protection over your entire home network.
 
 **What it does automatically:**
+- **Network-aware discovery** — identifies which network it is attached to (keyed on the gateway's MAC, not just the subnet) and scopes every device, threat, and firewall rule to that network, so moving between Wi-Fi networks never mixes old devices into the current view
 - Discovers every device on the network and builds a risk profile using OUI lookup, Nmap, and NVD CVE data
 - Detects anomalous traffic per device using a locally trained LSTM Autoencoder
 - Classifies threats against the **MITRE ATT&CK for ICS/IoT** framework using Gemma 4 (local LLM via Ollama — no cloud)
-- Deploys Cowrie and OpenCanary honeypots to trap and study attackers
-- Blocks threats in real time via nftables rules and eBPF/XDP (sub-millisecond latency)
+- **Plug-and-play honeypots** — Cowrie and OpenCanary start automatically with the system (bridge or macvlan mode auto-selected from the interface) to trap and study attackers
+- **Closed detection→prevention loop** — a detected attacker (from the AI pipeline *or* a honeypot hit) is auto-blocked with a real `nftables` DROP rule, recorded in the Firewall tab, with a **safety guard** that refuses to block the appliance's own host or the gateway
 - Enriches attacker IPs with **AlienVault OTX** and **AbuseIPDB** threat intelligence
 - Streams everything live to a React dashboard with WebSocket alerts
+
+> Automated blocking is gated by the dashboard's **Auto-Quarantine / Manual Approval** switch: in Manual Approval mode the AI still detects, decides, and alerts, but applies no rule until a human acts.
 
 ---
 
@@ -71,8 +74,8 @@ Layer 7  →  Dashboard & REST API
 |--------|----------|
 | **Dashboard** | Network health gauge, active threat & device counts, live topology map, recent activity feed |
 | **Devices** | Full device registry, risk scores, CVE list per device, live port scanner, quarantine toggle |
-| **Threats** | Live MITRE ATT&CK threat feed, confidence scores, per-IP OTX + AbuseIPDB intel lookup |
-| **Firewall** | View/create/toggle/delete nftables rules, auto-quarantine policy, system metrics |
+| **Threats** | Live MITRE ATT&CK threat feed, confidence scores, per-IP OTX + AbuseIPDB intel lookup, **Acknowledge** (persisted), **View Logs / Investigate** evidence panel (indicators, captured credentials, attacker commands) |
+| **Firewall** | View/create/toggle/delete nftables rules with **real host enforcement**, per-rule **Enforced / Logical** badge, self-lockout safety guard, auto-quarantine policy, system metrics |
 | **Honeypots** | Live attacker sessions, credential capture log, top attacker IPs, block IP → firewall rule, IP intel |
 | **Diagnostics** | Health check for all 7 system layers with live status indicators |
 | **Logs** | Filterable live logs from all services (level, file, search) |
@@ -178,17 +181,23 @@ cd ..
 bash run.sh
 ```
 
-This starts all 7 layers in order:
+This starts every service in order:
 
 ```
-[1/7] Redis
-[2/7] FastAPI backend          → http://localhost:8000
-[3/7] Packet capture (sudo)   → wlan0
-[4/7] Anomaly detection worker
-[5/7] Threat classifier (Gemma)
-[6/7] Response planner (LangGraph)
-[7/7] React dashboard          → http://localhost:3000
+[1/10] Redis
+[2/10] FastAPI backend          → http://localhost:8000
+[3/10] Packet capture (sudo)    → wlan0
+[4/10] Discovery agent (Layer 2 — writes devices into the registry)
+[5/10] Honeypots (Layer 4 — Cowrie + OpenCanary, auto bridge/macvlan)
+[6/10] Anomaly detection worker
+[7/10] Threat classifier (Gemma)
+[8/10] Response planner (LangGraph) — applies auto-blocks
+[9/10] Honeypot monitor (turns attacker sessions into threats + blocks)
+[10/10] React dashboard         → http://localhost:3000
 ```
+
+> Run with `sudo bash run.sh` (or ensure the process can escalate): live packet
+> capture and real `nftables` enforcement both require root.
 
 Open **http://localhost:3000** to access the dashboard.
 API docs (Swagger UI) at **http://localhost:8000/docs**
@@ -224,9 +233,11 @@ python -m sentinel.core.capture.main --pcap your_file.pcap --no-redis
 |------|----------|
 | `logs/api.log` | FastAPI backend |
 | `logs/capture.log` | Layer 1 — live packet capture |
+| `logs/discovery.log` | Layer 2 — device discovery |
 | `logs/anomaly.log` | Agent 1 — LSTM anomaly detection |
 | `logs/classifier.log` | Agent 2 — Gemma threat classification |
-| `logs/responder.log` | Agent 3 — LangGraph response planner |
+| `logs/responder.log` | Agent 3 — LangGraph response planner (auto-block) |
+| `logs/honeypot.log` | Honeypot monitor — sessions → threats → blocks |
 | `logs/dashboard.log` | React/Vite dev server |
 
 ---
@@ -241,21 +252,34 @@ All agents communicate over Redis pub/sub:
 | `sentinel:packets` | Layer 1 capture | Raw packet metadata |
 | `sentinel:discovery` | Layer 1 capture | Device seen events (ARP/mDNS/DHCP) |
 | `sentinel:anomaly` | Anomaly Agent | Anomaly score + device_id |
-| `sentinel:threat` | Classifier Agent | MITRE ATT&CK JSON threat events |
-| `sentinel:actions` | Response Agent | nftables / honeypot actions |
+| `sentinel:threat` | Classifier Agent, Honeypot Monitor | MITRE ATT&CK JSON threat events |
+| `sentinel:actions` | Response Agent, Honeypot Monitor | Enforcement actions (block/quarantine) with applied-rule status |
+| `sentinel:alerts` | Response Agent | Alerts + pending human-approval notices |
 
 ---
 
 ## Raspberry Pi 5 Deployment
 
-SENTINEL is designed to run identically on Pi 5. Only 4 things change:
+SENTINEL is **designed and targeted for the Raspberry Pi 5**. Development and
+testing to date have been on an **ARM64 laptop (Kali Linux)**; the codebase is
+already ARM64-native, so no porting is required. Performance and inline
+enforcement have **not yet been validated on Pi 5 hardware** — the items below
+are the deployment changes, and the notes call out what still needs on-hardware
+verification.
 
-| What | Dev (PC) | Pi 5 |
-|------|----------|------|
-| Capture interface | `wlan0` | `br0` (bridge) |
-| LLM model | `gemma4:e4b` | `gemma4:e2b` (~2GB RAM, 7.6 tok/s) |
-| llama.cpp | Pre-built x86_64 | Recompile for ARM64 |
+| What | Dev (laptop, ARM64) | Pi 5 |
+|------|---------------------|------|
+| Capture interface | `wlan0` (managed Wi-Fi) | `br0` (inline Ethernet bridge) |
+| LLM model | `gemma4:e4b` | `gemma4:e2b` — **latency/RAM to be measured on-device** |
+| Honeypot mode | `bridge` (Wi-Fi can't do macvlan) | `macvlan` (honeypots get their own LAN IPs) |
+| Real internet-cutoff blocking | host-directed only (laptop is not inline) | full forward-chain drops (Pi sits inline) |
 | Docker | Same images | Same (ARM64 auto-pulled) |
+
+> **Evaluation note.** Because no Pi 5 hardware is currently available, benchmarks
+> are produced by dataset/PCAP replay under cgroup-constrained resources that
+> approximate the Pi 5, **not** by measuring on the device. Results are reported
+> as Pi-5-*targeted* under stated constraints, and laptop/cloud ARM performance
+> is **not** presented as equivalent to a Pi 5.
 
 **Pi 5 bridge setup (netplan):**
 ```yaml
@@ -293,12 +317,18 @@ SENTINAL/
 │   │   │   ├── flow_parser.py    # 5-tuple flow aggregation
 │   │   │   ├── metadata_extractor.py  # DNS/TLS/HTTP/ARP/mDNS
 │   │   │   └── redis_publisher.py
-│   │   └── fingerprinting/       # Layer 2 — device discovery & CVE
-│   │       ├── discovery.py      # Discovery agent
-│   │       ├── registry.py       # SQLite device registry (SQLAlchemy)
-│   │       ├── cve.py            # NVD CVE scanner
-│   │       ├── oui.py            # OUI vendor lookup
-│   │       └── scanner.py        # Nmap active scanner
+│   │   ├── fingerprinting/       # Layer 2 — device discovery & CVE
+│   │   │   ├── discovery.py      # Discovery agent
+│   │   │   ├── registry.py       # SQLite device registry (SQLAlchemy)
+│   │   │   ├── cve.py            # NVD CVE scanner
+│   │   │   ├── oui.py            # OUI vendor lookup
+│   │   │   └── scanner.py        # Nmap active scanner
+│   │   ├── firewall/             # Layer 5 — enforcement
+│   │   │   ├── host_firewall.py  # Real nftables block/unblock + safety guard
+│   │   │   ├── nftables_manager.py
+│   │   │   ├── quarantine.py
+│   │   │   └── engine.py         # Response engine (Redis actions → nft/XDP)
+│   │   └── network_identity.py   # Gateway-MAC network fingerprint
 │   └── agents/
 │       ├── anomaly/              # Layer 3 — LSTM + Isolation Forest
 │       │   ├── worker.py         # Redis consumer
@@ -307,10 +337,12 @@ SENTINAL/
 │       ├── classifier/           # Layer 3 — Gemma threat classifier
 │       │   ├── worker.py         # Redis consumer
 │       │   └── gemma_client.py   # Ollama API client
-│       └── responder/            # Layer 3 — LangGraph response planner
-│           ├── worker.py         # Redis consumer
-│           ├── graph.py          # LangGraph agent graph
-│           └── policy.py         # YAML policy loader
+│       ├── responder/            # Layer 3 — LangGraph response planner
+│       │   ├── worker.py         # Redis consumer — applies auto-blocks
+│       │   ├── graph.py          # LangGraph agent graph
+│       │   └── policy.py         # YAML policy loader
+│       └── honeypot/             # Layer 4 → pipeline bridge
+│           └── worker.py         # Cowrie sessions → threats → auto-block
 ├── api/
 │   └── main.py                   # FastAPI app — all Layer 7 endpoints
 ├── dashboard/                    # React + Vite frontend
@@ -324,8 +356,10 @@ SENTINAL/
 ├── logs/                         # Runtime logs (gitignored)
 ├── docker-compose.yml            # Redis + discovery
 ├── requirements.txt              # All Python dependencies
-├── run.sh                        # Full system startup
+├── run.sh                        # Full system startup (10 steps)
+├── start_honeypots.sh            # Layer 4 honeypot deployment (auto bridge/macvlan)
 ├── stop.sh                       # Full system shutdown
+├── attack_test.sh                # End-to-end attack simulation + verification
 └── seed_data.py                  # Demo data generator
 ```
 
@@ -390,9 +424,14 @@ Key endpoints:
 | GET | `/api/dashboard/stats` | Dashboard summary stats |
 | GET | `/api/devices` | All registered devices |
 | POST | `/api/devices/{id}/quarantine` | Toggle device quarantine |
-| GET | `/api/threats` | Live threat feed |
-| GET | `/api/firewall/rules` | Active nftables rules |
-| POST | `/api/firewall/rules` | Create new rule |
+| GET | `/api/network/current` | Currently attached network (gateway-MAC identity) |
+| GET | `/api/detection/status` | Anomaly pipeline warm-up / active state |
+| GET | `/api/threats` | Live threat feed (scoped to current network) |
+| GET | `/api/threats/{id}` | Full event evidence (indicators, credentials, commands) |
+| POST | `/api/threats/{id}/acknowledge` | Mark a threat acknowledged |
+| GET | `/api/firewall/rules` | Active rules + per-rule `enforced` flag |
+| POST | `/api/firewall/rules` | Create rule — applies real `nftables` DROP (guarded) |
+| DELETE | `/api/firewall/rules/{id}` | Unblock — removes exactly that host rule |
 | GET | `/api/honeypots/sessions` | Cowrie session log |
 | GET | `/api/intel/{ip}` | OTX + AbuseIPDB enrichment |
 | GET | `/api/diagnostics` | Full system health check |
