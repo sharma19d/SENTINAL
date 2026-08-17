@@ -652,7 +652,7 @@ const SessionRow: React.FC<{
               {/* Session metadata */}
               <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row sm:justify-between gap-1">
                 <span className="text-[10px] font-mono text-outline">
-                  Start: {session.start_time ? new Date(session.start_time).toUTCString() : '—'}
+                  Start: {session.start_time ? new Date(session.start_time).toLocaleString([], { hour12: false }) : '—'}
                 </span>
                 <span className="text-[10px] font-mono text-outline truncate">
                   ID: {session.session_id}

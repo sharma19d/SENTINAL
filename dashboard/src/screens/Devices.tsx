@@ -499,7 +499,7 @@ const DeviceRow: React.FC<{
               {/* Last seen */}
               <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row sm:justify-between gap-1">
                 <span className="text-[10px] font-mono text-outline uppercase tracking-wider">
-                  Last seen: {device.last_seen ? new Date(device.last_seen).toUTCString() : '—'}
+                  Last seen: {device.last_seen ? new Date(device.last_seen).toLocaleString([], { hour12: false }) : '—'}
                 </span>
                 <span className="text-[10px] font-mono text-outline uppercase tracking-wider truncate">
                   ID: {device.device_id}

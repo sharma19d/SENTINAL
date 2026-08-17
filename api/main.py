@@ -343,6 +343,20 @@ def compute_is_online(last_seen: Optional[datetime]) -> bool:
     return (datetime.utcnow() - last_seen) <= DEVICE_ONLINE_THRESHOLD
 
 
+def iso_z(dt: Optional[datetime]) -> Optional[str]:
+    """
+    Serialise a DB datetime as an explicit-UTC ISO string.
+
+    All timestamps are stored as naive `datetime.utcnow()`. A plain isoformat()
+    has no timezone marker, so the browser's `new Date()` parses it as *local*
+    time and every displayed time is off by the viewer's UTC offset. Appending
+    'Z' anchors it to UTC so the frontend converts to local time correctly.
+    """
+    if not dt:
+        return None
+    return dt.isoformat() + "Z"
+
+
 # ── Pydantic request models ────────────────────────────────────────
 class FirewallRuleCreate(BaseModel):
     protocol: str
@@ -399,7 +413,7 @@ async def dashboard_stats():
 
     activity = []
     for t in recent_threats[:10]:
-        ts = t.timestamp.isoformat() if t.timestamp else ""
+        ts = iso_z(t.timestamp) or ""
         activity.append({
             "id": t.event_id,
             "type": "threat",
@@ -436,7 +450,7 @@ async def notifications(limit: int = Query(8, ge=1, le=50)):
             "title": event.summary or "Threat detected",
             "detail": event.tactic or event.action_taken or "Security event",
             "severity": event.severity or 0,
-            "timestamp": event.timestamp.isoformat() if event.timestamp else None,
+            "timestamp": iso_z(event.timestamp),
             "unread": is_unread,
         })
 
@@ -460,7 +474,7 @@ async def activity_pulse():
             "id": t.event_id,
             "message": t.summary or "Threat detected",
             "severity": t.severity or 0,
-            "timestamp": t.timestamp.isoformat() if t.timestamp else None,
+            "timestamp": iso_z(t.timestamp),
         }
         for t in recent_threats[:5]
     ]
@@ -542,7 +556,7 @@ async def get_devices(scope: str = Query("current", pattern="^(current|all)$")):
             "open_ports": normalize_open_ports(json.loads(d.open_ports or "[]")),
             "cve_list": json.loads(d.cve_list or "[]"),
             "is_quarantined": bool(d.is_quarantined),
-            "last_seen": d.last_seen.isoformat() if d.last_seen else None,
+            "last_seen": iso_z(d.last_seen),
             "is_online": compute_is_online(d.last_seen),
         } for d in devices
     ]
@@ -565,7 +579,7 @@ async def get_device(device_id: str):
         "open_ports": normalize_open_ports(json.loads(d.open_ports or "[]")),
         "cve_list": json.loads(d.cve_list or "[]"),
         "is_quarantined": bool(d.is_quarantined),
-        "last_seen": d.last_seen.isoformat() if d.last_seen else None,
+        "last_seen": iso_z(d.last_seen),
         "is_online": compute_is_online(d.last_seen),
         "baseline_path": d.baseline_path,
         "recent_threats": [
@@ -575,7 +589,7 @@ async def get_device(device_id: str):
                 "technique_id": e.technique_id,
                 "severity": e.severity,
                 "summary": e.summary,
-                "timestamp": e.timestamp.isoformat() if e.timestamp else None,
+                "timestamp": iso_z(e.timestamp),
             } for e in threats[:10]
         ],
     }
@@ -670,7 +684,7 @@ async def get_threats(limit: int = 50,
             "indicators": json.loads(e.indicators or "[]"),
             "action_taken": e.action_taken,
             "resolved": bool(e.resolved),
-            "timestamp": e.timestamp.isoformat() if e.timestamp else None,
+            "timestamp": iso_z(e.timestamp),
         } for e in events
     ]
 
@@ -699,7 +713,7 @@ async def get_threat_detail(event_id: str):
         "action_taken": e.action_taken,
         "resolved": bool(e.resolved),
         "network_id": e.network_id,
-        "timestamp": e.timestamp.isoformat() if e.timestamp else None,
+        "timestamp": iso_z(e.timestamp),
         "captured_credentials": [],
         "commands": [],
     }
@@ -799,7 +813,7 @@ async def global_search(
                 "technique_id": threat.technique_id,
                 "summary": threat.summary,
                 "severity": threat.severity or 0,
-                "timestamp": threat.timestamp.isoformat() if threat.timestamp else None,
+                "timestamp": iso_z(threat.timestamp),
             })
 
     return {
@@ -934,7 +948,7 @@ async def get_firewall_rules(scope: str = Query("current", pattern="^(current|al
             "action": r.action,
             "enabled": bool(r.enabled),
             "description": r.description or "",
-            "created_at": r.created_at.isoformat() if r.created_at else None,
+            "created_at": iso_z(r.created_at),
             "network_id": r.network_id,
             "enforced": (r.target.split("/")[0] in enforced_ips) if r.target else False,
         } for r in rules
@@ -974,7 +988,7 @@ async def create_firewall_rule(body: FirewallRuleCreate):
         "action": rule.action,
         "enabled": bool(rule.enabled),
         "description": rule.description or "",
-        "created_at": rule.created_at.isoformat() if rule.created_at else None,
+        "created_at": iso_z(rule.created_at),
         "enforced": enforced,
         "enforcement_note": note,
     }

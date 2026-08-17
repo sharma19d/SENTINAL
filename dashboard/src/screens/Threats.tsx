@@ -11,7 +11,10 @@ import {
 function formatTime(iso: string | null): string {
   if (!iso) return '—';
   const d = new Date(iso);
-  return d.toUTCString().split(' ')[4] + ' UTC';
+  if (isNaN(d.getTime())) return '—';
+  // Show local (viewer's) time so it matches the wall clock and every other
+  // tab. Backend now sends explicit-UTC timestamps, so this converts correctly.
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 }
 
 // indicators can be plain strings OR objects depending on how the agent stored them
