@@ -58,11 +58,26 @@ else
 fi
 
 # ── Detect network + choose mode ─────────────────────────────────
-IFACE="$(ip -4 route show default 2>/dev/null | awk '/default via/ {print $5; exit}')"
+# The honeypot must live on the interface SENTINEL is actually sensing on —
+# the one the attacker can reach — NOT whichever interface happens to own the
+# default route. On a VM the default route is often the NAT uplink (eth0),
+# while sensing is on Wi-Fi (wlan0); picking the default route there deployed
+# the honeypot on the wrong network and (worse) chose macvlan on a wired-looking
+# interface. So prefer the capture interface: CAPTURE_INTERFACE env, then .env,
+# then the default route as a last resort.
+IFACE="${CAPTURE_INTERFACE:-}"
+if [ -z "$IFACE" ] && [ -f "$PROJECT_ROOT/.env" ]; then
+  IFACE="$(grep -E '^\s*CAPTURE_INTERFACE\s*=' "$PROJECT_ROOT/.env" | tail -1 | cut -d= -f2 | tr -d ' "'"'"'')"
+fi
+if [ -z "$IFACE" ]; then
+  IFACE="$(ip -4 route show default 2>/dev/null | awk '/default via/ {print $5; exit}')"
+fi
 IFACE="${IFACE:-wlan0}"
 
 if [ -z "${HONEYPOT_MODE:-}" ]; then
-  # `iw dev <iface> info` only succeeds for wireless interfaces.
+  # `iw dev <iface> info` only succeeds for wireless interfaces. A wireless
+  # sensing interface (or one that can't hold extra macvlan MACs) must use
+  # bridge mode, which binds the honeypot ports on all host interfaces.
   if iw dev "$IFACE" info >/dev/null 2>&1; then
     HONEYPOT_MODE="bridge"
     MODE_REASON="$IFACE is wireless; macvlan cannot pass traffic in managed mode"
