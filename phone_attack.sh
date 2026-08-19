@@ -58,16 +58,57 @@ hex2()  { printf '%02x' $((RANDOM % 256)); }
 hex4()  { printf '%02x%02x' $((RANDOM % 256)) $((RANDOM % 256)); }
 hexrow(){ local n=${1:-8} i o=""; for ((i=0;i<n;i++)); do o+="$(hex2) "; done; printf '%s' "$o"; }
 
-# matrix rain — R rows of drifting green glyphs
-matrix() {
+# ── Real Linux-style kernel boot log ────────────────────────────────
+# Phones are tall, so this is meant to fill the whole screen scrolling by —
+# like `dmesg` / systemd unit startup — before the logo appears, instead of
+# random matrix glyphs which don't read as "booting" to a live audience.
+BOOT_LINES=(
+  "[    0.000000] Linux version 6.1.0-sentinel (root@c2) #1 SMP PREEMPT"
+  "[    0.000000] Command line: BOOT_IMAGE=/vmlinuz root=/dev/mapper/sentinel quiet"
+  "[    0.041902] ACPI: Core revision 20220331"
+  "[    0.089213] Detected 8 CPU cores, arming scheduler"
+  "[    0.114455] pci 0000:00:1f.6: enabling device network controller"
+  "[    0.203981] random: fast init done"
+  "[    0.512004] NET: Registered PF_PACKET protocol family"
+  "[    0.612200] IPv4: raw promiscuous mode enabled"
+  "[    0.812023] nf_conntrack: default automatic helper assignment"
+  "[    0.902110] tun: Universal TUN/TAP device driver"
+  "[    1.001233] cryptd: max_cpu_qlen set to 1000"
+  "[    1.102900] AES CTR mode by8 optimization enabled"
+  "[    1.203441] usb 1-1: new high-speed device — wlan0 attach"
+  "[    1.304122] wlan0: authenticate with target AP"
+  "[    1.402301] wlan0: associated"
+  "[    1.503092] IPv6: ADDRCONF(NETDEV_UP): wlan0: link is not ready"
+  "[    1.601820] rfkill: input handler enabled"
+  "[    2.011293] systemd[1]: sentinel-c2.target reached"
+  "[  OK  ] Started Network Manager"
+  "[  OK  ] Started Load/Save Random Seed"
+  "[  OK  ] Reached target Network"
+  "[  OK  ] Mounted /opt/payloads"
+  "[  OK  ] Started OpenBSD Secure Shell client stub"
+  "[  OK  ] Started D-Bus System Message Bus"
+  "[  OK  ] Started nftables rule injector"
+  "[  OK  ] Started packet sniffer daemon"
+  "[  OK  ] Loaded module: mirai_shell.ko"
+  "[  OK  ] Loaded module: cred_spray.ko"
+  "[  OK  ] Loaded module: recon_sweep.ko"
+  "[  OK  ] Started Command & Control heartbeat"
+  "[  OK  ] Reached target Multi-User System"
+  "[ WARN ] target rate-limit not detected, proceeding"
+  "[  OK  ] sentinel-console: handshake complete"
+)
+bootlog() {
   [ "$FX_SPEED" = "0" ] && return
-  local rows=${1:-7} cols=36 chars='01<>/\|-=+*#%$&@[]{}░▒▓█ﾊﾐﾋｷ'
-  local r c line idx
-  for ((r=0; r<rows; r++)); do
-    line=""
-    for ((c=0; c<cols; c++)); do idx=$(( RANDOM % ${#chars} )); line+="${chars:idx:1}"; done
-    if (( RANDOM % 4 == 0 )); then printf "  ${BG}%s${RS}\n" "$line"; else printf "  ${DG}%s${RS}\n" "$line"; fi
-    nap 0.025
+  local line rest
+  for line in "${BOOT_LINES[@]}"; do
+    if [[ "$line" == *"[  OK  ]"* ]]; then
+      rest="${line#*] }"; printf "${DG}[${RS}  ${BG}OK${RS}  ${DG}]${RS} %s\n" "$rest"
+    elif [[ "$line" == *"[ WARN ]"* ]]; then
+      rest="${line#*] }"; printf "${DG}[${RS} ${YL}WARN${RS} ${DG}]${RS} %s\n" "$rest"
+    else
+      printf "${DG}%s${RS}\n" "$line"
+    fi
+    nap 0.045
   done
 }
 
@@ -133,7 +174,9 @@ ART
 
 boot() {
   CLR
-  matrix 7
+  bootlog
+  nap 0.35
+  CLR
   banner
   progress "loading exploit modules"
   feed 3
