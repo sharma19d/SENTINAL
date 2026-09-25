@@ -23,6 +23,7 @@ ACCEPT_TECH = {
 ACCEPT_TACTIC = {"DISCOVERY": ("discovery", "reconnaissance"),
                  "DOS": ("impact", "inhibit response function")}
 TECH_RE = re.compile(r"T\d{4}(?:\.\d{3})?")
+HOST = os.environ.get("LLM_HOST", "local")        # see PREREGISTRATION.md Deviations
 
 
 def context(s):
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     src = sys.argv[1]
     out_path = sys.argv[2] if len(sys.argv) > 2 else "results/llm_results.json"
     samples = json.load(open(src))["samples"]
-    gc = GemmaClassifier()
+    gc = GemmaClassifier(base_url=os.environ.get("OLLAMA_URL"))
 
     done = {}
     if os.path.exists(out_path):                                 # resumable
@@ -109,7 +110,7 @@ if __name__ == "__main__":
             continue
         raw, dt, meta = call(gc, build(gc, s, v))
         g = grade(raw, s["category"])
-        results.append({"id": s["id"], "variant": v, "botnet": s["botnet"], "attack": s["attack"],
+        results.append({"id": s["id"], "variant": v, "host": HOST, "botnet": s["botnet"], "attack": s["attack"],
                         "category": s["category"], "device": s["device"], "group": s["group"],
                         "latency_s": dt, "eval_count": meta.get("eval_count"),
                         "prompt_eval_count": meta.get("prompt_eval_count"),

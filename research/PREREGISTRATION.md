@@ -126,4 +126,21 @@ EXPLORATORY in any write-up:
 
 ## Deviations
 
-*(none yet)*
+### 2026-09-25 — remaining calls moved to a cloud GPU (resource constraint)
+
+**What.** The first 90 of the 400 calls (44 AS-BUILT, 46 EVIDENCE, in the
+pre-registered shuffled order) ran as specified on the local 4-core aarch64
+host. The run was then stopped at a checkpoint, with no call lost, because the
+local model was monopolising the author's workstation. The remaining 310 calls
+run on a Google Colab T4 GPU with the SAME Ollama model tag (`gemma4:e2b`,
+verified by digest), the same prompts, the same payload and default sampling,
+continuing the same shuffled order.
+
+**Consequences, fixed now before any cloud output exists.**
+1. *Latency* is reported ONLY from the 90 local calls. GPU latency does not
+   represent the appliance and is excluded from every latency figure.
+2. *Accuracy* metrics pool all 400 calls. Model weights, quantisation and
+   sampling are identical across hosts, so accuracy should not depend on the
+   host; as a check, accuracy is also reported split by host, and any material
+   difference will be stated.
+3. Each result records the host it ran on (`host` field).
