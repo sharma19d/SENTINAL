@@ -1,206 +1,148 @@
 """
-SENTINEL Agent 1 — Kitsune Feature Extractor
+SENTINEL Layer 3 — Kitsune feature extraction (115 features, N-BaIoT layout).
 
-Implements the 115 incremental statistics used by the Kitsune framework
-to profile network traffic at various time scales.
+Produces the exact 115-feature vector the anomaly model was trained on. The
+model is trained on N-BaIoT (Meidan et al., IEEE Pervasive Computing 2018),
+whose features come from Kitsune's extractor (Mirsky et al., NDSS 2018), so
+this module must reproduce THAT feature definition — any deviation hands the
+model inputs from a different distribution than it was trained on.
+
+The statistics engine is the reference Kitsune code, vendored unmodified in
+afterimage.py. The stream layout below is pinned to what the N-BaIoT data
+itself shows, established empirically on the dataset rather than assumed
+(research/ in the repository reproduces each check):
+
+  group   key (stream)                  per-lambda stats (in this order)
+  ------  ----------------------------  ------------------------------------
+  MI_dir  src MAC + src IP              weight, mean, variance
+  H       src IP                        weight, mean, variance
+  HH      channel  srcIP -> dstIP       weight, mean, std, magnitude, radius,
+          (2D partner: dstIP -> srcIP)  covariance, pcc
+  HH_jit  channel  srcIP -> dstIP       weight, mean, variance  (of inter-
+                                        arrival times)
+  HpHp    socket  src:port -> dst:port  weight, mean, std, magnitude, radius,
+          (2D partner: reverse socket)  covariance, pcc
+  lambdas 5, 3, 1, 0.1, 0.01
+
+Evidence for the non-obvious choices, from N-BaIoT's own rows:
+  * MI_dir == H on 100% of rows  -> both single-updated, one IP per MAC.
+  * HH weight < H weight         -> HH is keyed by the CHANNEL, not by the
+                                    source host (the public Kitsune-py keys it
+                                    by source IP; N-BaIoT's generator did not).
+  * radius >= std^2 on ~100% of rows -> 2D groups report a true std (not the
+                                    variance the reference's 1D getter returns)
+                                    and radius = sqrt(var_a^2 + var_b^2).
+  * the column labelled radius satisfies the radius bound and the column
+    labelled magnitude satisfies magnitude >= |mean| -> the data is ordered
+    magnitude, radius (the public reference returns radius first).
+
+The previous hand-written extractor (preserved for comparison in
+research/results/kitsune_OLD_for_comparison.py) fed one stream to both sides
+of every 2D statistic, so covariance equalled variance and pcc was only ever
+0 or 1 — 40 of the 115 features were degenerate — and it keyed MI by IP and H
+by MAC, the reverse of the definition.
 """
 
+from __future__ import annotations
+
 import math
+
 import numpy as np
-from typing import Dict, List, Tuple, Optional
 
-class IncrementalStat:
-    """
-    A single damped incremental statistic (weight, mean, variance).
-    Based on the Kitsune/AfterImage logic.
-    """
-    def __init__(self, Lambda: float):
-        self.Lambda = Lambda
-        self.last_timestamp = -1.0
-        self.weight = 0.0
-        self.mean = 0.0
-        self.variance = 0.0
+from sentinel.agents.anomaly import afterimage as af
 
-    def update(self, value: float, timestamp: float):
-        if self.last_timestamp == -1.0:
-            self.weight = 1.0
-            self.mean = value
-            self.variance = 0.0
-            self.last_timestamp = timestamp
-            return
+LAMBDAS = (5, 3, 1, 0.1, 0.01)
 
-        # Damping factor
-        delta_t = timestamp - self.last_timestamp
-        factor = math.pow(2, -self.Lambda * delta_t)
+# Streams whose decayed weight has fallen below this are dead: at lambda=0.01
+# an idle stream reaches it after ~1000 s. Evicting them bounds memory on an
+# always-on appliance; the reference's own cleanOutOldRecords() is broken (it
+# indexes [0] into an incStat), so eviction is done here.
+_DEAD_WEIGHT = 1e-3
+_EVICT_EVERY = 20_000          # packets between eviction sweeps
+_MIN_STD = 1e-3               # bytes; below this a stream is constant-size (see _two_d)
 
-        # Update damped statistics
-        self.weight = self.weight * factor + 1.0
-        
-        old_mean = self.mean
-        self.mean = (1.0 - (1.0 / self.weight)) * self.mean + (1.0 / self.weight) * value
-        
-        # Incremental variance (Welford's variation with damping)
-        self.variance = self.variance * factor + (value - old_mean) * (value - self.mean)
-        if self.variance < 0:
-            self.variance = 0.0
 
-        self.last_timestamp = timestamp
+class _Table:
+    """An incStatDB plus eviction that also unlinks covariance partners."""
 
-    def get_stats(self) -> List[float]:
-        return [self.weight, self.mean, self.variance]
+    def __init__(self):
+        self.db = af.incStatDB()
 
-class IncrementalStat2D:
-    """
-    Two-dimensional damped incremental statistics for tracking relationships.
-    (weight, mean_x, mean_y, var_x, var_y, covariance).
-    """
-    def __init__(self, Lambda: float):
-        self.Lambda = Lambda
-        self.last_timestamp = -1.0
-        self.weight = 0.0
-        self.mean_x = 0.0
-        self.mean_y = 0.0
-        self.var_x = 0.0
-        self.var_y = 0.0
-        self.cov = 0.0
+    def evict(self, now: float) -> int:
+        dead = []
+        for key, s in self.db.HT.items():
+            dt = now - s.lastTimestamp
+            w = s.w * (math.pow(2, -s.Lambda * dt) if dt > 0 else 1.0)
+            if w < _DEAD_WEIGHT:
+                dead.append(key)
+        for key in dead:
+            s = self.db.HT.pop(key)
+            for cov in s.covs:                       # break links both ways
+                other = cov.incStats[1] if cov.incStats[0] is s else cov.incStats[0]
+                if cov in other.covs:
+                    other.covs.remove(cov)
+            s.covs.clear()
+        return len(dead)
 
-    def update(self, val_x: float, val_y: float, timestamp: float):
-        if self.last_timestamp == -1.0:
-            self.weight = 1.0
-            self.mean_x = val_x
-            self.mean_y = val_y
-            self.var_x = 0.0
-            self.var_y = 0.0
-            self.cov = 0.0
-            self.last_timestamp = timestamp
-            return
-
-        delta_t = timestamp - self.last_timestamp
-        factor = math.pow(2, -self.Lambda * delta_t)
-
-        self.weight = self.weight * factor + 1.0
-        
-        old_mean_x = self.mean_x
-        old_mean_y = self.mean_y
-        
-        self.mean_x = (1.0 - (1.0 / self.weight)) * self.mean_x + (1.0 / self.weight) * val_x
-        self.mean_y = (1.0 - (1.0 / self.weight)) * self.mean_y + (1.0 / self.weight) * val_y
-        
-        self.var_x = self.var_x * factor + (val_x - old_mean_x) * (val_x - self.mean_x)
-        self.var_y = self.var_y * factor + (val_y - old_mean_y) * (val_y - self.mean_y)
-        self.cov = self.cov * factor + (val_x - old_mean_x) * (val_y - self.mean_y)
-        
-        if self.var_x < 0: self.var_x = 0.0
-        if self.var_y < 0: self.var_y = 0.0
-
-        self.last_timestamp = timestamp
-
-    def get_stats(self) -> List[float]:
-        # std_x, std_y
-        std_x = math.sqrt(self.var_x)
-        std_y = math.sqrt(self.var_y)
-        
-        # magnitude
-        mag = math.sqrt(self.mean_x**2 + self.mean_y**2)
-        
-        # radius
-        radius = math.sqrt(self.var_x + self.var_y)
-        
-        # PCC (Pearson Correlation Coefficient)
-        pcc = 0.0
-        if std_x > 0 and std_y > 0:
-            pcc = self.cov / (std_x * std_y)
-            # Clamp PCC
-            pcc = max(min(pcc, 1.0), -1.0)
-            
-        return [self.weight, self.mean_x, std_x, mag, radius, self.cov, pcc]
 
 class KitsuneExtractor:
-    """
-    Main extractor that maintains a set of incremental statistics
-    to produce the 115-feature vector.
-    """
-    def __init__(self):
-        # Time windows (lambdas)
-        self.lambdas = [5.0, 3.0, 1.0, 0.1, 0.01]
-        
-        # Stats storage
-        self.MI = {}    # src_ip -> [IncrementalStat x 5]
-        self.H = {}     # src_mac -> [IncrementalStat x 5]
-        self.HH = {}    # (src_ip, dst_ip) -> [IncrementalStat2D x 5]
-        self.HH_jit = {} # (src_ip, dst_ip) -> [IncrementalStat x 5]
-        self.HpHp = {}  # (src_ip, src_port, dst_ip, dst_port) -> [IncrementalStat2D x 5]
-        
-        # To track jitter
-        self.last_arrival_times = {} # (src_ip, dst_ip) -> timestamp
+    """Per-packet incremental extractor. Call extract() once per packet, in
+    timestamp order; returns the 115-feature vector for that packet."""
 
-    def extract(self, 
+    N_FEATURES = 115
+
+    def __init__(self, lambdas=LAMBDAS):
+        self.lambdas = tuple(lambdas)
+        self.MI, self.H, self.HH = _Table(), _Table(), _Table()
+        self.JIT, self.HpHp = _Table(), _Table()
+        self._n = 0
+
+    def _one_d(self, table, key, t, v, lam, diff=False):
+        return table.db.update_get_1D_Stats(key, t, v, lam, isTypeDiff=diff)   # w, mean, var
+
+    def _two_d(self, table, k1, k2, t, v, lam):
+        w, mean, var, radius, magnitude, cov, _ = table.db.update_get_1D2D_Stats(k1, k2, t, v, lam)
+        # pcc is recomputed with a numerical guard. The reference returns
+        # cov/(std_a*std_b) whenever that product is not EXACTLY zero; for a
+        # stream of constant-size packets the true variance is 0, but the
+        # reference's |CF2/w - mean^2| leaves ~1e-10 of cancellation noise, so
+        # the ratio can explode (values of +-6e5 were observed on real traffic,
+        # for a statistic bounded by +-1). A correlation is undefined for a
+        # zero-variance stream; 0 is the reference's own convention when the
+        # product is exactly zero, so any std below a thousandth of a byte is
+        # treated as zero, and the rest is bounded to [-1, 1] (Cauchy-Schwarz).
+        # This matches N-BaIoT, whose pcc lies within [-0.68, 0.82].
+        link = table.db.register_cov(k1, k2, lam, t)          # existing link; no update
+        sa, sb = link.incStats[0].std(), link.incStats[1].std()
+        pcc = 0.0 if min(sa, sb) < _MIN_STD else max(-1.0, min(1.0, cov / (sa * sb)))
+        return [w, mean, math.sqrt(var), magnitude, radius, cov, pcc]           # N-BaIoT order
+
+    def extract(self,
                 src_ip: str, src_mac: str, src_port: int,
                 dst_ip: str, dst_mac: str, dst_port: int,
                 pkt_len: int, timestamp: float) -> np.ndarray:
-        
-        # 1. MI (Source IP)
-        if src_ip not in self.MI:
-            self.MI[src_ip] = [IncrementalStat(l) for l in self.lambdas]
-        for s in self.MI[src_ip]:
-            s.update(pkt_len, timestamp)
-            
-        # 2. H (Source MAC)
-        if src_mac not in self.H:
-            self.H[src_mac] = [IncrementalStat(l) for l in self.lambdas]
-        for s in self.H[src_mac]:
-            s.update(pkt_len, timestamp)
-            
-        # 3. HH (Source IP -> Dest IP)
-        hh_key = (src_ip, dst_ip)
-        if hh_key not in self.HH:
-            self.HH[hh_key] = [IncrementalStat2D(l) for l in self.lambdas]
-        # In Kitsune, HH usually tracks (pkt_len, same_len?) or similar.
-        # Most implementations use (pkt_len, pkt_len) for HH and HpHp 
-        # to get magnitude and radius of the flow.
-        for s in self.HH[hh_key]:
-            s.update(pkt_len, pkt_len, timestamp)
-            
-        # 4. HH_jit (Jitter)
-        if hh_key not in self.HH_jit:
-            self.HH_jit[hh_key] = [IncrementalStat(l) for l in self.lambdas]
-            self.last_arrival_times[hh_key] = timestamp
-            jitter = 0.0
-        else:
-            jitter = abs(timestamp - self.last_arrival_times[hh_key])
-            self.last_arrival_times[hh_key] = timestamp
-            
-        for s in self.HH_jit[hh_key]:
-            s.update(jitter, timestamp)
-            
-        # 5. HpHp (Source IP:Port -> Dest IP:Port)
-        hphp_key = (src_ip, src_port, dst_ip, dst_port)
-        if hphp_key not in self.HpHp:
-            self.HpHp[hphp_key] = [IncrementalStat2D(l) for l in self.lambdas]
-        for s in self.HpHp[hphp_key]:
-            s.update(pkt_len, pkt_len, timestamp)
-            
-        # Assemble feature vector (115 features)
-        features = []
-        
-        # MI_dir (15)
-        for i in range(5):
-            features.extend(self.MI[src_ip][i].get_stats())
-            
-        # H (15)
-        for i in range(5):
-            features.extend(self.H[src_mac][i].get_stats())
-            
-        # HH (35)
-        for i in range(5):
-            features.extend(self.HH[hh_key][i].get_stats())
-            
-        # HH_jit (15)
-        for i in range(5):
-            features.extend(self.HH_jit[hh_key][i].get_stats())
-            
-        # HpHp (35)
-        for i in range(5):
-            features.extend(self.HpHp[hphp_key][i].get_stats())
-            
-        return np.array(features, dtype=np.float32)
+        t, v = float(timestamp), float(pkt_len)
+        chan, rchan = f"{src_ip}>{dst_ip}", f"{dst_ip}>{src_ip}"
+        sock, rsock = f"{src_ip}:{src_port}>{dst_ip}:{dst_port}", f"{dst_ip}:{dst_port}>{src_ip}:{src_port}"
+
+        f = []
+        for lam in self.lambdas:
+            f += self._one_d(self.MI, f"{src_mac}{src_ip}", t, v, lam)
+        for lam in self.lambdas:
+            f += self._one_d(self.H, src_ip, t, v, lam)
+        for lam in self.lambdas:
+            f += self._two_d(self.HH, chan, rchan, t, v, lam)
+        for lam in self.lambdas:
+            f += self._one_d(self.JIT, chan, t, 0.0, lam, diff=True)
+        for lam in self.lambdas:
+            f += self._two_d(self.HpHp, sock, rsock, t, v, lam)
+
+        self._n += 1
+        if self._n % _EVICT_EVERY == 0:
+            for tbl in (self.MI, self.H, self.HH, self.JIT, self.HpHp):
+                tbl.evict(t)
+
+        out = np.asarray(f, dtype=np.float32)
+        # pcc is 0/0 until a stream has variance; the reference returns nan in
+        # some such paths. The model has never seen nan, so map it to 0.
+        return np.nan_to_num(out, nan=0.0, posinf=0.0, neginf=0.0)
