@@ -83,7 +83,9 @@ Table~\ref{tab:latency} gives the median time of each stage. Everything the
 appliance computes itself is fast: extracting features and scoring a window
 together take \NlatDetectPkt{}\,ms per packet, enough for roughly
 \NdetectPPS{} packets per second on one core, and the bus hop and response
-policy each cost under a millisecond. The path is dominated by two calls. The
+policy each cost under a millisecond. Enforcing a decision is also quick: an
+nftables block takes \NenfBlock{}\,ms at the median (95th percentile
+\NenfBlockP{}\,ms). The path is dominated by two calls. The
 LLM needs \NllmLatMed{}\,s per event (95th percentile \NllmLatP{}\,s), and
 \NllmCold{}\,s for the first event after the model service starts. The
 AlienVault OTX lookup is slower and far less predictable: a median of
