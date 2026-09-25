@@ -1,0 +1,48 @@
+% SENTINEL — workshop paper (IEEE conference format).
+% Every number in this paper is a macro from numbers.tex, which is GENERATED
+% from the result files by ../research/make_numbers.py. Do not type numbers by
+% hand: regenerate instead, so that every figure traces to a result file.
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,shapes.geometric}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepackage[hidelinks]{hyperref}
+
+\input{numbers}
+
+\begin{document}
+
+\title{SENTINEL: A Local-LLM Detection-to-Response\\Pipeline for Home IoT, and the\\Evaluation Pitfalls It Exposed}
+
+% AUTHOR BLOCK: placeholders are deliberate — confirm full name, affiliation
+% and contact e-mail before submission. Nothing here was inferred.
+\author{\IEEEauthorblockN{Vinay [SURNAME --- confirm]}
+\IEEEauthorblockA{\textit{[Department --- confirm]}\\{}
+\textit{[University --- confirm]}\\{}
+{[City, Country --- confirm]}\\{}
+{[e-mail --- confirm]}}}
+
+\maketitle
+
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/related}
+\input{sections/design}
+\input{sections/method}
+\input{sections/results}
+\input{sections/discussion}
+\input{sections/conclusion}
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

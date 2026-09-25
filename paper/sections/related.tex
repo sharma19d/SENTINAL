@@ -1,0 +1,74 @@
+\section{Background and Related Work}
+\label{sec:related}
+
+\paragraph{Anomaly detection for IoT traffic}
+Kitsune introduced a family of damped, incremental statistics computed per
+packet over several time scales and several stream aggregations (host,
+MAC--IP pair, channel, socket), together with an ensemble of small
+autoencoders that learns benign behaviour online~\cite{mirsky2018kitsune}. It
+was designed for resource-constrained network devices and evaluated on a
+Raspberry~Pi. N-BaIoT applied the same 115 features to traffic captured from
+nine commercial IoT devices before and after infection by the Mirai and
+BASHLITE botnets, training one deep autoencoder per device and reporting that
+all attacks were detected~\cite{meidan2018nbaiot}. Newer benchmarks such as
+CICIoT2023 cover more devices and attack types~\cite{neto2023ciciot}.
+\textsc{Sentinel} reuses the Kitsune feature definition and the N-BaIoT data,
+but trains a single sequence autoencoder shared across devices, which is the
+realistic choice for an appliance that cannot collect labelled benign traffic
+for every new gadget in advance.
+
+\paragraph{How such detectors are evaluated}
+Sommer and Paxson argued that anomaly detection for networks is harder than
+the machine-learning framing suggests: the cost of false positives is high,
+the semantic gap between an anomaly and an attack is wide, and evaluation data
+rarely resembles deployment~\cite{sommer2010closedworld}. Arp~et~al.\
+catalogue recurring pitfalls in security machine learning, among them data
+snooping, spurious correlations, inappropriate baselines and misleading
+metrics under class imbalance~\cite{arp2022dosdonts}, and dataset audits have
+found labelling and construction errors in widely used intrusion
+datasets~\cite{engelen2021cicids}. Our evaluation is an application of that
+advice to a complete system rather than to a single model; several of the
+problems we report are instances of the pitfalls they describe.
+
+\paragraph{LLMs for security operations}
+Large language models are increasingly applied to security tasks, including
+threat-intelligence extraction and mapping to ATT\&CK; a recent systematic
+review surveys this literature~\cite{xu2025llmsec}, and surveys of ATT\&CK's
+use in research describe the mapping problem in
+detail~\cite{roy2023sok,alsada2023attack}. Agentic designs that chain
+detection, classification and response have also appeared; AgenticCyber, for
+instance, orchestrates cloud-hosted multimodal models over enterprise
+telemetry~\cite{roy2025agenticcyber}. \textsc{Sentinel} differs in placing a
+small quantised model on the appliance itself, which removes the need to send
+traffic to a cloud service but constrains model size and speed. Most prior
+evaluations of LLM ATT\&CK mapping use written threat reports as input; we
+evaluate the model on the structured anomaly events a detector actually
+produces.
+
+\paragraph{Deception and automated blocking}
+Honeypots are a long-standing source of attacker intelligence for IoT.
+HoneyIoT adapts a high-interaction IoT honeypot's responses with
+reinforcement learning to prolong attacker engagement~\cite{guan2023honeyiot}.
+Heiding~et~al.\ used honeypot observations to evaluate login blocking for IoT
+devices~\cite{heiding2020honeypot}, so feeding deception data into blocking is
+not new. \textsc{Sentinel}'s contribution here is integration rather than
+invention: honeypot sessions and detector alerts share one enforcement path
+with one safety guard.
+
+\paragraph{Kernel-level enforcement}
+eBPF and XDP allow packets to be filtered in the kernel's fast path.
+iKern embeds intrusion detection and prevention in eBPF~\cite{hadi2024ikern},
+Zhang~et~al.\ run a neural network inside the kernel for real-time
+prevention~\cite{zhang2024ebpf}, and eBPF-based DDoS mitigation has been
+demonstrated on a Raspberry~Pi~4~\cite{tolay2025ebpf}. \textsc{Sentinel}
+keeps all learning in user space and uses nftables for enforcement; it
+contains an XDP drop path, but that path was not enabled in the configuration
+evaluated here.
+
+\paragraph{Home IoT context}
+IoT Inspector collected labelled traffic from smart-home devices at scale and
+found device behaviour to be comparatively regular~\cite{huang2020iotinspector},
+which is the premise of anomaly detection on the home segment. Manufacturer
+Usage Descriptions let vendors declare the traffic a device
+needs~\cite{lear2019mud}; they are complementary to anomaly detection, but
+require manufacturer participation that most consumer devices lack.

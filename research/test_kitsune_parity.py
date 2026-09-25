@@ -72,8 +72,15 @@ def check(name, F):
 if __name__ == "__main__":
     path = sys.argv[1]; n = int(sys.argv[2]) if len(sys.argv) > 2 else 60000
     P = list(packets(path, n)); print(f"{len(P):,} IP packets from {os.path.basename(path)}")
-    new_t, new_in = check("NEW extractor (reference engine)", run(New, P))
-    old_t, old_in = check("OLD extractor (hand-written)", run(Old, P))
+    Fn, Fo = run(New, P), run(Old, P)
+    new_t, new_in = check("NEW extractor (reference engine)", Fn)
+    old_t, old_in = check("OLD extractor (hand-written)", Fo)
+    import json
+    pcc_n = lambda F: int(len(np.unique(np.round(F[[c for c in cols if c.endswith('_pcc')]].to_numpy().ravel(), 6))))
+    json.dump({"packets": len(P),
+               "new": {**{k: float(v) for k, v in new_t.items()}, "pcc_distinct": pcc_n(Fn), "in_range": float(new_in)},
+               "old": {**{k: float(v) for k, v in old_t.items()}, "pcc_distinct": pcc_n(Fo), "in_range": float(old_in)}},
+              open(os.path.join(ROOT, "research/results/parity.json"), "w"), indent=1)
     ok = all(v > 0.99 for v in new_t.values())
     print(f"\nSTRUCTURAL PARITY {'PASS' if ok else 'FAIL'} (new extractor: all invariants > 99%)")
     sys.exit(0 if ok else 1)

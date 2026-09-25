@@ -1,0 +1,21 @@
+{
+ "packets": 55318,
+ "new": {
+  "MI_dir == H": 0.9998553816117719,
+  "HH_weight <= H_wt": 1.0,
+  "radius >= std^2": 1.0,
+  "magnitude >= |mean|": 1.0,
+  "|pcc| <= 1 (all)": 1.0,
+  "pcc_distinct": 47479,
+  "in_range": 0.9955235893026407
+ },
+ "old": {
+  "MI_dir == H": 0.9870204996565314,
+  "HH_weight <= H_wt": 0.9999819227014715,
+  "radius >= std^2": 0.4546982898875592,
+  "magnitude >= |mean|": 1.0,
+  "|pcc| <= 1 (all)": 1.0,
+  "pcc_distinct": 2,
+  "in_range": 0.9904305069346089
+ }
+}

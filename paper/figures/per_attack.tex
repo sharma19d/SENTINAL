@@ -1,0 +1,25 @@
+% Detection rate per attack class. Data: figures/per_attack.csv (generated).
+% Palette: categorical slots 1-4 (validated for CVD; relief = legend + Table).
+\begin{tikzpicture}
+\begin{axis}[
+  width=\columnwidth, height=46mm,
+  ybar, bar width=2.1pt,
+  table/col sep=comma, unbounded coords=discard,
+  ymin=0, ymax=105, ytick={0,25,50,75,100},
+  ylabel={detected (\%)}, ylabel style={font=\footnotesize},
+  xtick=data, xticklabels from table={figures/per_attack.csv}{label},
+  xticklabel style={rotate=40, anchor=east, font=\scriptsize},
+  yticklabel style={font=\scriptsize},
+  ymajorgrids, grid style={gray!20},
+  axis line style={gray!60}, tick style={gray!60},
+  enlarge x limits=0.06,
+  legend style={font=\scriptsize, at={(0.5,1.03)}, anchor=south, legend columns=4, draw=none},
+  legend image code/.code={\draw[#1, draw=none] (0cm,-0.08cm) rectangle (0.22cm,0.12cm);},
+]
+\addplot[fill={rgb,255:red,42;green,120;blue,214}]  table[x=cls, y=deployed, col sep=comma] {figures/per_attack.csv};
+\addplot[fill={rgb,255:red,235;green,104;blue,52}]  table[x=cls, y=lstm,     col sep=comma] {figures/per_attack.csv};
+\addplot[fill={rgb,255:red,27;green,175;blue,122}]  table[x=cls, y=dense,    col sep=comma] {figures/per_attack.csv};
+\addplot[fill={rgb,255:red,237;green,161;blue,0}]   table[x=cls, y=iforest,  col sep=comma] {figures/per_attack.csv};
+\legend{Deployed, LSTM-AE, Dense AE, Isol.\ Forest}
+\end{axis}
+\end{tikzpicture}

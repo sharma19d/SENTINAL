@@ -1,0 +1,92 @@
+\section{System Design}
+\label{sec:design}
+
+\textsc{Sentinel} is a set of cooperating services on one host, connected by
+a Redis publish/subscribe bus (Fig.~\ref{fig:arch}). We describe the system as
+built and evaluated, which differs in places from its original design; where
+it does, we say so.
+
+\begin{figure}[t]
+\centering
+\resizebox{\columnwidth}{!}{\input{figures/architecture}}
+\caption{The detection-to-response path. Solid arrows are bus channels;
+dashed boxes are the only components that contact external services.}
+\label{fig:arch}
+\end{figure}
+
+\subsection{Capture and device context}
+A capture service reads packets from the monitored interface with Scapy's
+asynchronous sniffer and publishes a compact per-packet record (addresses,
+ports, length, timestamp) on the bus. A discovery service builds a device
+registry passively from the mDNS, SSDP, DHCP and ARP traffic it observes, maps
+MAC prefixes to vendors, and queries NIST's National Vulnerability Database for
+known CVEs by vendor. Active Nmap scanning exists but is triggered only on
+demand from the dashboard.
+
+\subsection{Anomaly detection}
+For every packet the anomaly service computes the 115 Kitsune
+features~\cite{mirsky2018kitsune}: damped statistics at five time scales
+($\lambda \in \{5, 3, 1, 0.1, 0.01\}$) over five stream aggregations (source
+MAC--IP pair, source IP, channel, channel jitter, and socket), including
+two-dimensional statistics that relate each channel or socket to its reverse
+direction. It keeps a sliding window of the last ten feature vectors per
+device and scores each full window with a sequence autoencoder: a two-layer
+LSTM~\cite{hochreiter1997lstm} encoder compresses the $10\times115$ window into
+a 64-dimensional state, which is repeated across ten steps and decoded by a
+second two-layer LSTM and a linear layer (153,651 parameters in total). The
+anomaly score is the mean squared reconstruction error over the whole window,
+computed with ONNX Runtime~\cite{onnxruntime} on min--max-scaled features, and
+an event is raised when it exceeds a single threshold shared by all devices.
+
+\subsection{LLM classification}
+The classifier service enriches each anomaly event with the device's vendor
+and known CVEs from the registry and with the reputation of the remote address
+from AlienVault OTX~\cite{otx} and AbuseIPDB~\cite{abuseipdb}. It then asks
+Gemma~4~E2B~\cite{gemma4}, served locally by Ollama~\cite{ollama} and quantised
+to 4 bits, for a JSON object with an ATT\&CK tactic and technique identifier,
+a confidence, a severity from 1 to 10, a one-sentence summary and a
+recommended action. The model runs with Ollama's default sampling
+(temperature~1.0), so its output for a given event is not deterministic.
+Events whose response does not parse are dropped.
+
+\subsection{Response and enforcement}
+The response service is a two-node LangGraph~\cite{langgraph} state machine,
+not a second language model: a policy node maps the LLM's severity to actions
+through a declarative policy file, and a gate node holds the action for human
+confirmation when the policy requires it. In the evaluated configuration,
+severities 6--10 cause the event's indicator address---the destination of the
+anomalous flow---to be blocked without confirmation, and lower severities are
+logged. The policy also names a device-quarantine action for severities 9--10;
+the responder currently enforces it as the same address block, and a
+MAC-level quarantine module exists but is not invoked by the responder. Keeping the enforcement decision deterministic and
+inspectable, rather than generated, is deliberate: the model proposes a
+severity, and a policy the owner can read decides what happens.
+
+Blocks are applied as nftables rules in a dedicated table, each tracked by its
+rule handle so that it can be removed individually. A guard refuses to block
+the appliance's own addresses, the default gateway, loopback, broadcast and
+unspecified addresses, and address ranges, so that a misclassification cannot
+cut the home off its own router. An XDP fast path is implemented but was not
+enabled for this evaluation.
+
+\subsection{Deception}
+Cowrie~\cite{cowrie} (SSH and Telnet) and OpenCanary~\cite{opencanary} run in
+containers. A honeypot service follows Cowrie's JSON log, records credentials
+and commands from each session as a threat event, and sends the attacker's
+address to the same guarded enforcement path.
+
+\subsection{What leaves the appliance}
+No packet payload, capture or feature vector is sent off the device, and the
+LLM runs locally. Three lookups do leave it: the remote address of each
+anomalous flow goes to OTX and AbuseIPDB, and device vendor names go to the
+NVD. All three are optional, and a privacy-sensitive deployment can disable
+them at some cost to context.
+
+\subsection{Threat model}
+In scope are network-observable attacks involving devices on the monitored
+segment: compromised devices scanning or flooding (as in N-BaIoT), and inbound
+credential attacks against exposed services (as seen by the honeypots). We
+assume the attacker does not control the appliance and cannot tamper with its
+view of the traffic. Out of scope are physical access, inspection of encrypted
+payloads, supply-chain compromise, attacks on \textsc{Sentinel} itself, and
+adaptive attackers who shape traffic to evade the detector.

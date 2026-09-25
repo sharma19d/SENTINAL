@@ -164,3 +164,12 @@ dashboard/.cache/
 *.sst
 *.meta
 sentinel.zip
+
+# LaTeX build artefacts (paper/)
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.toc
+paper/_fig.*

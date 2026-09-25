@@ -1,0 +1,80 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Lessons}
+
+\paragraph{Report detection per class, and per device}
+%%LESSON1%%
+
+\paragraph{Evaluate the running system, not only the model}
+A model can be evaluated flawlessly on its dataset while the deployed system
+feeds it something else. \textsc{Sentinel}'s extractor was written from a
+description of Kitsune rather than from its code, and the error it contained
+was invisible in every offline experiment, because offline experiments read
+N-BaIoT's precomputed features and never touch the extractor. The check that
+caught it needs no additional data: structural invariants measured on the
+training set's own rows, asserted on live output. We recommend such parity
+tests as a standing part of any pipeline that trains on features computed by
+someone else's tool.
+
+\paragraph{Recover what an artefact encodes}
+The deployed model arrived without its training script. Its scaler recorded,
+in its per-feature minima, maxima and sample count, enough to identify the
+exact training devices---which in turn exposed that its in-distribution
+evaluation would have been contaminated, and supplied a natural held-out-device
+split. Fitted preprocessing objects are an underused source of provenance.
+
+\paragraph{Give the model the evidence}
+%%LESSON4%%
+
+\paragraph{Latency lives in the integration}
+Every component we wrote runs in well under a millisecond per event; the
+detection-to-response path is slow because of an external reputation service
+called in the wrong way and a language model on a CPU. Neither problem is
+visible when the detector is benchmarked alone. Requesting only the needed
+section of the OTX response, running it off the event loop with a timeout, and
+caching per address would remove most of the reputation cost.
+
+\subsection{Limitations and threats to validity}
+\emph{Dataset.} N-BaIoT was captured in 2018 in a laboratory, with nine
+devices and two botnet families; home networks today carry more devices, more
+encrypted traffic and other malware. Our results characterise these attacks on
+these devices. The held-out-device split measures generalisation to three
+unseen devices of the same era, not to arbitrary new hardware.
+
+\emph{Hardware.} All timings come from a four-core aarch64 virtual machine,
+not a Raspberry~Pi~5. The host matches the Pi in instruction set, core count
+and approximate memory, but not in clock speed, memory bandwidth or thermal
+behaviour, and sustained LLM inference on the Pi will be slower. Physical
+validation remains future work.
+
+\emph{Replay, not deployment.} Detection results come from replaying captured
+features, not from a live network; the parity test narrows but does not close
+the gap between the two. We have not evaluated \textsc{Sentinel} against an
+adaptive attacker.
+
+\emph{LLM evaluation.} The ground truth maps attack classes to ATT\&CK
+techniques by our reading of the dataset's definitions; other mappings are
+defensible, which is why we accept several techniques per class and report
+tactic-level accuracy as well. The model samples at temperature~1.0, so a
+single run estimates, rather than fixes, its behaviour; 200 windows per prompt
+give 95\% intervals no wider than about $\pm$7 percentage points.
+
+\emph{Deception path.} The honeypot-to-firewall path was exercised
+functionally, by attacking our own honeypot, but is not evaluated
+quantitatively here; the appliance's own event log mixes those sessions with
+synthetic events injected to test the response logic, so we do not report
+counts from it.
+
+\emph{Single threshold.} Every retrained model uses one global threshold at a
+nominal 1\% false-positive budget; other operating points trade detection for
+false positives differently, and the threshold-free AUC values we report
+summarise that trade-off.
+
+\subsection{Ethics}
+No data about people was collected for this work. Detection experiments use
+the public N-BaIoT dataset and the Mirai capture distributed with Kitsune. The
+LLM experiment used reserved documentation addresses (RFC~5737), and
+reputation lookups in the latency experiment were made only for such
+addresses. The honeypot path was exercised only by the author, attacking the
+author's own honeypot from the author's own device.

@@ -1,0 +1,72 @@
+\section{Introduction}
+\label{sec:intro}
+
+Consumer Internet-of-Things devices are numerous, rarely patched, and
+frequently exposed on home networks with default credentials. The Mirai botnet
+showed the consequence at scale: a large population of cameras, routers and
+recorders was conscripted into denial-of-service attacks largely by guessing
+factory passwords~\cite{antonakakis2017mirai}. A household has no security
+operations team to watch its traffic. Whatever defends it has to run
+unattended, on modest hardware, and without shipping private traffic to a
+third party.
+
+This paper describes \textsc{Sentinel}, an open-source appliance that attempts
+exactly that, and reports what a careful evaluation of it revealed.
+\textsc{Sentinel} captures traffic on the home segment, scores it with an
+autoencoder over Kitsune's streaming features~\cite{mirsky2018kitsune}, asks a
+locally hosted large language model (LLM) to label anomalous events with MITRE
+ATT\&CK tactics and techniques~\cite{mitreattack}, and turns the label into an
+nftables~\cite{nftables} block through a deterministic, auditable response
+policy. Honeypots~\cite{cowrie,opencanary} feed attacker addresses into the
+same enforcement path. The language model runs on the appliance itself, so no
+packet payload or traffic content leaves the home.
+
+Building such a pipeline is now easy; knowing whether it works is not. Anomaly
+detectors for IoT traffic are routinely reported at near-perfect accuracy on
+public benchmarks, yet aggregate scores on lab datasets say little about how a
+system behaves when deployed~\cite{sommer2010closedworld,arp2022dosdonts}. We
+therefore treated evaluation as the main object of study, and it overturned
+several things we believed about our own system:
+
+\begin{itemize}
+\item \emph{A per-class blind spot hidden by the aggregate.} On
+  N-BaIoT~\cite{meidan2018nbaiot}, the deployed detector catches the Mirai
+  attacks almost perfectly, yet misses nearly all BASHLITE TCP and UDP floods,
+  so that \NdeplMissedShare{} of attack windows go undetected. An aggregate
+  detection rate conceals this entirely.
+\item \emph{False positives grow on unseen devices.} Holding out entire devices
+  from training, as a new gadget joining a home network would be, raises the
+  false-positive rate from \NlstmFPRin{} to \NlstmFPRout{} for our
+  reproducible model.
+\item \emph{The live feature extractor did not match the training features.}
+  \textsc{Sentinel}'s own re-implementation of the Kitsune extractor computed
+  40 of the 115 features differently from the data the model was trained on,
+  so offline accuracy did not describe the running system. We traced the
+  discrepancy, fixed it by adopting the reference implementation, and verified
+  parity against invariants measured on the training data itself.
+\item \emph{The LLM was asked to classify without evidence.} The classifier's
+  prompt carried device metadata and an anomaly score but no description of
+  the traffic, leaving the model to guess the ATT\&CK technique.
+\end{itemize}
+
+\noindent Our contributions are:
+\begin{enumerate}
+\item The design and open-source implementation of an end-to-end,
+  on-premise detection-to-response pipeline for home IoT networks that keeps
+  inference, including the LLM, on the appliance (\S\ref{sec:design}).
+\item A leakage-aware evaluation protocol for N-BaIoT with a
+  \emph{held-out-device} split, applied to the deployed model, a reproducible
+  retraining over five seeds, and two baselines (\S\ref{sec:method},
+  \S\ref{sec:res-detect}).
+\item A pre-registered evaluation of LLM ATT\&CK labelling from the evidence
+  the pipeline actually provides, with and without a traffic summary
+  (\S\ref{sec:res-llm}).
+\item A per-stage latency breakdown on a four-core aarch64 host, locating the
+  bottleneck of the detection-to-response path (\S\ref{sec:res-latency}).
+\item Practical lessons for building and evaluating such systems: recovering
+  the provenance of an undocumented model from its scaler, and checking that
+  live features match training features (\S\ref{sec:discussion}).
+\end{enumerate}
+
+All code, the evaluation harness, the pre-registration and the result files
+are released with the system.\footnote{Repository URL withheld for review.}

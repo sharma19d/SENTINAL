@@ -1,0 +1,120 @@
+\section{Results}
+\label{sec:results}
+
+\subsection{Detection, per attack class}
+\label{sec:res-detect}
+
+%%DETECTION%%
+
+\begin{table}[t]
+\centering
+\caption{Detection rate (\%) per attack class, all devices pooled. LSTM-AE,
+Dense AE and Isolation Forest are means over five seeds.}
+\label{tab:per-attack}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llrrrr}
+\toprule
+Botnet & Attack & Deployed & LSTM-AE & Dense AE & I.\,Forest \\
+\midrule
+\TperAttackRows
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\input{figures/per_attack}
+\caption{Detection rate per attack class (M: Mirai, B: BASHLITE). Two
+BASHLITE flood classes are almost entirely missed; Table~\ref{tab:per-attack}
+gives the values.}
+\label{fig:per-attack}
+\end{figure}
+
+\subsection{Unseen devices}
+\label{sec:res-heldout}
+
+%%HELDOUT%%
+
+\subsection{Live feature parity}
+\label{sec:res-parity}
+
+Offline results describe the model on N-BaIoT's features; they describe the
+running system only if the live extractor computes the same features. We
+checked this with invariants measured on N-BaIoT's own rows, which any faithful
+extractor must satisfy, on \NparPackets{} real packets from the Mirai capture
+distributed with Kitsune~\cite{kitsunepy} (Table~\ref{tab:parity}). The
+extractor originally shipped with \textsc{Sentinel} fed a single stream to both
+sides of every two-dimensional statistic, so its correlation features took only
+\NparOldPccN{} distinct values and its radius violated the bound on most
+packets. After replacing it with the reference statistics engine and pinning
+the stream layout to what the data shows, every invariant holds and the
+correlation features take \NparNewPccN{} distinct values within $[-1,1]$.
+
+\begin{table}[t]
+\centering
+\caption{Invariants measured on N-BaIoT, checked on real traffic for the
+original and the corrected live extractor (share of packets satisfying each).}
+\label{tab:parity}
+\footnotesize
+\begin{tabular}{lrr}
+\toprule
+Invariant (from N-BaIoT's rows) & Original & Corrected \\
+\midrule
+MI$_{\text{dir}}$ = H (one IP per MAC)        & \NparOldMih & \NparNewMih \\
+channel weight $\le$ host weight              & \NparOldHw  & \NparNewHw  \\
+radius $\ge$ std$^2$                          & \NparOldRad & \NparNewRad \\
+magnitude $\ge |$mean$|$                      & \NparOldMag & \NparNewMag \\
+$|$pcc$|$ $\le 1$                             & \NparOldPcc & \NparNewPcc \\
+distinct pcc values                           & \NparOldPccN & \NparNewPccN \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{LLM classification}
+\label{sec:res-llm}
+
+%%LLM%%
+
+\subsection{Latency}
+\label{sec:res-latency}
+
+Table~\ref{tab:latency} gives the median time of each stage. Everything the
+appliance computes itself is fast: extracting features and scoring a window
+together take \NlatDetectPkt{}\,ms per packet, enough for roughly
+\NdetectPPS{} packets per second on one core, and the bus hop and response
+policy each cost under a millisecond. The path is dominated by two calls. The
+LLM needs \NllmLatMed{}\,s per event (95th percentile \NllmLatP{}\,s), and
+\NllmCold{}\,s for the first event after the model service starts. The
+AlienVault OTX lookup is slower and far less predictable: a median of
+\NotxFullMed{}\,s over \NotxFullN{} lookups, ranging from \NotxFullMin{}\,s to
+\NotxFullMax{}\,s. It is made with a synchronous client inside the
+classifier's event loop and without a timeout, so while it waits no other
+event is classified. The classifier reads only the \emph{general} section of
+the OTX response, yet requests every section; requesting that section alone
+takes \NotxGenMed{}\,s (median of \NotxGenN{}), a \NotxSpeedup$\times$
+reduction.
+
+\begin{table}[t]
+\centering
+\caption{Median latency per stage on a 4-core aarch64 host.}
+\label{tab:latency}
+\footnotesize
+\begin{tabular}{lr}
+\toprule
+Stage & Median \\
+\midrule
+Feature extraction (per packet)            & \NlatExtract\,ms \\
+Anomaly inference (per window)             & \NlatInfer\,ms \\
+Redis bus hop                              & \NlatBus\,ms \\
+Response policy (LangGraph)                & \NlatPolicy\,ms \\
+nftables block                             & \NenfBlock\,ms \\
+\midrule
+LLM classification (warm)                  & \NllmLatMed\,s \\
+LLM first call after start                 & \NllmCold\,s \\
+AbuseIPDB lookup                           & \NabuseS\,s \\
+OTX lookup, all sections (as built)        & \NotxFullMed\,s \\
+OTX lookup, \emph{general} section only    & \NotxGenMed\,s \\
+\bottomrule
+\end{tabular}
+\end{table}

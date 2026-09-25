@@ -1,0 +1,91 @@
+\section{Evaluation Methodology}
+\label{sec:method}
+
+\subsection{Dataset and the deployed model's provenance}
+We evaluate detection on N-BaIoT~\cite{meidan2018nbaiot}: benign traffic from
+nine commercial devices (doorbells, a thermostat, a baby monitor, security
+cameras and a webcam) and traffic from the same devices after infection by
+Mirai and BASHLITE, each executing five attacks. Features are the 115 Kitsune
+statistics described in \S\ref{sec:design}. The attack classes are defined by
+the dataset's authors; for example, BASHLITE \emph{COMBO} is ``sending spam
+data and opening a connection to a specified IP address and port'' and Mirai
+\emph{UDPplain} is ``UDP flooding with fewer options, optimized for higher
+PPS''~\cite{meidan2018nbaiot}.
+
+The model shipped with \textsc{Sentinel} had been trained in a notebook that
+was not kept, so its training data was undocumented. We recovered it from the
+saved min--max scaler: its 115 per-feature minima and maxima match the benign
+traffic of exactly six of the nine devices with zero deviation, and the number
+of rows it was fitted on (\NprovRows{}) equals their combined benign row count.
+We call these six devices \emph{in-distribution} and the remaining three
+(\emph{Ennio} doorbell, \emph{Philips} baby monitor, \emph{SimpleHome} XCS7-1003
+camera) \emph{held-out}. No model evaluated here saw any traffic from the
+held-out devices, which therefore measure how the detector behaves on a device
+it has never observed---the ordinary case for a home appliance.
+
+\subsection{Splits and leakage}
+Adjacent rows of Kitsune features share damped statistics, so a random
+train/test split places near-duplicate rows on both sides of the boundary.
+Following Meidan~et~al., we split each in-distribution device's benign
+traffic \emph{chronologically} and keep the final third for
+testing~\cite{meidan2018nbaiot}. We train on the first 90\% of the remainder
+and use the last 10\% for early stopping and threshold selection. Scalers are
+fitted on the training portion only. Attack traffic is never used for training
+or threshold selection. Windows are ten consecutive rows from a single capture
+file, never spanning a file or device boundary; test windows do not overlap.
+
+The deployed model does not satisfy these conditions---its scaler saw all
+benign rows of the in-distribution devices---so we report its in-distribution
+false-positive rate only as optimistic and rely on its held-out-device and
+attack results, which are clean.
+
+\subsection{Models compared}
+\begin{itemize}
+\item \emph{Deployed}: the shipped ONNX model with its shipped threshold.
+\item \emph{LSTM-AE}: the same architecture retrained under the protocol above
+  with five seeds. Its parameter count reproduces the deployed model's exactly.
+\item \emph{Dense AE}: the per-row deep autoencoder architecture of N-BaIoT's
+  authors~\cite{meidan2018nbaiot} (hidden widths 86--57--37--28, mirrored),
+  scoring a window by its rows' mean error. It sees the same windows as the
+  LSTM-AE but models no temporal order.
+\item \emph{Isolation Forest}~\cite{liu2008iforest} on the flattened window,
+  as a non-neural baseline.
+\end{itemize}
+Every retrained model uses the same threshold rule: the 99th percentile of its
+own validation-benign scores, a nominal 1\% false-positive budget fixed without
+reference to attack traffic.
+
+\subsection{LLM classification (pre-registered)}
+To avoid grading our own test cases after seeing the model's answers, we
+committed the experimental design to the project repository before running the
+model on any sample. The ground truth maps each N-BaIoT attack class, by its
+authors' definition, to a set of acceptable ATT\&CK techniques: scans to
+Network Service Discovery, Active Scanning or Remote System Discovery, and all
+floods to Network or Endpoint Denial of Service. Equivalent techniques from the
+ATT\&CK for ICS matrix are accepted, because \textsc{Sentinel}'s prompt asks
+for that matrix. We drew 20 windows per attack class (200 in total) with a fixed
+seed, from both device groups, and queried the model under two prompts:
+\emph{as-built}, produced by \textsc{Sentinel}'s own prompt builder, and
+\emph{evidence}, identical but for five plain-language traffic statistics
+computed from the window (recent packet count, mean packet size, approximate
+numbers of destination hosts and of sockets, and channel jitter). Fields that
+could leak the label---the protocol, notably---were withheld from both, and
+reputation lookups were disabled. We report technique and tactic accuracy with
+Wilson 95\% intervals~\cite{wilson1927}, the rate of valid JSON, and latency.
+Two further analyses were declared after the initial design but before any
+output was seen: as a secondary analysis, results restricted to the windows the
+detector would actually forward to the classifier; and, labelled exploratory,
+the rate at which the pipeline would have blocked, i.e.\ the fraction of
+attack windows assigned severity~$\geq 6$.
+
+\subsection{Latency and host}
+We time each stage of the path in process with the real components: feature
+extraction per packet on real traffic (the Mirai capture distributed with
+Kitsune~\cite{kitsunepy}), anomaly inference per window, a Redis bus hop, the
+response policy, and the threat-intelligence lookups. LLM latency is taken from
+the 400 classification calls. All measurements ran on one host: a four-core
+aarch64 virtual machine with 7.7\,GB of memory. This is the same instruction
+set as, and a similar core count and memory size to, the Raspberry~Pi~5 that
+\textsc{Sentinel} targets, but it is not that device: it does not reproduce the
+Pi's clock speed, memory bandwidth or thermal throttling, so absolute timings
+on the Pi will differ. Neural models were trained on a Colab T4 GPU.

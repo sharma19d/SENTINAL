@@ -1,0 +1,11 @@
+cls,label,deployed,lstm,lstmsd,dense,iforest
+0,M-scan,99.950,nan,0.000,nan,nan
+1,M-ack,99.997,nan,0.000,nan,nan
+2,M-syn,100.000,nan,0.000,nan,nan
+3,M-udp,99.998,nan,0.000,nan,nan
+4,M-udpplain,100.000,nan,0.000,nan,nan
+5,B-scan,99.980,nan,0.000,nan,nan
+6,B-junk,99.981,nan,0.000,nan,nan
+7,B-combo,99.998,nan,0.000,nan,nan
+8,B-tcp,0.708,nan,0.000,nan,nan
+9,B-udp,0.360,nan,0.000,nan,nan

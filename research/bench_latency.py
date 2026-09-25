@@ -96,10 +96,13 @@ if __name__ == "__main__":
     out["2_anomaly_inference_per_window"] = bench_infer(P);          show("2 anomaly inference", out["2_anomaly_inference_per_window"])
     out["5_redis_bus_hop"] = bench_bus();                            show("5 redis bus hop", out["5_redis_bus_hop"])
     out["4_response_policy"] = asyncio.run(bench_policy());          show("4 response policy", out["4_response_policy"])
-    try:
-        out["3_intel_enrichment"] = asyncio.run(bench_intel());      show("3 intel enrichment", out["3_intel_enrichment"])
-    except Exception as e:
-        out["3_intel_enrichment"] = {"error": str(e)}; print("  3 intel enrichment    ERROR", e)
+    # Intel enrichment is external and slow enough (see bench_intel_probe.py)
+    # that it is measured separately rather than blocking the other stages.
+    if "--with-intel" in sys.argv:
+        try:
+            out["3_intel_enrichment"] = asyncio.run(bench_intel());  show("3 intel enrichment", out["3_intel_enrichment"])
+        except Exception as e:
+            out["3_intel_enrichment"] = {"error": str(e)}; print("  3 intel enrichment    ERROR", e)
     import platform
     out["host"] = {"machine": platform.machine(), "cpus": os.cpu_count(), "python": platform.python_version()}
     json.dump(out, open(os.path.join(ROOT, "research/results/latency_stages.json"), "w"), indent=2)

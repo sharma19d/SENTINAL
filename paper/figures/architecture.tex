@@ -1,0 +1,42 @@
+% SENTINEL architecture — the detection-to-response path as built.
+% Solid boxes run on the appliance; dashed boxes are external services.
+\begin{tikzpicture}[
+  font=\footnotesize,
+  stage/.style={draw, rounded corners=2pt, align=center, minimum height=9mm,
+                minimum width=19mm, fill=blue!6},
+  ext/.style={draw, dashed, rounded corners=2pt, align=center, minimum height=6.5mm,
+              minimum width=19mm, fill=gray!8},
+  bus/.style={-{Latex[length=1.8mm]}, thick},
+  side/.style={-{Latex[length=1.5mm]}, densely dotted},
+  lbl/.style={font=\scriptsize\ttfamily, inner sep=1.2pt}
+]
+% main path (y = 0), 34 mm pitch leaves room for the channel labels
+\node[stage] (cap) at (0,0)    {Capture\\{\scriptsize Scapy}};
+\node[stage] (ano) at (3.4,0)  {Anomaly\\{\scriptsize Kitsune, LSTM-AE}};
+\node[stage] (cls) at (6.8,0)  {Classifier\\{\scriptsize Gemma 4 E2B}};
+\node[stage] (rsp) at (10.2,0)  {Responder\\{\scriptsize policy graph}};
+\draw[bus] (cap) -- node[lbl, above] {packets} (ano);
+\draw[bus] (ano) -- node[lbl, above] {anomaly} (cls);
+\draw[bus] (cls) -- node[lbl, above] {threat}  (rsp);
+
+% enforcement row (y = -1.7)
+\node[stage, fill=orange!12] (hp) at (0,-1.7)   {Honeypots\\{\scriptsize Cowrie / OpenCanary}};
+\node[stage, fill=red!9]     (fw) at (10.2,-1.7) {nftables\\{\scriptsize block + guard}};
+\draw[bus] (rsp) -- node[lbl, right] {actions} (fw);
+\draw[bus] (hp) -- node[lbl, above] {attacker IP} (fw);
+
+% local registry (on the appliance), above the main path
+\node[stage, fill=green!7, minimum height=7mm] (reg) at (3.4,1.35) {Device registry};
+\draw[side] (reg.east) -| node[lbl, above, pos=0.25] {vendor, CVEs} (cls.north);
+
+% the appliance boundary
+\node[draw, dotted, rounded corners=3pt, inner xsep=2.2mm, inner ysep=2.2mm,
+      fit=(cap)(rsp)(hp)(fw)(reg)] (box) {};
+\node[font=\scriptsize\itshape, anchor=north west] at (box.south west) {on the appliance};
+
+% external services, above the boundary
+\node[ext] (nvd)   at (3.4,2.75) {NIST NVD};
+\node[ext] (intel) at (8.5,2.75) {OTX, AbuseIPDB};
+\draw[side] (nvd) -- node[lbl, left, pos=0.3] {vendor name} (reg);
+\draw[side] (intel.south) |- ++(0,-0.45) -| node[lbl, right, pos=0.75] {remote IP} (cls.north east);
+\end{tikzpicture}
