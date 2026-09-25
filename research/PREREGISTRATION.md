@@ -90,6 +90,28 @@ Held constant across both variants, to avoid leaking the label:
 
 Reported per variant, per category and per class, with Wilson 95% intervals.
 
+## Clarifications (added before any LLM output was seen)
+
+Implementation details the sections above left open, fixed now — before a single
+evaluation sample has been sent to the model — rather than chosen after seeing
+results:
+
+1. **Multiple technique IDs.** If `technique_id` contains more than one ATT&CK
+   ID, the FIRST one is graded as the model's primary answer. Grading "any of
+   them" would reward a model for hedging with a list.
+2. **Flagged subset.** Samples are drawn uniformly per class regardless of
+   whether the LSTM would flag them, as specified. Because the deployed
+   pipeline only forwards FLAGGED windows to the classifier, results are ALSO
+   reported on the flagged subset (score > the LSTM's threshold). The
+   unconditional numbers remain the primary result.
+3. **Evidence placement.** The EVIDENCE block is inserted immediately before
+   the prompt's `TASK:` line, after the as-built anomaly fields, so the as-built
+   text is otherwise byte-identical between variants.
+4. **Order.** The 400 (sample, variant) calls run in one order shuffled with
+   seed 0, interleaving the variants so that any drift in the model's speed or
+   behaviour over the run cannot systematically favour one variant. One
+   warm-up call loads the model weights and is not scored.
+
 ## Deviations
 
 *(none yet)*
