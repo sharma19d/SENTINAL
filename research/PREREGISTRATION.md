@@ -112,6 +112,18 @@ results:
    behaviour over the run cannot systematically favour one variant. One
    warm-up call loads the model weights and is not scored.
 
+## Exploratory analyses (declared before any LLM output was seen)
+
+Not part of the confirmatory questions above, and to be reported as
+EXPLORATORY in any write-up:
+
+1. **Would-block rate.** SENTINEL's response policy (`sentinel/config/policy.yaml`)
+   blocks the indicator with no human confirmation when the LLM's `severity` is
+   >= 6. The fraction of attack samples receiving severity >= 6 therefore
+   estimates how often the pipeline, end to end, would have enforced a block.
+   Reported per variant and per category.
+2. **Severity and action distributions**, per variant.
+
 ## Deviations
 
 *(none yet)*
