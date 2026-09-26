@@ -173,3 +173,9 @@ paper/*.bbl
 paper/*.blg
 paper/*.toc
 paper/_fig.*
+
+# Raw per-window score files (~14 MB each); summarised in research/results/summary_models.json
+research/results/res_deployed.json
+research/results/colab/*_seed*.json
+research/results/colab/runs/
+research/results/colab/ollama_serve.log

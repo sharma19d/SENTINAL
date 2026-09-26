@@ -1,0 +1,3606 @@
+{
+  "seed": 0,
+  "lstm_threshold": 0.004680064506828785,
+  "samples": [
+    {
+      "id": "gafgyt-combo-00",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 19.863054,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7086.67,
+        "mean_packet_size_bytes": 74.8,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7086.67,
+        "channel_jitter_mean_s": 15080.0
+      }
+    },
+    {
+      "id": "gafgyt-combo-01",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 76.597519,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7303.85,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7157.18,
+        "channel_jitter_mean_s": 261.3
+      }
+    },
+    {
+      "id": "gafgyt-combo-02",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "Samsung_SNH_1011_N_Webcam",
+      "group": "in_dist",
+      "anomaly_score": 60.209377,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7753.46,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7536.15,
+        "channel_jitter_mean_s": 964.3
+      }
+    },
+    {
+      "id": "gafgyt-combo-03",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.167973,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1460.53,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1460.53,
+        "channel_jitter_mean_s": 843900.0
+      }
+    },
+    {
+      "id": "gafgyt-combo-04",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 30.092527,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7556.09,
+        "mean_packet_size_bytes": 74.4,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7556.09,
+        "channel_jitter_mean_s": 6784.0
+      }
+    },
+    {
+      "id": "gafgyt-combo-05",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 81.450905,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7456.01,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7307.8,
+        "channel_jitter_mean_s": 196.3
+      }
+    },
+    {
+      "id": "gafgyt-combo-06",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 46.043415,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7903.95,
+        "mean_packet_size_bytes": 74.2,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7722.56,
+        "channel_jitter_mean_s": 2408.0
+      }
+    },
+    {
+      "id": "gafgyt-combo-07",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 0.4857,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 2237.66,
+        "mean_packet_size_bytes": 74.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 2237.66,
+        "channel_jitter_mean_s": 483100.0
+      }
+    },
+    {
+      "id": "gafgyt-combo-08",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 68.134216,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6880.24,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 6739.23,
+        "channel_jitter_mean_s": 432.7
+      }
+    },
+    {
+      "id": "gafgyt-combo-09",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 67.764664,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6842.47,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 6702.34,
+        "channel_jitter_mean_s": 439.9
+      }
+    },
+    {
+      "id": "gafgyt-combo-10",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 80.176483,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7360.12,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7214.28,
+        "channel_jitter_mean_s": 208.1
+      }
+    },
+    {
+      "id": "gafgyt-combo-11",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 9.690289,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5596.71,
+        "mean_packet_size_bytes": 74.8,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 5596.71,
+        "channel_jitter_mean_s": 42480.0
+      }
+    },
+    {
+      "id": "gafgyt-combo-12",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "Samsung_SNH_1011_N_Webcam",
+      "group": "in_dist",
+      "anomaly_score": 3.083001,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 4507.92,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 4507.92,
+        "channel_jitter_mean_s": 146500.0
+      }
+    },
+    {
+      "id": "gafgyt-combo-13",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 82.461861,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7470.62,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7322.71,
+        "channel_jitter_mean_s": 184.3
+      }
+    },
+    {
+      "id": "gafgyt-combo-14",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 1.129333,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3141.98,
+        "mean_packet_size_bytes": 74.2,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 3141.98,
+        "channel_jitter_mean_s": 292400.0
+      }
+    },
+    {
+      "id": "gafgyt-combo-15",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 44.698067,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7884.94,
+        "mean_packet_size_bytes": 74.2,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7703.57,
+        "channel_jitter_mean_s": 2614.0
+      }
+    },
+    {
+      "id": "gafgyt-combo-16",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 6.292783,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5647.97,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 5647.97,
+        "channel_jitter_mean_s": 78750.0
+      }
+    },
+    {
+      "id": "gafgyt-combo-17",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "Samsung_SNH_1011_N_Webcam",
+      "group": "in_dist",
+      "anomaly_score": 18.646509,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6981.3,
+        "mean_packet_size_bytes": 74.9,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 6981.3,
+        "channel_jitter_mean_s": 16820.0
+      }
+    },
+    {
+      "id": "gafgyt-combo-18",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 41.69241,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7887.56,
+        "mean_packet_size_bytes": 74.2,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7705.78,
+        "channel_jitter_mean_s": 3172.0
+      }
+    },
+    {
+      "id": "gafgyt-combo-19",
+      "botnet": "gafgyt",
+      "attack": "combo",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 34.263954,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7763.18,
+        "mean_packet_size_bytes": 74.3,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7763.18,
+        "channel_jitter_mean_s": 5139.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-00",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 30.651808,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7134.42,
+        "mean_packet_size_bytes": 74.8,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7134.42,
+        "channel_jitter_mean_s": 7459.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-01",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 22.117065,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7678.12,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7678.12,
+        "channel_jitter_mean_s": 17650.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-02",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 22.895784,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7735.08,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7735.08,
+        "channel_jitter_mean_s": 16650.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-03",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 10.172713,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6567.71,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 6567.71,
+        "channel_jitter_mean_s": 51770.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-04",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 29.698225,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7071.21,
+        "mean_packet_size_bytes": 74.6,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7071.21,
+        "channel_jitter_mean_s": 7999.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-05",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 2.32517,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 4153.25,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 4153.25,
+        "channel_jitter_mean_s": 189600.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-06",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Samsung_SNH_1011_N_Webcam",
+      "group": "in_dist",
+      "anomaly_score": 20.09639,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7569.81,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7569.81,
+        "channel_jitter_mean_s": 20800.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-07",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 22.713081,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6476.83,
+        "mean_packet_size_bytes": 74.7,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 6476.83,
+        "channel_jitter_mean_s": 13790.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-08",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 30.380789,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7104.31,
+        "mean_packet_size_bytes": 74.8,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7104.31,
+        "channel_jitter_mean_s": 7588.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-09",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 15.876992,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7223.53,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7223.53,
+        "channel_jitter_mean_s": 29650.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-10",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 10.295234,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6594.63,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 6594.63,
+        "channel_jitter_mean_s": 51100.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-11",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 7.845377,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6154.75,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 6154.75,
+        "channel_jitter_mean_s": 68260.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-12",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Samsung_SNH_1011_N_Webcam",
+      "group": "in_dist",
+      "anomaly_score": 13.109491,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6913.94,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 6913.94,
+        "channel_jitter_mean_s": 38260.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-13",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 14.57749,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7064.77,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7064.77,
+        "channel_jitter_mean_s": 33280.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-14",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 23.559193,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6554.49,
+        "mean_packet_size_bytes": 74.7,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 6554.49,
+        "channel_jitter_mean_s": 12850.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-15",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 31.480751,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7174.99,
+        "mean_packet_size_bytes": 75.2,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7174.99,
+        "channel_jitter_mean_s": 7014.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-16",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 1.195954,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3230.11,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 3230.11,
+        "channel_jitter_mean_s": 291000.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-17",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 34.388412,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6384.1,
+        "mean_packet_size_bytes": 74.8,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 6246.76,
+        "channel_jitter_mean_s": 4872.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-18",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 16.535215,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7275.37,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 7275.37,
+        "channel_jitter_mean_s": 27960.0
+      }
+    },
+    {
+      "id": "gafgyt-junk-19",
+      "botnet": "gafgyt",
+      "attack": "junk",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 8.880951,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6345.95,
+        "mean_packet_size_bytes": 74.1,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 6345.95,
+        "channel_jitter_mean_s": 59880.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-00",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 1.035513,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 913.03,
+        "mean_packet_size_bytes": 74.8,
+        "approx_active_destination_hosts": 913.03,
+        "approx_active_sockets": 913.03,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-01",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 1.497864,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 704.78,
+        "mean_packet_size_bytes": 79.7,
+        "approx_active_destination_hosts": 704.78,
+        "approx_active_sockets": 704.78,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-02",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.935287,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1023.41,
+        "mean_packet_size_bytes": 75.6,
+        "approx_active_destination_hosts": 1023.41,
+        "approx_active_sockets": 1023.41,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-03",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.659037,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 880.96,
+        "mean_packet_size_bytes": 77.9,
+        "approx_active_destination_hosts": 880.96,
+        "approx_active_sockets": 880.96,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-04",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 1.539048,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 939.0,
+        "mean_packet_size_bytes": 75.1,
+        "approx_active_destination_hosts": 427.99,
+        "approx_active_sockets": 427.99,
+        "channel_jitter_mean_s": 367300000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-05",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 1.624776,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 975.09,
+        "mean_packet_size_bytes": 75.5,
+        "approx_active_destination_hosts": 975.09,
+        "approx_active_sockets": 975.09,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-06",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Samsung_SNH_1011_N_Webcam",
+      "group": "in_dist",
+      "anomaly_score": 0.237764,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1129.97,
+        "mean_packet_size_bytes": 76.9,
+        "approx_active_destination_hosts": 514.84,
+        "approx_active_sockets": 514.84,
+        "channel_jitter_mean_s": 367100000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-07",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.185647,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1059.71,
+        "mean_packet_size_bytes": 79.1,
+        "approx_active_destination_hosts": 584.91,
+        "approx_active_sockets": 584.91,
+        "channel_jitter_mean_s": 674700000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-08",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 1.577737,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1198.14,
+        "mean_packet_size_bytes": 80.4,
+        "approx_active_destination_hosts": 545.93,
+        "approx_active_sockets": 545.93,
+        "channel_jitter_mean_s": 367300000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-09",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.960999,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1120.22,
+        "mean_packet_size_bytes": 75.3,
+        "approx_active_destination_hosts": 618.28,
+        "approx_active_sockets": 618.28,
+        "channel_jitter_mean_s": 674800000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-10",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 1.508859,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1201.93,
+        "mean_packet_size_bytes": 74.8,
+        "approx_active_destination_hosts": 547.9,
+        "approx_active_sockets": 547.9,
+        "channel_jitter_mean_s": 367200000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-11",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 0.220848,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 699.17,
+        "mean_packet_size_bytes": 80.3,
+        "approx_active_destination_hosts": 699.17,
+        "approx_active_sockets": 699.17,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-12",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 1.579281,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 954.9,
+        "mean_packet_size_bytes": 75.4,
+        "approx_active_destination_hosts": 435.14,
+        "approx_active_sockets": 435.14,
+        "channel_jitter_mean_s": 367300000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-13",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 1.325169,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1298.83,
+        "mean_packet_size_bytes": 80.0,
+        "approx_active_destination_hosts": 717.19,
+        "approx_active_sockets": 717.19,
+        "channel_jitter_mean_s": 674400000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-14",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 1.595819,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 925.64,
+        "mean_packet_size_bytes": 76.2,
+        "approx_active_destination_hosts": 925.64,
+        "approx_active_sockets": 925.64,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-15",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 1.506391,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 798.94,
+        "mean_packet_size_bytes": 78.1,
+        "approx_active_destination_hosts": 440.9,
+        "approx_active_sockets": 440.9,
+        "channel_jitter_mean_s": 674900000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-16",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 1.455655,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 786.97,
+        "mean_packet_size_bytes": 75.2,
+        "approx_active_destination_hosts": 434.32,
+        "approx_active_sockets": 434.32,
+        "channel_jitter_mean_s": 674800000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-17",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 0.581735,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 948.99,
+        "mean_packet_size_bytes": 75.0,
+        "approx_active_destination_hosts": 524.73,
+        "approx_active_sockets": 524.73,
+        "channel_jitter_mean_s": 673200000.0
+      }
+    },
+    {
+      "id": "gafgyt-scan-18",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 1.546852,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 924.22,
+        "mean_packet_size_bytes": 75.2,
+        "approx_active_destination_hosts": 62.12,
+        "approx_active_sockets": 63.34,
+        "channel_jitter_mean_s": 1.007
+      }
+    },
+    {
+      "id": "gafgyt-scan-19",
+      "botnet": "gafgyt",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 0.234871,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1119.67,
+        "mean_packet_size_bytes": 77.0,
+        "approx_active_destination_hosts": 510.28,
+        "approx_active_sockets": 510.28,
+        "channel_jitter_mean_s": 367200000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-00",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-01",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-02",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-03",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-04",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-05",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-06",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-07",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-08",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-09",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-10",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-11",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-12",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-13",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-14",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-15",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-16",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-17",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-18",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-tcp-19",
+      "botnet": "gafgyt",
+      "attack": "tcp",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-00",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-01",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-02",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-03",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Samsung_SNH_1011_N_Webcam",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-04",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-05",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Samsung_SNH_1011_N_Webcam",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-06",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-07",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-08",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-09",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-10",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-11",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-12",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-13",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-14",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-15",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-16",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-17",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-18",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "gafgyt-udp-19",
+      "botnet": "gafgyt",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Ennio_Doorbell",
+      "group": "held_out",
+      "anomaly_score": 0.000209,
+      "alert_level": "warning",
+      "flagged": false,
+      "evidence": {
+        "recent_packet_count": 1.0,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1.0,
+        "approx_active_sockets": 1.0,
+        "channel_jitter_mean_s": 1506000000.0
+      }
+    },
+    {
+      "id": "mirai-ack-00",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 22.997116,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5947.32,
+        "mean_packet_size_bytes": 439.1,
+        "approx_active_destination_hosts": 1.33,
+        "approx_active_sockets": 5947.32,
+        "channel_jitter_mean_s": 3431.0
+      }
+    },
+    {
+      "id": "mirai-ack-01",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 13.063323,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3214.63,
+        "mean_packet_size_bytes": 336.4,
+        "approx_active_destination_hosts": 3214.63,
+        "approx_active_sockets": 3214.63,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-ack-02",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 10.582703,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3533.42,
+        "mean_packet_size_bytes": 335.6,
+        "approx_active_destination_hosts": 3533.42,
+        "approx_active_sockets": 3533.42,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-ack-03",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 5.256836,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5222.38,
+        "mean_packet_size_bytes": 440.0,
+        "approx_active_destination_hosts": 1.33,
+        "approx_active_sockets": 5222.38,
+        "channel_jitter_mean_s": 67520.0
+      }
+    },
+    {
+      "id": "mirai-ack-04",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 62.050747,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6454.13,
+        "mean_packet_size_bytes": 435.7,
+        "approx_active_destination_hosts": 6454.13,
+        "approx_active_sockets": 6454.13,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-ack-05",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 61.453926,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6263.62,
+        "mean_packet_size_bytes": 394.9,
+        "approx_active_destination_hosts": 6263.62,
+        "approx_active_sockets": 6263.62,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-ack-06",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 37.788681,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6313.7,
+        "mean_packet_size_bytes": 396.0,
+        "approx_active_destination_hosts": 1.51,
+        "approx_active_sockets": 6313.7,
+        "channel_jitter_mean_s": 405.9
+      }
+    },
+    {
+      "id": "mirai-ack-07",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 1.829131,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3728.65,
+        "mean_packet_size_bytes": 441.0,
+        "approx_active_destination_hosts": 1.33,
+        "approx_active_sockets": 3728.65,
+        "channel_jitter_mean_s": 207000.0
+      }
+    },
+    {
+      "id": "mirai-ack-08",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 7.345098,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5625.3,
+        "mean_packet_size_bytes": 446.3,
+        "approx_active_destination_hosts": 5625.3,
+        "approx_active_sockets": 5625.3,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-ack-09",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 99.305382,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6224.02,
+        "mean_packet_size_bytes": 439.5,
+        "approx_active_destination_hosts": 1.33,
+        "approx_active_sockets": 6224.02,
+        "channel_jitter_mean_s": 0.1014
+      }
+    },
+    {
+      "id": "mirai-ack-10",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 2.401865,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3300.99,
+        "mean_packet_size_bytes": 356.8,
+        "approx_active_destination_hosts": 3300.99,
+        "approx_active_sockets": 3300.99,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-ack-11",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 16.467699,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3956.1,
+        "mean_packet_size_bytes": 336.6,
+        "approx_active_destination_hosts": 1.83,
+        "approx_active_sockets": 3956.1,
+        "channel_jitter_mean_s": 29.69
+      }
+    },
+    {
+      "id": "mirai-ack-12",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 72.492867,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5816.66,
+        "mean_packet_size_bytes": 432.2,
+        "approx_active_destination_hosts": 1.36,
+        "approx_active_sockets": 5816.66,
+        "channel_jitter_mean_s": 0.01018
+      }
+    },
+    {
+      "id": "mirai-ack-13",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 18.167206,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3299.67,
+        "mean_packet_size_bytes": 299.6,
+        "approx_active_destination_hosts": 3299.67,
+        "approx_active_sockets": 3299.67,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-ack-14",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 35.456181,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6276.17,
+        "mean_packet_size_bytes": 439.8,
+        "approx_active_destination_hosts": 1.33,
+        "approx_active_sockets": 6276.17,
+        "channel_jitter_mean_s": 722.1
+      }
+    },
+    {
+      "id": "mirai-ack-15",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 5.478193,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5249.07,
+        "mean_packet_size_bytes": 447.5,
+        "approx_active_destination_hosts": 1.31,
+        "approx_active_sockets": 5249.07,
+        "channel_jitter_mean_s": 62290.0
+      }
+    },
+    {
+      "id": "mirai-ack-16",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 45.573433,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5952.89,
+        "mean_packet_size_bytes": 432.6,
+        "approx_active_destination_hosts": 5952.89,
+        "approx_active_sockets": 5952.89,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-ack-17",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 94.108315,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6284.14,
+        "mean_packet_size_bytes": 394.5,
+        "approx_active_destination_hosts": 1.51,
+        "approx_active_sockets": 6284.14,
+        "channel_jitter_mean_s": 0.08036
+      }
+    },
+    {
+      "id": "mirai-ack-18",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 42.352146,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6439.86,
+        "mean_packet_size_bytes": 390.3,
+        "approx_active_destination_hosts": 6439.86,
+        "approx_active_sockets": 6439.86,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-ack-19",
+      "botnet": "mirai",
+      "attack": "ack",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 6.297366,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5891.02,
+        "mean_packet_size_bytes": 390.8,
+        "approx_active_destination_hosts": 5891.02,
+        "approx_active_sockets": 5891.02,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-00",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 4.797314,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1960.16,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1960.16,
+        "approx_active_sockets": 1960.16,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-01",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 8.293126,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1960.69,
+        "mean_packet_size_bytes": 60.1,
+        "approx_active_destination_hosts": 1960.69,
+        "approx_active_sockets": 1960.69,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-02",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 5.279202,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1962.79,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1962.79,
+        "approx_active_sockets": 1962.79,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-03",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 7.936992,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1969.75,
+        "mean_packet_size_bytes": 60.1,
+        "approx_active_destination_hosts": 1969.75,
+        "approx_active_sockets": 1969.75,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-04",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 4.312318,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1949.42,
+        "mean_packet_size_bytes": 60.1,
+        "approx_active_destination_hosts": 1949.42,
+        "approx_active_sockets": 1949.42,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-05",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 4.64123,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1913.34,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1913.34,
+        "approx_active_sockets": 1913.34,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-06",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 3.139545,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 2272.27,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 2272.27,
+        "approx_active_sockets": 2272.27,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-07",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 7.964911,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1931.34,
+        "mean_packet_size_bytes": 60.1,
+        "approx_active_destination_hosts": 1931.34,
+        "approx_active_sockets": 1931.34,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-08",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 9.943167,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 2246.38,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 2246.38,
+        "approx_active_sockets": 2246.38,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-09",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 0.515754,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1814.48,
+        "mean_packet_size_bytes": 60.1,
+        "approx_active_destination_hosts": 1814.48,
+        "approx_active_sockets": 1814.48,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-10",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 1.893794,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1945.66,
+        "mean_packet_size_bytes": 60.1,
+        "approx_active_destination_hosts": 1945.66,
+        "approx_active_sockets": 1945.66,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-11",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 1.539502,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1973.98,
+        "mean_packet_size_bytes": 60.2,
+        "approx_active_destination_hosts": 1973.98,
+        "approx_active_sockets": 1973.98,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-12",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 2.2984,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 2013.5,
+        "mean_packet_size_bytes": 60.1,
+        "approx_active_destination_hosts": 2013.5,
+        "approx_active_sockets": 2013.5,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-13",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 4.727323,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1949.95,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 1949.95,
+        "approx_active_sockets": 1949.95,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-14",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 5.078906,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1981.75,
+        "mean_packet_size_bytes": 60.1,
+        "approx_active_destination_hosts": 1981.75,
+        "approx_active_sockets": 1981.75,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-15",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 3.490894,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1932.54,
+        "mean_packet_size_bytes": 60.6,
+        "approx_active_destination_hosts": 1932.54,
+        "approx_active_sockets": 1932.54,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-16",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 11.501238,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 2328.19,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 2328.19,
+        "approx_active_sockets": 2328.19,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-17",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 11.903955,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 2206.95,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 2206.95,
+        "approx_active_sockets": 2206.95,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-18",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 11.008436,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 2220.11,
+        "mean_packet_size_bytes": 60.0,
+        "approx_active_destination_hosts": 2220.11,
+        "approx_active_sockets": 2220.11,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-scan-19",
+      "botnet": "mirai",
+      "attack": "scan",
+      "category": "DISCOVERY",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 7.133625,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 1982.7,
+        "mean_packet_size_bytes": 60.1,
+        "approx_active_destination_hosts": 1982.7,
+        "approx_active_sockets": 1982.7,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-syn-00",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 8.526711,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6297.65,
+        "mean_packet_size_bytes": 69.4,
+        "approx_active_destination_hosts": 6297.65,
+        "approx_active_sockets": 6297.65,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-syn-01",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 1.051734,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 2767.61,
+        "mean_packet_size_bytes": 67.0,
+        "approx_active_destination_hosts": 2.0,
+        "approx_active_sockets": 2767.61,
+        "channel_jitter_mean_s": 179700.0
+      }
+    },
+    {
+      "id": "mirai-syn-02",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 12.322949,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6236.23,
+        "mean_packet_size_bytes": 70.5,
+        "approx_active_destination_hosts": 1.34,
+        "approx_active_sockets": 6236.23,
+        "channel_jitter_mean_s": 19470.0
+      }
+    },
+    {
+      "id": "mirai-syn-03",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 54.127972,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6563.83,
+        "mean_packet_size_bytes": 70.6,
+        "approx_active_destination_hosts": 1.34,
+        "approx_active_sockets": 6563.83,
+        "channel_jitter_mean_s": 149.0
+      }
+    },
+    {
+      "id": "mirai-syn-04",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 7.772999,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6295.32,
+        "mean_packet_size_bytes": 69.4,
+        "approx_active_destination_hosts": 6295.32,
+        "approx_active_sockets": 6295.32,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-syn-05",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 8.672318,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6356.02,
+        "mean_packet_size_bytes": 69.4,
+        "approx_active_destination_hosts": 6356.02,
+        "approx_active_sockets": 6356.02,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-syn-06",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 42.233826,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6801.24,
+        "mean_packet_size_bytes": 70.8,
+        "approx_active_destination_hosts": 1.3,
+        "approx_active_sockets": 6801.24,
+        "channel_jitter_mean_s": 565.1
+      }
+    },
+    {
+      "id": "mirai-syn-07",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 53.515022,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6594.25,
+        "mean_packet_size_bytes": 70.7,
+        "approx_active_destination_hosts": 6594.25,
+        "approx_active_sockets": 6594.25,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-syn-08",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 77.568382,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6757.07,
+        "mean_packet_size_bytes": 69.3,
+        "approx_active_destination_hosts": 1.5,
+        "approx_active_sockets": 6757.07,
+        "channel_jitter_mean_s": 5.342
+      }
+    },
+    {
+      "id": "mirai-syn-09",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 5.967846,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 4326.79,
+        "mean_packet_size_bytes": 68.4,
+        "approx_active_destination_hosts": 4326.79,
+        "approx_active_sockets": 4326.79,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-syn-10",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 122.193848,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6650.25,
+        "mean_packet_size_bytes": 71.0,
+        "approx_active_destination_hosts": 1.27,
+        "approx_active_sockets": 6650.25,
+        "channel_jitter_mean_s": 0.005305
+      }
+    },
+    {
+      "id": "mirai-syn-11",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 112.591339,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6901.03,
+        "mean_packet_size_bytes": 70.8,
+        "approx_active_destination_hosts": 1.29,
+        "approx_active_sockets": 6901.03,
+        "channel_jitter_mean_s": 0.1536
+      }
+    },
+    {
+      "id": "mirai-syn-12",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 102.302261,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6805.37,
+        "mean_packet_size_bytes": 70.8,
+        "approx_active_destination_hosts": 1.3,
+        "approx_active_sockets": 6805.37,
+        "channel_jitter_mean_s": 0.5196
+      }
+    },
+    {
+      "id": "mirai-syn-13",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 121.207733,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6727.31,
+        "mean_packet_size_bytes": 70.6,
+        "approx_active_destination_hosts": 1.32,
+        "approx_active_sockets": 6727.31,
+        "channel_jitter_mean_s": 0.005804
+      }
+    },
+    {
+      "id": "mirai-syn-14",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 122.343315,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 7121.53,
+        "mean_packet_size_bytes": 70.7,
+        "approx_active_destination_hosts": 1.3,
+        "approx_active_sockets": 7121.53,
+        "channel_jitter_mean_s": 0.05418
+      }
+    },
+    {
+      "id": "mirai-syn-15",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 19.589037,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6446.51,
+        "mean_packet_size_bytes": 69.5,
+        "approx_active_destination_hosts": 1.48,
+        "approx_active_sockets": 6446.51,
+        "channel_jitter_mean_s": 6211.0
+      }
+    },
+    {
+      "id": "mirai-syn-16",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 5.724439,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5998.07,
+        "mean_packet_size_bytes": 69.4,
+        "approx_active_destination_hosts": 5998.07,
+        "approx_active_sockets": 5998.07,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-syn-17",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 19.908176,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3985.79,
+        "mean_packet_size_bytes": 68.1,
+        "approx_active_destination_hosts": 3985.79,
+        "approx_active_sockets": 3985.79,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-syn-18",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 66.791672,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6507.45,
+        "mean_packet_size_bytes": 70.8,
+        "approx_active_destination_hosts": 1.31,
+        "approx_active_sockets": 6507.45,
+        "channel_jitter_mean_s": 35.72
+      }
+    },
+    {
+      "id": "mirai-syn-19",
+      "botnet": "mirai",
+      "attack": "syn",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 11.335379,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6295.65,
+        "mean_packet_size_bytes": 69.3,
+        "approx_active_destination_hosts": 1.5,
+        "approx_active_sockets": 6295.65,
+        "channel_jitter_mean_s": 21850.0
+      }
+    },
+    {
+      "id": "mirai-udp-00",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 38.738358,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 4264.36,
+        "mean_packet_size_bytes": 344.0,
+        "approx_active_destination_hosts": 1.74,
+        "approx_active_sockets": 4264.36,
+        "channel_jitter_mean_s": 0.005919
+      }
+    },
+    {
+      "id": "mirai-udp-01",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 21.44088,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 4091.78,
+        "mean_packet_size_bytes": 343.5,
+        "approx_active_destination_hosts": 4091.78,
+        "approx_active_sockets": 4091.78,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udp-02",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 43.18988,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3640.16,
+        "mean_packet_size_bytes": 345.1,
+        "approx_active_destination_hosts": 1.73,
+        "approx_active_sockets": 3640.16,
+        "channel_jitter_mean_s": 0.006975
+      }
+    },
+    {
+      "id": "mirai-udp-03",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 48.511444,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3796.86,
+        "mean_packet_size_bytes": 339.9,
+        "approx_active_destination_hosts": 1.76,
+        "approx_active_sockets": 3796.86,
+        "channel_jitter_mean_s": 0.006729
+      }
+    },
+    {
+      "id": "mirai-udp-04",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 32.591957,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3588.64,
+        "mean_packet_size_bytes": 339.5,
+        "approx_active_destination_hosts": 3588.64,
+        "approx_active_sockets": 3588.64,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udp-05",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 29.234035,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 4313.6,
+        "mean_packet_size_bytes": 349.2,
+        "approx_active_destination_hosts": 1.71,
+        "approx_active_sockets": 4313.6,
+        "channel_jitter_mean_s": 1.94
+      }
+    },
+    {
+      "id": "mirai-udp-06",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 2.962994,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3835.91,
+        "mean_packet_size_bytes": 339.7,
+        "approx_active_destination_hosts": 3835.91,
+        "approx_active_sockets": 3835.91,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udp-07",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 27.706104,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6560.5,
+        "mean_packet_size_bytes": 425.3,
+        "approx_active_destination_hosts": 1.35,
+        "approx_active_sockets": 6560.5,
+        "channel_jitter_mean_s": 2854.0
+      }
+    },
+    {
+      "id": "mirai-udp-08",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 45.360748,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6101.34,
+        "mean_packet_size_bytes": 420.9,
+        "approx_active_destination_hosts": 1.37,
+        "approx_active_sockets": 6101.34,
+        "channel_jitter_mean_s": 280.0
+      }
+    },
+    {
+      "id": "mirai-udp-09",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 145.694275,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6355.29,
+        "mean_packet_size_bytes": 382.1,
+        "approx_active_destination_hosts": 1.53,
+        "approx_active_sockets": 6355.29,
+        "channel_jitter_mean_s": 0.003486
+      }
+    },
+    {
+      "id": "mirai-udp-10",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 72.195518,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6340.33,
+        "mean_packet_size_bytes": 382.7,
+        "approx_active_destination_hosts": 1.53,
+        "approx_active_sockets": 6340.33,
+        "channel_jitter_mean_s": 3.815
+      }
+    },
+    {
+      "id": "mirai-udp-11",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 49.157528,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3849.23,
+        "mean_packet_size_bytes": 339.2,
+        "approx_active_destination_hosts": 1.77,
+        "approx_active_sockets": 3849.23,
+        "channel_jitter_mean_s": 0.006653
+      }
+    },
+    {
+      "id": "mirai-udp-12",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 25.809271,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6120.07,
+        "mean_packet_size_bytes": 425.5,
+        "approx_active_destination_hosts": 6120.07,
+        "approx_active_sockets": 6120.07,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udp-13",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 62.68829,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6454.28,
+        "mean_packet_size_bytes": 425.7,
+        "approx_active_destination_hosts": 6454.28,
+        "approx_active_sockets": 6454.28,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udp-14",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 42.504265,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 4112.67,
+        "mean_packet_size_bytes": 347.0,
+        "approx_active_destination_hosts": 1.72,
+        "approx_active_sockets": 4112.67,
+        "channel_jitter_mean_s": 0.006512
+      }
+    },
+    {
+      "id": "mirai-udp-15",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 81.049736,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6529.63,
+        "mean_packet_size_bytes": 418.5,
+        "approx_active_destination_hosts": 6529.63,
+        "approx_active_sockets": 6529.63,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udp-16",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 100.475807,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6686.22,
+        "mean_packet_size_bytes": 429.8,
+        "approx_active_destination_hosts": 1.34,
+        "approx_active_sockets": 6686.22,
+        "channel_jitter_mean_s": 0.231
+      }
+    },
+    {
+      "id": "mirai-udp-17",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 78.754486,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6012.04,
+        "mean_packet_size_bytes": 408.1,
+        "approx_active_destination_hosts": 6012.04,
+        "approx_active_sockets": 6012.04,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udp-18",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 139.221786,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 6327.88,
+        "mean_packet_size_bytes": 420.6,
+        "approx_active_destination_hosts": 1.37,
+        "approx_active_sockets": 6327.88,
+        "channel_jitter_mean_s": 0.003278
+      }
+    },
+    {
+      "id": "mirai-udp-19",
+      "botnet": "mirai",
+      "attack": "udp",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 33.729538,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 4003.29,
+        "mean_packet_size_bytes": 339.0,
+        "approx_active_destination_hosts": 4003.29,
+        "approx_active_sockets": 4003.29,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udpplain-00",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 71.595879,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5566.41,
+        "mean_packet_size_bytes": 407.3,
+        "approx_active_destination_hosts": 1.42,
+        "approx_active_sockets": 1.42,
+        "channel_jitter_mean_s": 0.7672
+      }
+    },
+    {
+      "id": "mirai-udpplain-01",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 10.136701,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 4330.46,
+        "mean_packet_size_bytes": 386.5,
+        "approx_active_destination_hosts": 1.51,
+        "approx_active_sockets": 1.51,
+        "channel_jitter_mean_s": 8235.0
+      }
+    },
+    {
+      "id": "mirai-udpplain-02",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 71.937019,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5429.12,
+        "mean_packet_size_bytes": 409.4,
+        "approx_active_destination_hosts": 1.41,
+        "approx_active_sockets": 1.41,
+        "channel_jitter_mean_s": 0.6816
+      }
+    },
+    {
+      "id": "mirai-udpplain-03",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 26.530828,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5462.17,
+        "mean_packet_size_bytes": 404.3,
+        "approx_active_destination_hosts": 5462.17,
+        "approx_active_sockets": 5462.17,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udpplain-04",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 13.367016,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3336.51,
+        "mean_packet_size_bytes": 307.0,
+        "approx_active_destination_hosts": 3336.51,
+        "approx_active_sockets": 3336.51,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udpplain-05",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 24.21685,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 4560.08,
+        "mean_packet_size_bytes": 341.8,
+        "approx_active_destination_hosts": 4560.08,
+        "approx_active_sockets": 4560.08,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udpplain-06",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 14.652779,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5011.22,
+        "mean_packet_size_bytes": 336.6,
+        "approx_active_destination_hosts": 5011.22,
+        "approx_active_sockets": 5011.22,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udpplain-07",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 8.040754,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 4266.76,
+        "mean_packet_size_bytes": 385.4,
+        "approx_active_destination_hosts": 1.52,
+        "approx_active_sockets": 1.52,
+        "channel_jitter_mean_s": 14280.0
+      }
+    },
+    {
+      "id": "mirai-udpplain-08",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "Danmini_Doorbell",
+      "group": "in_dist",
+      "anomaly_score": 25.988462,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 4637.6,
+        "mean_packet_size_bytes": 332.8,
+        "approx_active_destination_hosts": 1.81,
+        "approx_active_sockets": 1.81,
+        "channel_jitter_mean_s": 19.24
+      }
+    },
+    {
+      "id": "mirai-udpplain-09",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 68.018372,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5028.12,
+        "mean_packet_size_bytes": 335.4,
+        "approx_active_destination_hosts": 1.79,
+        "approx_active_sockets": 1.79,
+        "channel_jitter_mean_s": 0.01799
+      }
+    },
+    {
+      "id": "mirai-udpplain-10",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "Philips_B120N10_Baby_Monitor",
+      "group": "held_out",
+      "anomaly_score": 3.582113,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 4648.93,
+        "mean_packet_size_bytes": 333.0,
+        "approx_active_destination_hosts": 1.81,
+        "approx_active_sockets": 1.81,
+        "channel_jitter_mean_s": 56390.0
+      }
+    },
+    {
+      "id": "mirai-udpplain-11",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "Ecobee_Thermostat",
+      "group": "in_dist",
+      "anomaly_score": 48.990654,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5567.67,
+        "mean_packet_size_bytes": 407.2,
+        "approx_active_destination_hosts": 1.42,
+        "approx_active_sockets": 1.42,
+        "channel_jitter_mean_s": 5.415
+      }
+    },
+    {
+      "id": "mirai-udpplain-12",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 42.133247,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5350.73,
+        "mean_packet_size_bytes": 407.8,
+        "approx_active_destination_hosts": 1.42,
+        "approx_active_sockets": 1.42,
+        "channel_jitter_mean_s": 54.65
+      }
+    },
+    {
+      "id": "mirai-udpplain-13",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "Provision_PT_737E_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 0.03587,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 839.38,
+        "mean_packet_size_bytes": 312.5,
+        "approx_active_destination_hosts": 1.95,
+        "approx_active_sockets": 1.96,
+        "channel_jitter_mean_s": 2728000.0
+      }
+    },
+    {
+      "id": "mirai-udpplain-14",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 30.37911,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5143.04,
+        "mean_packet_size_bytes": 400.8,
+        "approx_active_destination_hosts": 1.45,
+        "approx_active_sockets": 1.45,
+        "channel_jitter_mean_s": 26.68
+      }
+    },
+    {
+      "id": "mirai-udpplain-15",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1003_WHT_Security_Camera",
+      "group": "held_out",
+      "anomaly_score": 35.518124,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5499.08,
+        "mean_packet_size_bytes": 412.8,
+        "approx_active_destination_hosts": 5499.08,
+        "approx_active_sockets": 5499.08,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udpplain-16",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 71.233238,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5520.02,
+        "mean_packet_size_bytes": 412.9,
+        "approx_active_destination_hosts": 1.4,
+        "approx_active_sockets": 1.4,
+        "channel_jitter_mean_s": 0.8031
+      }
+    },
+    {
+      "id": "mirai-udpplain-17",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "Provision_PT_838_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 16.27322,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 3124.54,
+        "mean_packet_size_bytes": 303.2,
+        "approx_active_destination_hosts": 3124.54,
+        "approx_active_sockets": 3124.54,
+        "channel_jitter_mean_s": 1508000000.0
+      }
+    },
+    {
+      "id": "mirai-udpplain-18",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 49.879848,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5326.03,
+        "mean_packet_size_bytes": 408.3,
+        "approx_active_destination_hosts": 1.42,
+        "approx_active_sockets": 1.42,
+        "channel_jitter_mean_s": 16.01
+      }
+    },
+    {
+      "id": "mirai-udpplain-19",
+      "botnet": "mirai",
+      "attack": "udpplain",
+      "category": "DOS",
+      "device": "SimpleHome_XCS7_1002_WHT_Security_Camera",
+      "group": "in_dist",
+      "anomaly_score": 55.984886,
+      "alert_level": "critical",
+      "flagged": true,
+      "evidence": {
+        "recent_packet_count": 5443.05,
+        "mean_packet_size_bytes": 404.5,
+        "approx_active_destination_hosts": 1.43,
+        "approx_active_sockets": 1.43,
+        "channel_jitter_mean_s": 6.757
+      }
+    }
+  ]
+}

@@ -1,1 +1,23 @@
-% TODO: conclusion (written after results)
+\section{Conclusion}
+\label{sec:conclusion}
+
+\textsc{Sentinel} shows that a complete detection-to-response pipeline for a
+home network, including a language model, runs on a four-core, 8\,GB-class host of the kind it targets,
+and that everything except the language model and one external lookup runs in
+well under a millisecond per event. Its evaluation shows how much a system can
+look right while being wrong in specific, consequential ways: a detector that
+misses two whole attack classes behind a respectable aggregate, false alarms
+concentrated on one unseen device, a live feature extractor that fed the model
+inputs it was never trained on, and a local LLM whose ATT\&CK labels are almost
+never correct while its severities still drive blocking.
+
+None of these problems was visible from the headline numbers, and each was
+found by a check that is cheap to run: report per class and per device, hold
+out whole devices, test live features against invariants of the training data,
+pre-register the LLM test, and time every stage of the path rather than the
+model alone. We offer these checks, and the harness that implements them, as
+the more lasting contribution. Immediate next steps are to address the
+BASHLITE flood blind spot with features that capture it, to calibrate
+thresholds per device class, to make the reputation lookup asynchronous and
+selective, to replace free-form LLM labelling with a validated or constrained
+classifier, and to repeat the timing on physical Raspberry~Pi~5 hardware.

@@ -31,6 +31,7 @@ while True:
         subprocess.run(["colab", "--auth=adc", "download", "-s", SESSION, f"/content/out/{rel}", loc],
                        capture_output=True, env=ENV, timeout=600)
         print(time.strftime("%H:%M:%S"), "synced", rel, size, flush=True)
-    if "ALL.done" in files and all(os.path.exists(os.path.join(DEST, f)) for f in files):
+    need = [m for m in os.environ.get("DONE_MARKERS", "ALL.done").split(",") if m]
+    if all(m in files for m in need) and all(os.path.exists(os.path.join(DEST, f)) for f in files):
         print("all artefacts synced"); break
     time.sleep(90)

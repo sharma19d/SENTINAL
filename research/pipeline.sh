@@ -28,6 +28,10 @@ train() {  # $1 = seed
   fi
 }
 
+if [ "${BASELINES_ONLY:-0}" = "1" ]; then
+  log "baselines only"; ONLY=dense,iforest python3 -u eval_models.py > /content/out/eval_models.log 2>&1
+  cp /content/res_models/*.json /content/out/ 2>/dev/null; log "ALL DONE"; touch /content/out/ALL.done; exit 0
+fi
 train 0
 if [ ! -f /content/out/llm_samples.json ]; then
   log "drawing LLM samples"; python3 -u gen_llm_samples.py > /content/out/gen_llm_samples.log 2>&1

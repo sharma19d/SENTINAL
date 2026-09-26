@@ -4,12 +4,48 @@
 \subsection{Detection, per attack class}
 \label{sec:res-detect}
 
-%%DETECTION%%
+Table~\ref{tab:per-attack} and Fig.~\ref{fig:per-attack} report detection
+per attack class. Both the deployed model and its leakage-free retraining catch
+eight of the ten classes almost perfectly---every Mirai attack, and BASHLITE's
+scan, junk and combo---yet miss nearly all of BASHLITE's TCP and UDP floods:
+the deployed model detects \NdeplTcp{} and \NdeplUdp{} of them, and the
+retrained model \NlstmTcp{} and \NlstmUdp{} over five seeds. Because these two
+classes make up \NblindShare{} of all \NattackWindows{} attack windows, the
+overall detection rate is only \NdeplTPR{} for the deployed model and
+\NlstmTPR{} for the retrained one, a figure that no aggregate accuracy on the
+remaining classes would hint at.
+
+The miss is not a matter of a badly placed threshold. The retrained model
+separates the other eight classes from benign traffic with an AUC of
+\NotherAUC{}, but the two BASHLITE floods with an AUC of only \NblindAUC{}.
+Lowering the threshold far enough to catch half of their windows would raise
+the false-positive rate to \NblindCostFPRin{} on the training devices and
+\NblindCostFPRall{} across all devices. For the deployed model the diagnosis
+is especially stark: every window of these floods receives almost the same
+reconstruction error, just below its threshold and inside the range of ordinary
+benign variation. Setting a separate threshold per device, which we also tried,
+recovered them on one device only.
+
+The two baselines locate the cause. The dense autoencoder of N-BaIoT's
+authors, which scores rows independently and models no order, misses the two
+floods entirely (\NdenseTcp{} and \NdenseUdp{}), and so does the Isolation
+Forest; the blind spot belongs to reconstruction- and isolation-based detection
+on these features, not to the LSTM. Elsewhere the dense model matches the
+sequence model: the same overall detection (\NdenseTPR{} against \NlstmTPR{})
+and the same false-positive rate on unseen devices (\NdenseFPRout{} against
+\NlstmFPRout{}), with half the false positives on the training devices
+(\NdenseFPRin{} against \NlstmFPRin{}) and a higher AUC on unseen devices
+(\NdenseAUCout{} against \NlstmAUCout{}). On this data, modelling packet order
+adds cost without a measurable benefit. The Isolation Forest raises the fewest
+false alarms on unseen devices (\NisoFPRout{}) only because it detects so
+little: \NisoTPR{} of attack windows at the same nominal budget, although its
+AUC of \NisoAUCout{} shows that its ranking is better than its operating point.
 
 \begin{table}[t]
 \centering
-\caption{Detection rate (\%) per attack class, all devices pooled. LSTM-AE,
-Dense AE and Isolation Forest are means over five seeds.}
+\caption{Detection rate (\%) per attack class, all devices pooled. LSTM-AE and
+Dense AE are means over five seeds, Isolation Forest over four (the fifth run
+was lost when the cloud VM running it was reclaimed).}
 \label{tab:per-attack}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
@@ -34,7 +70,15 @@ gives the values.}
 \subsection{Unseen devices}
 \label{sec:res-heldout}
 
-%%HELDOUT%%
+Evaluating on devices absent from training raises the pooled false-positive
+rate of the retrained model from \NlstmFPRin{} on the training devices to
+\NlstmFPRout{} on the held-out ones (the deployed model reaches \NdeplFPRout{}
+on them). The increase is not uniform. The held-out \emph{Ennio} doorbell is
+flagged as rarely as the training devices, while the \emph{Philips} baby
+monitor, whose benign traffic is the largest of any device in the dataset,
+produces most of the false alarms. A single threshold calibrated
+on a household's existing devices thus says little about the next device
+added to it, and a single device with unusual traffic can dominate the false-alarm budget of the whole network.
 
 \subsection{Live feature parity}
 \label{sec:res-parity}
@@ -74,7 +118,56 @@ distinct pcc values                           & \NparOldPccN & \NparNewPccN \\
 \subsection{LLM classification}
 \label{sec:res-llm}
 
-%%LLM%%
+Table~\ref{tab:llm} summarises the pre-registered experiment. With the prompt
+\textsc{Sentinel} actually sends, the model named an acceptable ATT\&CK
+technique for \NllmAsbTech{} of the 200 attack windows and an acceptable
+tactic for \NllmAsbTac{}, although every response was valid JSON. Adding the
+traffic summary did not rescue it: \NllmEviTech{} for the technique and
+\NllmEviTac{} for the tactic. The pre-registered expectation that evidence
+would help is therefore not supported at this model size. Restricting to the
+windows the detector would actually forward changes nothing
+(\NllmAsbTechFlag{} as built).
+
+The failure has a consistent shape. Across all \NllmN{} responses,
+\NllmCtwoShare{} name Command and Control as the tactic, typically technique
+T1071 (Application Layer Protocol), and not one names Impact, the tactic for
+denial of service, although 320 of them describe floods. Given a device, a remote address and a high anomaly score, the model
+describes a compromised device talking to a controller---a plausible prior,
+and wrong for both scans and floods. Its reading of the evidence follows the
+same prior: a scan's many short connections become ``a high volume of
+connections \ldots\ potentially indicative of C2 communication.'' Accuracy did
+not differ between the calls run locally (\NllmLocTech{}, $n=\NllmLocN$) and on
+the cloud GPU (\NllmCloudTech{}, $n=\NllmCloudN$).
+
+Enforcement nevertheless happens. \NllmSevNineShare{} of responses assign
+severity 9 or more, and under \textsc{Sentinel}'s policy the pipeline would
+have blocked \NllmAsbBlock{} of the attack windows as built (exploratory
+analysis). The block is thus decided by a severity the model assigns almost
+regardless of what the traffic is, and the ATT\&CK label attached to it is
+nearly always wrong. We did not query the model on benign windows, but nothing
+in its behaviour suggests it would treat a detector false positive differently.
+
+\begin{table}[t]
+\centering
+\caption{LLM ATT\&CK labelling of 200 attack windows per prompt (Gemma~4
+E2B). Brackets: Wilson 95\% intervals.}
+\label{tab:llm}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcc}
+\toprule
+ & As built & With evidence \\
+\midrule
+Technique correct            & \NllmAsbTech    & \NllmEviTech \\
+\quad scans ($n=40$)         & \NllmAsbTechDisc & \NllmEviTechDisc \\
+\quad floods ($n=160$)       & \NllmAsbTechDos  & \NllmEviTechDos \\
+Tactic correct               & \NllmAsbTac     & \NllmEviTac \\
+Valid JSON                   & \NllmAsbJson    & \NllmEviJson \\
+Would block (sev.\,$\ge6$)$^\dagger$ & \NllmAsbBlock & \NllmEviBlock \\
+\bottomrule
+\multicolumn{3}{l}{\scriptsize $^\dagger$Exploratory analysis, declared before any output was seen.}
+\end{tabular}
+\end{table}
 
 \subsection{Latency}
 \label{sec:res-latency}

@@ -32,7 +32,7 @@ several things we believed about our own system:
 \item \emph{A per-class blind spot hidden by the aggregate.} On
   N-BaIoT~\cite{meidan2018nbaiot}, the deployed detector catches the Mirai
   attacks almost perfectly, yet misses nearly all BASHLITE TCP and UDP floods,
-  so that \NdeplMissedShare{} of attack windows go undetected. An aggregate
+  which make up \NblindShare{} of attack windows. An aggregate
   detection rate conceals this entirely.
 \item \emph{False positives grow on unseen devices.} Holding out entire devices
   from training, as a new gadget joining a home network would be, raises the
@@ -44,9 +44,13 @@ several things we believed about our own system:
   so offline accuracy did not describe the running system. We traced the
   discrepancy, fixed it by adopting the reference implementation, and verified
   parity against invariants measured on the training data itself.
-\item \emph{The LLM was asked to classify without evidence.} The classifier's
-  prompt carried device metadata and an anomaly score but no description of
-  the traffic, leaving the model to guess the ATT\&CK technique.
+\item \emph{The LLM's labels were almost never right.} In a pre-registered
+  test, the local model named a correct ATT\&CK technique for
+  \NllmAsbTech{} of attack windows, labelling \NllmCtwoShare{} of all
+  events as Command and Control; describing the traffic to it did not help.
+  Because the response policy acts on the model's severity, which it set high
+  for most events, the pipeline would still have blocked \NllmAsbBlock{} of
+  attacks---for reasons unrelated to the label.
 \end{itemize}
 
 \noindent Our contributions are:
@@ -58,9 +62,9 @@ several things we believed about our own system:
   \emph{held-out-device} split, applied to the deployed model, a reproducible
   retraining over five seeds, and two baselines (\S\ref{sec:method},
   \S\ref{sec:res-detect}).
-\item A pre-registered evaluation of LLM ATT\&CK labelling from the evidence
-  the pipeline actually provides, with and without a traffic summary
-  (\S\ref{sec:res-llm}).
+\item A pre-registered evaluation of LLM ATT\&CK labelling on the events the
+  pipeline actually produces, with and without a traffic summary, showing that
+  a small local model does not yet perform this task (\S\ref{sec:res-llm}).
 \item A per-stage latency breakdown on a four-core aarch64 host, locating the
   bottleneck of the detection-to-response path (\S\ref{sec:res-latency}).
 \item Practical lessons for building and evaluating such systems: recovering

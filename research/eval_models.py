@@ -133,6 +133,9 @@ if __name__ == "__main__":
     jobs = [(f"lstm_seed{s}", (lambda s=s: lstm_scorer(s))) for s in SEEDS]
     jobs += [(f"dense_seed{s}", (lambda s=s: train_dense(split, s))) for s in SEEDS]
     jobs += [(f"iforest_seed{s}", (lambda s=s: train_iforest(split, s))) for s in SEEDS]
+    only = [x for x in os.environ.get("ONLY", "").split(",") if x]
+    if only:                                   # e.g. ONLY=dense,iforest after a VM reclaim
+        jobs = [(n, b) for n, b in jobs if n.split("_")[0] in only]
     for name, build in jobs:
         out = f"/content/res_models/{name}.json"
         if os.path.exists(out):

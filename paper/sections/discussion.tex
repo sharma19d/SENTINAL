@@ -4,7 +4,17 @@
 \subsection{Lessons}
 
 \paragraph{Report detection per class, and per device}
-%%LESSON1%%
+An aggregate detection rate on N-BaIoT would have told us that the detector
+works; it catches almost everything in eight classes. Broken down by class it
+is blind to two of the ten, and broken down by device its false alarms come
+mostly from one. Neither fact changes the model; both change whether it is fit
+to deploy. N-BaIoT's authors trained one model per device and reported that
+all attacks were detected~\cite{meidan2018nbaiot}; a single shared model, the
+realistic configuration for an appliance, behaves differently, and only a
+per-class, per-device report shows how. This is the class-imbalance and
+misleading-metric pitfall described by Arp~et~al.~\cite{arp2022dosdonts},
+arising here from structure within the attack traffic rather than from the
+benign-to-attack ratio.
 
 \paragraph{Evaluate the running system, not only the model}
 A model can be evaluated flawlessly on its dataset while the deployed system
@@ -24,8 +34,22 @@ exact training devices---which in turn exposed that its in-distribution
 evaluation would have been contaminated, and supplied a natural held-out-device
 split. Fitted preprocessing objects are an underused source of provenance.
 
-\paragraph{Give the model the evidence}
-%%LESSON4%%
+\paragraph{A small local LLM is not yet a classifier}
+We expected the classifier to fail without evidence and to recover with it.
+Only the first half held. A 4-bit model with 2.3 billion effective parameters given
+a structured anomaly event labels almost everything as Command and Control,
+with or without a description of the traffic. Three consequences follow for
+designs like ours. First, the ATT\&CK label on an alert should not be trusted,
+or shown to a user, without validation of the model that produced it. Second,
+when the label is wrong but the severity is high, a severity-gated policy
+turns the language model into an expensive way of blocking nearly everything
+the detector forwards; the anomaly threshold, not the model, is then the real
+decision point. Third, the privacy argument for running the model locally is
+sound, but locality constrains model size, and at this size the model does not
+do the job asked of it. Larger local models, few-shot prompts built from
+labelled examples, or constraining the output to the techniques consistent with
+the evidence are the obvious next steps; each should be judged by the same
+pre-registered test.
 
 \paragraph{Latency lives in the integration}
 Every component we wrote runs in well under a millisecond per event; the

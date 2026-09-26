@@ -1,1 +1,28 @@
-% TODO: abstract (written after results)
+\begin{abstract}
+Home IoT devices run unattended, with no one to defend them. We present \textsc{Sentinel}, an open-source appliance that detects
+anomalous traffic with a sequence autoencoder over Kitsune features, labels
+events with MITRE ATT\&CK techniques using a language model running on the
+appliance, and enforces blocks through nftables under a deterministic,
+auditable policy, with honeypots feeding the same path. We then evaluate the whole system rigorously. On N-BaIoT, with entire
+devices held out of training, the detector catches eight of ten attack
+classes almost perfectly yet misses nearly all BASHLITE TCP and UDP floods,
+\NblindShare{} of attack windows, for which its scores barely separate attack
+from benign traffic; false positives rise from \NlstmFPRin{} to
+\NlstmFPRout{} on unseen devices, driven mostly by one device. The blind spot
+is shared by a simpler autoencoder, which matches the sequence model at lower
+cost. In a pre-registered test the local LLM named a correct ATT\&CK
+technique for \NllmAsbTech{} of attack windows, labelling almost everything as
+command-and-control even when given a traffic summary, while its high
+severities would still have triggered blocks for \NllmAsbBlock{} of attacks.
+We also found that \textsc{Sentinel}'s live feature extractor computed 40 of
+115 features differently from the training data, and fixed it with a parity
+test built from invariants of the training set. Every in-house stage takes
+under a millisecond; the path is dominated by the LLM (\NllmLatMed{}\,s) and a
+blocking threat-intelligence lookup (median \NotxFullMed{}\,s). We release the
+code, the pre-registration and all results.
+\end{abstract}
+
+\begin{IEEEkeywords}
+IoT security, anomaly detection, large language models, MITRE ATT\&CK,
+evaluation methodology, N-BaIoT
+\end{IEEEkeywords}

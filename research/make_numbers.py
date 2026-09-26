@@ -90,6 +90,25 @@ for name, ss in fam.items():
     M[f"N{t}AUCout"] = ms([x["auc_out"] for x in ss], 3, as_pct=False)
     for c in ("gafgyt/tcp", "gafgyt/udp"):
         M[f"N{t}{'Tcp' if c.endswith('tcp') else 'Udp'}"] = ms([x["cls"][c] for x in ss], 2)
+def blind_cost(res):
+    """FPR on in-distribution benign at the threshold that would catch half of
+    the BASHLITE tcp/udp windows (their median score) — what detecting them costs."""
+    blind = np.concatenate([v["scores"] for v in res["attack"].values()
+                            if v["botnet"] == "gafgyt" and v["attack"] in ("tcp", "udp")])
+    other = np.concatenate([v["scores"] for v in res["attack"].values()
+                            if not (v["botnet"] == "gafgyt" and v["attack"] in ("tcp", "udp"))])
+    ben_in = np.concatenate([v["scores"] for v in res["benign"].values() if v["group"] == "in_dist"])
+    ben_all = np.concatenate([v["scores"] for v in res["benign"].values()])
+    thr = np.median(blind)
+    return {"cost_fpr_in": float((ben_in > thr).mean()), "cost_fpr_all": float((ben_all > thr).mean()),
+            "auc_blind": auc(ben_all, blind), "auc_other": auc(ben_all, other)}
+if "lstm" in fam:
+    bc = [blind_cost(load(p)) for p in sorted(glob.glob(f"{R}/colab/lstm_seed*.json"))]
+    M["NblindCostFPRin"] = ms([b["cost_fpr_in"] for b in bc], 1)
+    M["NblindCostFPRall"] = ms([b["cost_fpr_all"] for b in bc], 1)
+    M["NblindAUC"] = ms([b["auc_blind"] for b in bc], 3, as_pct=False)
+    M["NotherAUC"] = ms([b["auc_other"] for b in bc], 3, as_pct=False)
+    for k, v in bc[0].items(): print(f"  seed0 {k}: {v:.4f}")
 if "lstm" in fam:
     ss = fam["lstm"]
     M["NlstmFPRratio"] = f"{np.mean([x['fpr_out'] for x in ss]) / np.mean([x['fpr_in'] for x in ss]):.1f}"
@@ -181,7 +200,21 @@ if llm:
         from collections import Counter
         top = Counter(r["technique"] for r in rs if r["technique"]).most_common(3)
         M[f"Nllm{t}TopTech"] = ", ".join(f"{k} ({c})" for k, c in top)
-    lat_llm = np.asarray([r["latency_s"] for r in res])
+    # Latency from LOCAL calls only (PREREGISTRATION.md, Deviations): the cloud
+    # GPU's timing does not represent the appliance.
+    allr = res
+    M["NllmCtwoShare"] = pct(np.mean(["command and control" in (r["tactic"] or "").lower() for r in allr]), 1)
+    M["NllmImpactN"] = str(sum("impact" in (r["tactic"] or "").lower() for r in allr))
+    sev_all = []
+    for r in allr:
+        try: sev_all.append(float(json.loads(r["raw"]).get("severity")))
+        except Exception: pass
+    M["NllmSevNineShare"] = pct(np.mean(np.asarray(sev_all) >= 9), 1)
+    lat_llm = np.asarray([r["latency_s"] for r in res if r.get("host", "local") == "local"])
+    M["NllmLatN"] = str(len(lat_llm))
+    for h, t in (("local", "Loc"), ("colab-t4", "Cloud")):             # per-host accuracy check
+        hr = [r for r in res if r.get("host", "local") == h]
+        M[f"Nllm{t}N"] = str(len(hr)); M[f"Nllm{t}Tech"] = wfmt(sum(r["technique_ok"] for r in hr), len(hr))
     M["NllmLatMed"] = f"{np.median(lat_llm):.1f}"; M["NllmLatP"] = f"{np.percentile(lat_llm, 95):.1f}"
 
 # ---- write -------------------------------------------------------------------
