@@ -3,7 +3,17 @@
 > Working document for producing the experimental results needed for a research paper.  
 > Companion to [RESEARCH_PAPERS.md](RESEARCH_PAPERS.md) (literature review, 24 papers, 6 research gaps).
 >
-> **Status:** Literature review complete. Evaluation not started.  
+> **Status (updated 2026-09-25): EVALUATION DONE.** Results, code and the paper
+> are in `research/` and `paper/`. This file is kept as the original plan.
+> What changed from the plan: detection was evaluated on **N-BaIoT** (the model's
+> actual training set, recovered from its scaler) rather than CICIoT2023, with a
+> held-out-device split; baselines were a dense AE (N-BaIoT's own design) and
+> Isolation Forest; the LLM test used N-BaIoT attack classes with a pre-registered
+> mapping (`research/PREREGISTRATION.md`); timing ran on a 4-core aarch64 VM
+> (no Pi). Plan items not done: CICIoT2023, KitNET baseline, honeypot dataset
+> analysis, cgroup resource profiling.
+>
+> ~~**Status:** Literature review complete. Evaluation not started.~~  
 > **Hard constraint:** No physical Raspberry Pi 5 available. No machine can run 24/7.  
 > **Consequence:** Evaluation is dataset-replay based, not live-deployment based. This is standard practice and is defensible if stated correctly (see §3).
 
@@ -18,7 +28,7 @@
 | Research gaps (6 identified) | ✅ Done |
 | System architecture (7 layers) | ✅ Done — implemented |
 | Implementation | ✅ Done — working system |
-| **Evaluation / results** | ❌ **Not started — this document covers it** |
+| **Evaluation / results** | ✅ **Done — see `research/` and `paper/main.pdf`** |
 | Discussion & conclusion | ❌ Blocked on evaluation |
 
 **Roughly 60-70% of the paper is writable today.** The missing 30% is the evaluation section, which is what reviewers weight most heavily.

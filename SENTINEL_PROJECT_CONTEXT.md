@@ -21,14 +21,41 @@
 **SENTINEL** is a consumer-grade, plug-and-play network security appliance powered by a multi-agent AI system. It protects home IoT devices from cyber attacks by:
 
 - Automatically discovering and risk-profiling every device on the home network
-- Running an LSTM anomaly detector trained on per-device traffic baselines
+- Running an LSTM anomaly detector over Kitsune features (one model shared by all devices, trained on N-BaIoT)
 - Using a local LLM (Gemma 4) to classify threats using MITRE ATT&CK for ICS/IoT
-- Deploying virtual honeypots and honeytokens to trap and study attackers
-- Enforcing firewall rules via eBPF/XDP + nftables in real time
-- Presenting everything through a Next.js PWA dashboard with live alerts
+- Deploying honeypots (Cowrie, OpenCanary) whose attacker IPs feed the firewall
+- Enforcing blocks via nftables with a self-lockout safety guard (eBPF/XDP implemented but not enabled)
+- Presenting everything through a React + Vite dashboard with live WebSocket alerts
 
 **Final target hardware:** Raspberry Pi 5 (8GB RAM) — inline bridge between ISP router and home switch.
 **Current development:** ARM64 laptop (Kali Linux) — the full stack runs here, but Pi 5 hardware validation (LLM performance, inline enforcement) is **pending**; laptop results are not treated as Pi-5-equivalent.
+
+---
+
+## 2a. As built vs. as designed — READ THIS FIRST (verified 2026-09-25)
+
+Sections 5–8 and 11 below are the **original design**. The code differs, and
+an evaluation checked every claim against it. Trust this table over anything
+below it; details and evidence are in `paper/main.pdf` and `research/`.
+
+| Design said | As built |
+|---|---|
+| Per-device LSTM baselines | One global LSTM autoencoder (153,651 params), trained on 6 N-BaIoT devices |
+| LSTM + Isolation Forest cold-start | No Isolation Forest in the code |
+| Gemma 4 E4B (dev) / E2B (Pi) | E2B (Q4_K_M) everywhere, temperature 1.0 |
+| LLM-driven response planning / honeypot coordination | Responder is a deterministic LangGraph policy; no honeypot redirection |
+| eBPF/XDP fast path | Implemented, not enabled (bcc not installed); nftables does enforcement |
+| Auto quarantine (DHCP + ARP) | MAC quarantine module exists but the responder never calls it; "quarantine_device" blocks the indicator IP |
+| UPnP honeypot, honeytokens, STIX/TAXII, VLAN micro-segmentation | Not implemented |
+| Active Nmap scanning in discovery | Discovery is passive; Nmap only on demand from the dashboard |
+| "No data leaves the device" | LLM is local, but remote IPs go to OTX/AbuseIPDB and vendor names to NVD |
+| Runs on Raspberry Pi 5 | Never tested on a Pi; all timing is from a 4-core aarch64 VM |
+
+**Measured (research/):** detection misses BASHLITE TCP/UDP floods (27.8% of
+attack windows); FPR 0.23% on training devices vs 3.65% unseen; LLM names a
+correct ATT&CK technique ~0% of the time; OTX lookup median ~21 s and blocks
+the classifier. **Fixed:** the live Kitsune extractor (40 of 115 features were
+wrong) now uses the vendored reference engine (`afterimage.py`).
 
 ---
 
@@ -70,19 +97,19 @@ Layer 1  →  Network Capture & Packet Engine
 Layer 2  →  Device Discovery & Risk Profiler Agent
                 |  OUI lookup + Nmap + NVD CVE API + SQLite registry
 Layer 3  →  Agentic AI Engine  (multi-agent via LangGraph + Redis)
-            ├── Anomaly Detector Agent  (LSTM Autoencoder + Isolation Forest)
-            ├── Threat Classifier Agent (Gemma 4 E4B → MITRE ATT&CK JSON)
-            └── Response Planner Agent  (YAML policy → nftables/honeypot actions)
+            ├── Anomaly Detector Agent  (Kitsune features → LSTM autoencoder)
+            ├── Threat Classifier Agent (Gemma 4 E2B → MITRE ATT&CK JSON)
+            └── Response Planner Agent  (deterministic YAML policy → nftables)
                 |
         ┌───────┴───────┐
 Layer 4  →  Deception Layer      Layer 5  →  Firewall & Response Engine
-            Cowrie (SSH)                     eBPF/XDP packet filter
-            OpenCanary (multi)               nftables rule injection
-            UPnP honeypot                    VLAN micro-segmentation
-            Honeytokens                      Auto quarantine (DHCP + ARP)
+            Cowrie (SSH)                     nftables block + safety guard
+            OpenCanary (multi)               eBPF/XDP (implemented, not enabled)
+            [planned] UPnP honeypot          [planned] VLAN micro-segmentation
+            [planned] Honeytokens            [planned] MAC quarantine wiring
                 |                                    |
 Layer 6  →  Threat Intel Bus + Log Store
-                |  STIX/TAXII feeds + IoC enrichment + SQLite/Loki
+                |  OTX + AbuseIPDB IoC enrichment + SQLite  ([planned] STIX/TAXII, Loki)
 Layer 7  →  Dashboard & Alert UI
                 Next.js 14 PWA + D3.js + WebSockets + Web Push
 ```
@@ -440,11 +467,25 @@ rules:
 
 ---
 
-## 14. Novel Research Contributions (for paper/report)
+## 14. Research Contributions (for paper/report)
 
-1. **On-device LLM TTP classification at <10W** — Gemma 4 E2B at 7.6 tok/s on Pi 5 with no cloud, no GPU
-2. **AI-driven dynamic honeypot coordination** — Response Planner agent selects which honeypot to redirect each attacker to based on classified TTP (not static rules)
-3. **Consumer-grade threat attribution on a $75 device** — passive fingerprinting + LSTM baselining + deception telemetry combined on a single SBC
+As stated in `paper/main.pdf`, and backed by measurements in `research/`:
+
+1. An open-source, on-premise detection-to-response pipeline for home IoT with
+   the LLM running on the appliance.
+2. A leakage-aware N-BaIoT evaluation with a held-out-device split, exposing a
+   per-class blind spot and device-driven false positives that aggregate
+   metrics hide.
+3. A pre-registered evaluation of local-LLM ATT&CK labelling (negative result).
+4. A per-stage latency breakdown locating the bottleneck (LLM + OTX lookup).
+5. Practical lessons: model provenance recovered from a scaler; live-vs-training
+   feature parity testing.
+
+**Retired claims — do not reuse.** An earlier version listed "Gemma 4 E2B at
+7.6 tok/s on Pi 5 at <10 W", "AI-driven dynamic honeypot coordination" and
+"threat attribution on a $75 device". None was measured or implemented, and
+"first system to…" novelty claims are unverifiable. See
+`research/REFERENCES_VERIFIED.md` for rejected literature-review claims.
 
 ---
 

@@ -1,3 +1,13 @@
+> ⚠️ **READ BEFORE CITING ANYTHING HERE (added 2026-09-25).** This review was
+> written from the *design* document, not the built system, and parts of it are
+> wrong: several entries list "Authors: Various", one venue (IAEME) is widely
+> listed as predatory, some years/venues/counts are incorrect, and several
+> "research gaps" claim things the code does not do (per-device models,
+> Isolation Forest, transparent bridge, LLM response planning) or that prior
+> work already did (honeypot-driven blocking). **Do not cite from this file.**
+> The verified bibliography is `paper/refs.bib`; the audit trail is
+> `research/REFERENCES_VERIFIED.md`.
+
 # SENTINEL — Related Research & Literature Review
 
 > Compiled for Final Year Project research paper preparation.  

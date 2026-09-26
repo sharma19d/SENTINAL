@@ -44,19 +44,20 @@ Layer 1  →  Network Capture & Packet Engine
 Layer 2  →  Device Discovery & Risk Profiler
                 |  OUI lookup · Nmap active scan · NVD CVE API · SQLite registry
 Layer 3  →  Agentic AI Engine  (LangGraph + Redis pub/sub)
-            ├── Anomaly Detector Agent   (LSTM Autoencoder + Isolation Forest)
+            ├── Anomaly Detector Agent   (Kitsune features → LSTM autoencoder)
             ├── Threat Classifier Agent  (Gemma 4 → MITRE ATT&CK JSON output)
-            └── Response Planner Agent   (YAML policy → nftables/honeypot actions)
+            └── Response Planner Agent   (deterministic YAML policy → nftables)
                 |
         ┌───────┴───────────┐
 Layer 4  →  Deception Layer      Layer 5  →  Firewall & Response Engine
-            Cowrie (SSH/Telnet)               eBPF/XDP packet filter
-            OpenCanary (HTTP/SMB/FTP)         nftables rule injection
-            UPnP honeypot                     Auto quarantine (DHCP + ARP)
-            Honeytokens                       VLAN micro-segmentation
+            Cowrie (SSH/Telnet)               nftables block + safety guard
+            OpenCanary (HTTP/SMB/FTP)         eBPF/XDP fast path (implemented,
+                                              not enabled — needs bcc)
+            [planned] UPnP honeypot,          [planned] MAC quarantine wiring,
+            honeytokens                       VLAN micro-segmentation
                 |                                      |
 Layer 6  →  Threat Intelligence Bus
-                |  STIX/TAXII feeds · AlienVault OTX · AbuseIPDB · IoC enrichment
+                |  AlienVault OTX · AbuseIPDB · IoC enrichment  ([planned] STIX/TAXII)
 Layer 7  →  Dashboard & REST API
                 React 18 + Vite · FastAPI + Uvicorn · WebSockets
 ```
@@ -89,9 +90,9 @@ Layer 7  →  Dashboard & REST API
 
 | Component | Technology |
 |-----------|-----------|
-| Anomaly detection | LSTM Autoencoder (PyTorch → ONNX Runtime) |
-| Cold-start / statistical | Isolation Forest (scikit-learn, unsupervised) |
-| Threat classification LLM | **Gemma 4 E4B** via Ollama (dev) / **Gemma 4 E2B** (Pi 5) |
+| Anomaly detection | LSTM autoencoder (PyTorch → ONNX Runtime), one model shared by all devices, trained on N-BaIoT |
+| Feature extraction | 115 Kitsune features via the reference AfterImage engine (vendored, MIT) |
+| Threat classification LLM | **Gemma 4 E2B** (Q4_K_M) via Ollama — see *Research & evaluation* for its measured accuracy |
 | Agent orchestration | **LangGraph** multi-agent state machines |
 | ONNX inference | ONNX Runtime — fast ARM64 + x86_64 |
 
@@ -102,9 +103,9 @@ Layer 7  →  Dashboard & REST API
 | Packet capture | Scapy + libpcap (AF_PACKET) |
 | Deep packet inspection | nDPI — 300+ protocols incl. MQTT, UPnP, Zigbee |
 | Device fingerprinting | Nmap + passive mDNS/SSDP/ARP/DHCP/OUI |
-| Firewall | nftables + eBPF/XDP (BCC toolkit) |
-| Honeypots | Cowrie (SSH/Telnet), OpenCanary (HTTP/SMB/FTP), custom UPnP |
-| Threat intel | AlienVault OTX, AbuseIPDB, STIX/TAXII feeds, NVD CVE API |
+| Firewall | nftables (active); eBPF/XDP via BCC (implemented, not enabled) |
+| Honeypots | Cowrie (SSH/Telnet), OpenCanary (HTTP/SMB/FTP) |
+| Threat intel | AlienVault OTX, AbuseIPDB, NVD CVE API |
 
 ### Infrastructure
 
@@ -330,10 +331,11 @@ SENTINAL/
 │   │   │   └── engine.py         # Response engine (Redis actions → nft/XDP)
 │   │   └── network_identity.py   # Gateway-MAC network fingerprint
 │   └── agents/
-│       ├── anomaly/              # Layer 3 — LSTM + Isolation Forest
+│       ├── anomaly/              # Layer 3 — LSTM autoencoder
 │       │   ├── worker.py         # Redis consumer
 │       │   ├── inference.py      # ONNX Runtime LSTM inference
-│       │   └── kitsune.py        # Feature extraction (KitNET-style)
+│       │   ├── kitsune.py        # 115 Kitsune features, N-BaIoT layout
+│       │   └── afterimage.py     # Reference Kitsune stats engine (vendored, MIT)
 │       ├── classifier/           # Layer 3 — Gemma threat classifier
 │       │   ├── worker.py         # Redis consumer
 │       │   └── gemma_client.py   # Ollama API client
@@ -450,6 +452,42 @@ Full interactive docs: **http://localhost:8000/docs**
 <img width="1464" height="923" alt="Screenshot 2026-05-22 at 9 55 33 AM" src="https://github.com/user-attachments/assets/b2f5e6a4-aa52-4dfc-a340-adfa546375ae" />
 <img width="1464" height="923" alt="Screenshot 2026-05-22 at 9 55 40 AM" src="https://github.com/user-attachments/assets/ea94e53b-1420-41bf-a276-583be0399b0c" />
 
+
+---
+
+## Research & Evaluation
+
+SENTINEL was evaluated for a workshop paper. Everything is in the repository:
+
+| Where | What |
+|---|---|
+| `paper/main.pdf` | The paper (IEEE format); every number is generated from result files |
+| `research/` | Evaluation harness — N-BaIoT protocol, training, baselines, LLM test, latency |
+| `research/PREREGISTRATION.md` | LLM experiment design, committed before any output was seen |
+| `research/REFERENCES_VERIFIED.md` | How every citation was verified, and what was rejected |
+| `research/results/` | Result files (compact metrics in `summary_models.json`) |
+
+**Key measured results** (N-BaIoT, three devices held out of training):
+
+- The anomaly detector catches 8 of 10 attack classes at ~100%, but misses
+  nearly all **BASHLITE TCP and UDP floods** (27.8% of attack windows). This is
+  a limit of the Kitsune feature space — every model tried misses them.
+- False positives rise from **0.23%** on training devices to **3.65%** on
+  unseen ones, mostly from one device.
+- The local LLM names a correct ATT&CK technique for **~0%** of attacks
+  (it labels ~91% as Command and Control); treat its labels as unvalidated.
+  Blocking is driven by its severity score, not by the label.
+- Every in-house stage runs in **< 1 ms**; the path is dominated by the LLM
+  (~9.5 s) and the OTX lookup (median ~21 s, and it blocks the classifier).
+
+**Fixed during the evaluation:** the live feature extractor computed 40 of 115
+features differently from the training data. It now uses the reference Kitsune
+engine; `research/test_kitsune_parity.py` guards against regression.
+
+**Known issues, not yet fixed:** OTX lookup fetches every section and blocks the
+event loop; enforcement relies on the LLM's severity alone; single global
+anomaly threshold. Timing was measured on a 4-core aarch64 VM, not a physical
+Raspberry Pi 5.
 
 ---
 
