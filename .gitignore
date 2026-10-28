@@ -173,6 +173,9 @@ paper/*.bbl
 paper/*.blg
 paper/*.toc
 paper/_fig.*
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.synctex.gz
 
 # Raw per-window score files (~14 MB each); summarised in research/results/summary_models.json
 research/results/res_deployed.json

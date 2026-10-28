@@ -1,0 +1,5 @@
+# `latexmk` builds main.pdf (pdflatex + bibtex, rerun until stable);
+# `latexmk -c` removes the auxiliary files.
+$pdf_mode = 1;
+@default_files = ('main.tex');
+$pdflatex = 'pdflatex -interaction=nonstopmode -halt-on-error -file-line-error %O %S';
