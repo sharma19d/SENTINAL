@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Homora</string>
+
+    <!-- Navigation and common -->
+    <string name="nav_devices">Devices</string>
+    <string name="nav_security">Security</string>
+    <string name="nav_wifi">Wi-Fi</string>
+    <string name="settings">Settings</string>
+    <string name="back">Back</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="action_scan">Scan network</string>
+    <string name="action_rescan">Scan again</string>
+    <plurals name="scan_phase_discovering">
+        <item quantity="one">Looking for devices · %d found so far</item>
+        <item quantity="other">Looking for devices · %d found so far</item>
+    </plurals>
+    <plurals name="scan_phase_checking">
+        <item quantity="one">Checking %d device</item>
+        <item quantity="other">Checking %d devices</item>
+    </plurals>
+    <string name="scan_stop">Stop</string>
+    <string name="last_scan">Last scan %1$s</string>
+    <string name="err_no_wifi">Connect to your home Wi-Fi to scan it.</string>
+    <string name="err_not_private">This isn\'t a private home network, so Homora won\'t scan it.</string>
+    <string name="err_scan">The scan stopped unexpectedly. Please try again.</string>
+
+    <!-- Onboarding -->
+    <string name="onb1_title">See what\'s on your Wi-Fi</string>
+    <string name="onb1_body">Homora finds the devices on your home network, checks your setup for common security problems, and shows where your Wi-Fi signal is strong or weak.</string>
+    <string name="onb_privacy_title">Private by design</string>
+    <string name="onb_privacy_body">Scans run on your phone and only look at the network you\'re connected to. Your device list never leaves this phone.</string>
+    <string name="onb2_title">One permission</string>
+    <string name="onb2_body">Android only shows the Wi-Fi name and nearby networks to apps with location permission. Homora never reads, stores or sends your location.</string>
+    <string name="onb2_allow">Allow</string>
+    <string name="onb2_skip">Not now</string>
+    <string name="onb3_title">Help improve Homora?</string>
+    <string name="onb3_body">Share anonymous usage counts, like how long scans take and which checks find problems. Never your devices, network names or addresses. You can change this any time in Settings.</string>
+    <string name="onb3_yes">Share anonymous usage</string>
+    <string name="onb3_no">No thanks</string>
+    <string name="onb_continue">Continue</string>
+
+    <!-- Devices -->
+    <string name="devices_empty_title">No scan yet</string>
+    <string name="devices_empty_body">Scan your network to see every device connected to it.</string>
+    <plurals name="devices_unmarked">
+        <item quantity="one">%d device you haven\'t marked as yours</item>
+        <item quantity="other">%d devices you haven\'t marked as yours</item>
+    </plurals>
+    <string name="devices_unmarked_hint">Tap a device and choose \"This is mine\". Anything left unmarked deserves a closer look.</string>
+    <string name="devices_section_unmarked">Not marked yet</string>
+    <string name="devices_section_known">Yours</string>
+    <string name="device_unnamed">Unknown device</string>
+    <string name="lockout_link">Someone shouldn\'t be on your Wi-Fi?</string>
+
+    <string name="kind_router">Router</string>
+    <string name="kind_this_phone">This phone</string>
+    <string name="kind_phone">Phone or tablet</string>
+    <string name="kind_computer">Computer</string>
+    <string name="kind_tv">TV or streamer</string>
+    <string name="kind_speaker">Speaker</string>
+    <string name="kind_camera">Camera</string>
+    <string name="kind_printer">Printer</string>
+    <string name="kind_smart_home">Smart home device</string>
+    <string name="kind_console">Game console</string>
+    <string name="kind_storage">Network storage</string>
+    <string name="kind_unknown">Unknown type</string>
+
+    <string name="detail_mark_known">This is mine</string>
+    <string name="detail_rename">Rename</string>
+    <string name="detail_forget">Unmark</string>
+    <string name="detail_name_hint">Name, e.g. Living room TV</string>
+    <string name="detail_ip">IP address</string>
+    <string name="detail_seen_as">Recognised by</string>
+    <string name="detail_open_services">Open services</string>
+    <string name="detail_none">None</string>
+    <string name="detail_maker">Made by</string>
+    <string name="detail_model">Model</string>
+    <string name="detail_type">Type</string>
+    <string name="detail_find">Find this device</string>
+    <string name="detail_issues">Issues on this device</string>
+    <string name="detail_why_unknown_title">Why can\'t Homora name it?</string>
+    <string name="detail_why_unknown_body">Android doesn\'t let apps see other devices\' hardware (MAC) addresses, and many devices don\'t announce a name. Phones also use a private, random address on Wi-Fi, so even your router may list them as unknown. An unknown device is usually something you own.</string>
+    <string name="src_upnp">UPnP</string>
+    <string name="src_mdns">Bonjour / mDNS</string>
+    <string name="src_netbios">Windows network name</string>
+    <string name="src_dns">Router\'s name list</string>
+    <string name="src_service">Service it announces</string>
+    <string name="src_ip">IP address only</string>
+
+    <!-- Identify helper -->
+    <string name="identify_title">Find this device</string>
+    <string name="identify_body">Unplug or switch off your devices one at a time. Homora checks every few seconds and tells you when this one disappears.</string>
+    <string name="identify_watching">Watching %1$s…</string>
+    <string name="identify_gone">That was it!</string>
+    <string name="identify_gone_body">The device you just switched off is this one. Give it a name so you\'ll recognise it next time.</string>
+    <string name="identify_cant_watch">Homora can\'t watch this device because it doesn\'t answer on any port. Try scanning again instead.</string>
+
+    <!-- Security -->
+    <string name="security_empty">Scan your network to check it for common problems.</string>
+    <string name="security_all_good">No problems found</string>
+    <plurals name="security_issues">
+        <item quantity="one">%d thing to fix</item>
+        <item quantity="other">%d things to fix</item>
+    </plurals>
+    <string name="security_passed">Checks passed</string>
+    <string name="severity_high">Fix soon</string>
+    <string name="severity_medium">Worth fixing</string>
+    <string name="severity_low">Minor</string>
+    <string name="finding_why">What this means</string>
+    <string name="finding_fix">How to fix it</string>
+    <string name="finding_on_device">On %1$s</string>
+    <string name="finding_dispute">This isn\'t right</string>
+    <string name="finding_disputed_thanks">Thanks. We use this to improve the check.</string>
+    <string name="finding_helpful">Did this guide help?</string>
+    <string name="finding_helpful_thanks">Thanks for the feedback.</string>
+    <string name="finding_rescan">I\'ve fixed it — scan again</string>
+
+    <string name="check_wifi_encryption">Wi-Fi password and encryption</string>
+    <string name="check_wps">WPS is off</string>
+    <string name="check_upnp">UPnP is off</string>
+    <string name="check_telnet">No Telnet logins open</string>
+    <string name="check_ftp">No unencrypted file sharing</string>
+    <string name="check_remote_screen">No open screen sharing</string>
+    <string name="check_camera_stream">No open camera streams</string>
+    <string name="check_router_admin">Router settings page is encrypted</string>
+
+    <string name="f_wifi_open_title">Your Wi-Fi has no password</string>
+    <string name="f_wifi_open_why">Anyone nearby can join your network and reach your devices.</string>
+    <string-array name="f_wifi_open_steps">
+        <item>Open your router\'s settings. The address and admin password are usually on a sticker on the router.</item>
+        <item>Find Wi-Fi or Wireless security.</item>
+        <item>Choose WPA2 or WPA3 and set a long password.</item>
+        <item>Reconnect your devices with the new password.</item>
+    </string-array>
+
+    <string name="f_wifi_wep_title">Your Wi-Fi uses WEP, which is broken</string>
+    <string name="f_wifi_wep_why">WEP passwords can be cracked in minutes with free tools, so it protects almost nothing.</string>
+    <string-array name="f_wifi_wep_steps">
+        <item>Open your router\'s settings and find Wi-Fi or Wireless security.</item>
+        <item>Switch to WPA2 or WPA3 and set a long password.</item>
+        <item>If your router only offers WEP, it is too old to be safe and should be replaced.</item>
+    </string-array>
+
+    <string name="f_wifi_old_wpa_title">Your Wi-Fi uses old WPA security</string>
+    <string name="f_wifi_old_wpa_why">The original WPA (TKIP) has known weaknesses and also slows your Wi-Fi down.</string>
+    <string-array name="f_wifi_old_wpa_steps">
+        <item>Open your router\'s settings and find Wi-Fi or Wireless security.</item>
+        <item>Choose WPA2 (AES) or WPA2/WPA3.</item>
+        <item>Reconnect any device that drops off afterwards.</item>
+    </string-array>
+
+    <string name="f_wps_on_title">WPS is turned on</string>
+    <string name="f_wps_on_why">WPS lets devices join with a button or an 8-digit PIN. On many routers the PIN can be guessed, letting someone join without your password.</string>
+    <string-array name="f_wps_on_steps">
+        <item>Open your router\'s settings and find the Wi-Fi or Wireless section.</item>
+        <item>Turn WPS off.</item>
+        <item>You can still add devices by typing the Wi-Fi password.</item>
+    </string-array>
+
+    <string name="f_upnp_on_title">UPnP is turned on</string>
+    <string name="f_upnp_on_why">UPnP lets any device on your network open ports in your router to the internet without asking you. Malware on one device can use it to expose others.</string>
+    <string-array name="f_upnp_on_steps">
+        <item>Open your router\'s settings and look under Advanced, NAT or Forwarding.</item>
+        <item>Turn UPnP off.</item>
+        <item>If a game console or app stops working, set up a port forward for just that device instead.</item>
+    </string-array>
+
+    <string name="f_telnet_open_title">Telnet login is open</string>
+    <string name="f_telnet_open_why">Telnet is an old, unencrypted remote login. The Mirai botnet took over hundreds of thousands of cameras and routers by logging in over Telnet with default passwords.</string>
+    <string-array name="f_telnet_open_steps">
+        <item>Update the device\'s firmware from its app or web page.</item>
+        <item>Turn off Telnet in its settings, if there is an option.</item>
+        <item>Change the device\'s default password.</item>
+        <item>If none of that is possible, consider replacing it or moving it to a guest network.</item>
+    </string-array>
+
+    <string name="f_ftp_open_title">FTP file sharing is open</string>
+    <string name="f_ftp_open_why">FTP sends passwords and files unencrypted, so anyone on your Wi-Fi could read them.</string>
+    <string-array name="f_ftp_open_steps">
+        <item>If you don\'t use FTP, turn it off in the device\'s settings.</item>
+        <item>If you do, switch to an encrypted option such as SFTP, and use a strong password.</item>
+    </string-array>
+
+    <string name="f_vnc_open_title">Screen sharing (VNC) is open</string>
+    <string name="f_vnc_open_why">VNC lets someone see and control this device\'s screen. Many VNC setups have weak passwords or none.</string>
+    <string-array name="f_vnc_open_steps">
+        <item>If you don\'t use screen sharing, turn it off.</item>
+        <item>If you do, set a strong password and keep the software updated.</item>
+    </string-array>
+
+    <string name="f_camera_stream_open_title">A camera video stream is reachable</string>
+    <string name="f_camera_stream_open_why">This device offers a video stream (RTSP) on your network. If it still uses its default password, anyone on your Wi-Fi could watch it.</string>
+    <string-array name="f_camera_stream_open_steps">
+        <item>Change the camera\'s default password in its app.</item>
+        <item>Update its firmware.</item>
+        <item>If you only watch through the app, turn RTSP off if the camera allows it.</item>
+    </string-array>
+
+    <string name="f_router_admin_unencrypted_title">Router settings page isn\'t encrypted</string>
+    <string name="f_router_admin_unencrypted_why">Your router\'s settings page uses plain HTTP, so the admin password travels unencrypted when you log in. Someone on your Wi-Fi could capture it.</string>
+    <string-array name="f_router_admin_unencrypted_steps">
+        <item>Change the router\'s admin password from the default.</item>
+        <item>Turn on HTTPS for the settings page if your router offers it.</item>
+        <item>Only log in to the router from devices you trust.</item>
+    </string-array>
+
+    <!-- Lock-out guide -->
+    <string name="lockout_title">Get someone off your Wi-Fi</string>
+    <string-array name="lockout_steps">
+        <item>Log in to your router\'s settings. The address and admin password are usually on a sticker on the router.</item>
+        <item>Change the router\'s admin password. It is different from the Wi-Fi password.</item>
+        <item>Turn off WPS, so no one can rejoin with the button or PIN.</item>
+        <item>Change the Wi-Fi password. Every device is disconnected and has to rejoin with the new one.</item>
+        <item>Reconnect your own devices.</item>
+        <item>Scan again in Homora to check the unknown device is gone.</item>
+    </string-array>
+    <string name="lockout_note">If it keeps coming back, reset the router to factory settings and set it up again. Homora never disconnects devices itself; that\'s done from your router, so you stay in control.</string>
+
+    <!-- Wi-Fi -->
+    <string name="wifi_not_connected">You\'re not connected to Wi-Fi.</string>
+    <string name="wifi_your_network">Your Wi-Fi</string>
+    <string name="zone_excellent">Excellent</string>
+    <string name="zone_good">Good</string>
+    <string name="zone_fair">Fair</string>
+    <string name="zone_weak">Weak</string>
+    <string name="zone_dead">Dead zone</string>
+    <string name="wifi_dbm">%1$d dBm</string>
+    <string name="wifi_trend_up">Getting better</string>
+    <string name="wifi_trend_down">Getting worse</string>
+    <string name="wifi_trend_steady">Steady</string>
+    <string name="wifi_router_latency">Router %1$s ms</string>
+    <string name="wifi_router_latency_none">Router –</string>
+    <string name="wifi_link_rate">Link rate %1$d Mbps</string>
+    <string name="wifi_link_rate_hint">Link rate is the radio\'s maximum, not your internet speed.</string>
+    <string name="wifi_sound">Sound</string>
+    <string name="wifi_sound_hint">Beeps faster as the signal gets stronger, so you can walk around without watching the screen.</string>
+    <string name="wifi_save_spot">Save this spot</string>
+    <string name="wifi_spot_name_hint">Room name, e.g. Kitchen</string>
+    <string name="wifi_rooms_title">Your rooms</string>
+    <string name="wifi_rooms_empty">Walk to a room, wait a few seconds, then tap \"Save this spot\" to compare rooms.</string>
+    <string name="wifi_room_delete">Delete</string>
+    <string name="room_dead">Too weak. Expect drop-outs; move the router closer or add a mesh point.</string>
+    <string name="room_weak">Weak. Fine for browsing, poor for video calls.</string>
+    <string name="room_fair">OK for most things.</string>
+    <string name="room_good">Good for video calls and streaming.</string>
+    <string name="room_excellent">Strong enough for anything.</string>
+    <string name="wifi_permission_needed">Allow location permission to see your Wi-Fi name and nearby networks. Your location is never read or stored.</string>
+    <string name="wifi_allow">Allow</string>
+
+    <string name="smart_title">Smart device won\'t connect?</string>
+    <string name="smart_subtitle">Check what might be getting in the way</string>
+    <string name="smart_intro">Most smart plugs, bulbs and cameras only work on 2.4 GHz Wi-Fi. Here is what might be getting in the way.</string>
+    <string name="smart_band_high">Your phone is on %1$s. Many setup apps need the phone on 2.4 GHz while you add the device. Move further from the router, or turn off 5 GHz for a few minutes.</string>
+    <string name="smart_band_24">Your phone is on 2.4 GHz, which is right for setting up smart devices.</string>
+    <string name="smart_shared_name">Your router uses one Wi-Fi name for both 2.4 and 5 GHz. Some smart devices fail to join like this. In the router\'s settings, give 2.4 GHz its own name (look for \"band steering\" or \"smart connect\"), then connect the device to it.</string>
+    <string name="smart_separate_names">Your 2.4 and 5 GHz networks have separate names. Good.</string>
+    <plurals name="smart_crowded">
+        <item quantity="one">%1$d other network overlaps your 2.4 GHz channel (%2$d). Moving your router to channel %3$d, where %4$d overlap, could make connections more reliable.</item>
+        <item quantity="other">%1$d other networks overlap your 2.4 GHz channel (%2$d). Moving your router to channel %3$d, where %4$d overlap, could make connections more reliable.</item>
+    </plurals>
+    <string name="smart_not_crowded">Your 2.4 GHz channel isn\'t crowded.</string>
+    <string name="smart_no_data">Homora can\'t see nearby networks. Allow location permission and try again.</string>
+    <string name="smart_refresh">Refresh</string>
+
+    <!-- History -->
+    <string name="history_title">Recent changes</string>
+    <string name="history_new_device">New device: %1$s</string>
+    <string name="history_issue_found">New issue: %1$s</string>
+    <string name="history_issue_fixed">Fixed: %1$s</string>
+
+    <!-- Settings -->
+    <string name="settings_privacy_section">Privacy</string>
+    <string name="settings_analytics">Share anonymous usage</string>
+    <string name="settings_analytics_body">Counts only, never device names, addresses or network names.</string>
+    <string name="settings_what_sent">What\'s shared</string>
+    <string name="settings_what_sent_body">When sharing is on, Homora sends: scan duration and device counts (as ranges, like \"6–15\"), the types of problems found, which guides were opened or marked wrong, Wi-Fi meter use, and crash reports. Firebase adds an app-instance ID, your phone model and Android version. Homora never sends device names, IP or MAC addresses, Wi-Fi names, or your location.</string>
+    <string name="settings_alerts">New device alerts</string>
+    <string name="settings_alerts_body">Checks once a day, only on Wi-Fi while charging.</string>
+    <string name="settings_feedback">Send feedback</string>
+    <string name="settings_feedback_body">Suggest a feature or report a problem</string>
+    <string name="settings_privacy_policy">Privacy policy</string>
+    <string name="settings_clear">Clear saved data</string>
+    <string name="settings_clear_body">Removes your device names, rooms and scan history from this phone.</string>
+    <string name="settings_clear_confirm">Clear everything Homora saved on this phone?</string>
+    <string name="settings_clear_yes">Clear</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_body">Homora checks the home network you\'re connected to. It never tries passwords, never disconnects devices, and never scans any other network.</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="privacy_url">https://homora-2026.web.app/privacy.html</string>
+
+    <!-- Feedback -->
+    <string name="feedback_title">Send feedback</string>
+    <string name="feedback_idea">Feature idea</string>
+    <string name="feedback_problem">Problem</string>
+    <string name="feedback_hint">What would you like, or what went wrong?</string>
+    <string name="feedback_email">E-mail (optional, if you\'d like a reply)</string>
+    <string name="feedback_warning">Please don\'t include passwords or personal details.</string>
+    <string name="feedback_send">Send</string>
+    <string name="feedback_sent">Thanks! We read every message.</string>
+    <string name="feedback_error">Couldn\'t send. Check your connection and try again.</string>
+    <string name="feedback_unavailable">Feedback isn\'t available in this build.</string>
+    <string name="feedback_count">%1$d / %2$d</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_name">New devices</string>
+    <plurals name="notif_new_devices_title">
+        <item quantity="one">%d new device on your Wi-Fi</item>
+        <item quantity="other">%d new devices on your Wi-Fi</item>
+    </plurals>
+    <string name="notif_new_devices_text">Open Homora to see what it is.</string>
+</resources>

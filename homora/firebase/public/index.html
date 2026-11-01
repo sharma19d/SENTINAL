@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Homora privacy policy</title>
+<style>
+  :root { color-scheme: light dark; --fg: #171b21; --muted: #4a5260; --bg: #f8f9fc; --accent: #1f6fe5; }
+  @media (prefers-color-scheme: dark) { :root { --fg: #e2e5ea; --muted: #b9c0cb; --bg: #101318; --accent: #8db6ff; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.8rem; margin-bottom: 0; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; }
+  p.meta, li span { color: var(--muted); }
+  a { color: var(--accent); }
+  table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+  td, th { text-align: left; vertical-align: top; padding: 8px; border-bottom: 1px solid color-mix(in srgb, var(--muted) 30%, transparent); }
+</style>
+</head>
+<body>
+<main>
+<h1>Homora privacy policy</h1>
+<p class="meta">Last updated: 1 November 2026</p>
+
+<p>Homora checks the home network your phone is connected to: which devices are on it, whether it has common
+security problems, and how strong your Wi-Fi signal is. This policy explains what stays on your phone and what,
+if anything, is sent to us.</p>
+
+<h2>The short version</h2>
+<ul>
+  <li><strong>Your device list stays on your phone.</strong> Device names, IP and MAC addresses, Wi-Fi network
+    names, signal readings and room names are stored only on your phone and are deleted when you uninstall the app
+    or use <em>Settings → Clear saved data</em>.</li>
+  <li><strong>We never collect your location.</strong> Android requires location permission for apps to read the
+    Wi-Fi name and see nearby networks. Homora uses that permission only for those Wi-Fi details and never reads,
+    stores or sends your location.</li>
+  <li><strong>Usage statistics are off unless you turn them on</strong>, and never include anything about your
+    network or devices.</li>
+</ul>
+
+<h2>What Homora does on your network</h2>
+<p>When you tap <em>Scan</em>, Homora looks only at the private network your phone is on (at most 254 addresses).
+It asks devices which services they offer and what they are called, the same way your phone finds a printer or a
+TV. It never tries passwords, never sends exploits, never disconnects devices, and never scans other networks.
+Scans run only while the app is open. If you turn on <em>New device alerts</em>, a short check runs at most once a
+day, only on Wi-Fi while your phone is charging.</p>
+
+<h2>What is sent to us, and when</h2>
+<table>
+  <tr><th>Data</th><th>When</th><th>Purpose</th></tr>
+  <tr><td>Anonymous usage counts: scan duration and device counts as ranges (for example “6–15”), the types of
+    problems found, which guides were opened or marked wrong, Wi-Fi meter use</td>
+    <td>Only if you turn on <em>Share anonymous usage</em></td><td>To see which features work and improve checks</td></tr>
+  <tr><td>Crash reports (where in the app it crashed)</td><td>Only if you turn on <em>Share anonymous usage</em></td>
+    <td>To fix bugs</td></tr>
+  <tr><td>Feedback you write, and your e-mail if you choose to give it</td><td>Only when you tap <em>Send</em> in
+    <em>Send feedback</em></td><td>To read your suggestion or problem and, if you asked, reply</td></tr>
+</table>
+<p>These are processed with Google Firebase (Analytics, Crashlytics, Firestore, Authentication and App Check).
+Firebase also records an app-instance identifier, your phone model and Android version, and an approximate country
+derived from your IP address. Advertising ID collection and ad personalisation are switched off. Feedback is linked
+to an anonymous sign-in identifier, not to your name or Google account. See
+<a href="https://firebase.google.com/support/privacy">how Firebase handles data</a>.</p>
+<p>Homora never sends device names, IP or MAC addresses, Wi-Fi network names, signal readings, room names or your
+location. We do not sell data or use it for advertising.</p>
+
+<h2>Your choices</h2>
+<ul>
+  <li>Turn usage sharing on or off at any time in <em>Settings</em>.</li>
+  <li>Delete everything stored on your phone with <em>Settings → Clear saved data</em>, or by uninstalling.</li>
+  <li>To have feedback you sent deleted, e-mail us at the address below.</li>
+</ul>
+
+<h2>Retention</h2>
+<p>Analytics data is kept for the shortest period Firebase allows. Feedback is kept until the issue is handled and
+then deleted, or sooner on request.</p>
+
+<h2>Children</h2>
+<p>Homora is not directed at children under 13 and does not knowingly collect their data.</p>
+
+<h2>Contact</h2>
+<p>Questions or deletion requests: <a href="mailto:vinayyssharma17@gmail.com">vinayyssharma17@gmail.com</a></p>
+</main>
+</body>
+</html>

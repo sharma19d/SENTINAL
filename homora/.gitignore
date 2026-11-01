@@ -1,0 +1,13 @@
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+captures/
+.kotlin/
+# Firebase config: provided per machine / as a CI secret, never committed.
+app/google-services.json
+# Signing material
+*.jks
+*.keystore
+keystore.properties

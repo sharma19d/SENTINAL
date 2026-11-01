@@ -1,0 +1,29 @@
+rules_version = '2';
+
+// Homora's only server-side data is user feedback. Users may create one
+// well-formed document at a time and can never read, change or delete any.
+// The app owner reads feedback in the Firebase console (rules don't apply there).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /feedback/{id} {
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'type', 'text', 'email', 'appVersion', 'androidSdk', 'createdAt'])
+        && request.resource.data.keys().hasAll(['uid', 'type', 'text', 'appVersion', 'androidSdk', 'createdAt'])
+        && request.resource.data.type in ['idea', 'problem']
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 5
+        && request.resource.data.text.size() <= 1000
+        && (!('email' in request.resource.data)
+            || (request.resource.data.email is string && request.resource.data.email.size() <= 120))
+        && request.resource.data.appVersion is string
+        && request.resource.data.appVersion.size() <= 20
+        && request.resource.data.androidSdk is int
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
