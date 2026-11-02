@@ -37,6 +37,7 @@ class NewDeviceWorker(context: Context, params: WorkerParameters) : CoroutineWor
         if (!c.prefs.newDeviceAlerts.value) return Result.success()
         val lan = c.wifi.lanInfo() ?: return Result.success()
         if (!Ipv4.isPrivate(lan.selfIp)) return Result.success()
+        c.store.awaitLoaded()
         val before = c.store.state.value
         if (before.lastScan == null) return Result.success() // nothing to compare against yet
         val outcome = try {
@@ -44,7 +45,7 @@ class NewDeviceWorker(context: Context, params: WorkerParameters) : CoroutineWor
         } catch (_: Exception) {
             return Result.retry()
         }
-        val newOnes = outcome.devices.filter { !it.isSelf && it.identityKey !in before.seenKeys && it.identityKey !in before.known }
+        val newOnes = outcome.devices.filter { !it.isSelf && !it.isGateway && it.identityKey !in before.seenKeys && it.identityKey !in before.known }
         val report = com.charonsecurity.homora.checks.Checks.evaluate(outcome.devices, before.lastScan.wifi)
         c.store.update { ScanRepository.applyScan(it, outcome, report.findings, before.lastScan.wifi) }
         if (newOnes.isNotEmpty()) notify(newOnes.size)

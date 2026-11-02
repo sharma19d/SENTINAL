@@ -150,6 +150,8 @@ cython_debug/
 
 # Project Specific
 data/
+# ...but not the Android app's Kotlin package of the same name.
+!homora/app/src/main/java/com/charonsecurity/homora/data/
 models/
 *.pcap
 logs/
