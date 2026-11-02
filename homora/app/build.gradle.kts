@@ -1,3 +1,5 @@
+import java.time.Duration
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -56,7 +58,7 @@ android {
                 it.systemProperty("robolectric.pixelCopyRenderMode", "hardware")
                 // Name each test in the log and fail a stuck run instead of hanging CI.
                 it.testLogging { events("started", "passed", "failed", "skipped") }
-                it.timeout.set(java.time.Duration.ofMinutes(15))
+                it.timeout.set(Duration.ofMinutes(15))
             }
         }
     }
