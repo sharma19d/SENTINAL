@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import com.charonsecurity.homora.ui.components.HomoraLogo
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -186,6 +187,9 @@ class SnapshotTest {
     @Test fun onboardingPages() {
         val c = container(onboarded = false, scanned = false)
         compose.setContent { HomoraTheme { HomoraRoot(c) } }
+        // A tap skips the logo animation, as it does on a phone.
+        compose.onRoot().performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("Get started").fetchSemanticsNodes().isNotEmpty() }
         compose.waitForIdle()
         shot("08b_onboarding_page1")
         compose.onNodeWithText("Get started").performClick()
