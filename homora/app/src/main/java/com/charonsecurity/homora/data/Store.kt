@@ -51,6 +51,11 @@ class Store(context: Context) {
         it.copy(known = it.known + (key to KnownDevice(key, label.trim().take(60))))
     }
 
+    /** Marks a device as one the user wants off the network (or clears that). */
+    suspend fun setBlocked(key: String, on: Boolean) = update {
+        it.copy(blocked = if (on) it.blocked + (key to System.currentTimeMillis()) else it.blocked - key)
+    }
+
     suspend fun forget(key: String) = update { it.copy(known = it.known - key) }
 
     /** Saves a spot; a spot with the same name replaces the old reading. */

@@ -6,6 +6,18 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.horizontalScroll
+import com.charonsecurity.homora.ui.components.Tag
+import com.charonsecurity.homora.telemetry.Telemetry
+import com.charonsecurity.homora.checks.DeviceRisk
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,7 +63,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.charonsecurity.homora.AppContainer
 import com.charonsecurity.homora.R
-import com.charonsecurity.homora.checks.Severity
 import com.charonsecurity.homora.data.AppState
 import com.charonsecurity.homora.data.ScanState
 import com.charonsecurity.homora.net.Device
@@ -61,7 +72,6 @@ import com.charonsecurity.homora.ui.components.GlassCard
 import com.charonsecurity.homora.ui.components.GlowButton
 import com.charonsecurity.homora.ui.components.PillChip
 import com.charonsecurity.homora.ui.components.ScanControl
-import com.charonsecurity.homora.ui.components.StatusDot
 import com.charonsecurity.homora.ui.components.TabHeader
 import com.charonsecurity.homora.ui.components.icon
 import com.charonsecurity.homora.ui.components.label
@@ -108,7 +118,13 @@ fun DevicesScreen(
     }
     val mineCount = remember(all) { all.count { isMarked(it, app) } }
     val unknownCount = all.size - mineCount
-    val issues = remember(scan) { scan?.findings.orEmpty().groupBy { it.deviceKey } }
+    // One risk assessment per device, recomputed only when the scan or labels change.
+    val risks = remember(scan, app.known) {
+        scan?.devices.orEmpty().associate { d ->
+            d.identityKey to DeviceRisk.assess(d, scan!!.findings, isMarked(d, app), d.identityKey in scan.newKeys)
+        }
+    }
+    val scope = rememberCoroutineScope()
     val shown = remember(all, filter, query) {
         val q = query.trim().lowercase()
         all.filter {
@@ -184,7 +200,7 @@ fun DevicesScreen(
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.Top) {
                         Icon(Icons.Outlined.Info, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.width(12.dp))
-                        Text(stringResource(R.string.devices_unmarked_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.devices_long_press_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -201,8 +217,16 @@ fun DevicesScreen(
         }
         items(shown, key = { it.identityKey + "|" + it.ip }) { d ->
             DeviceCard(
-                d, app, issues[d.identityKey]?.minOfOrNull { it.type.severity.ordinal }, onOpen,
-                Modifier.animateItem().padding(horizontal = 16.dp, vertical = 5.dp),
+                d, app, risks[d.identityKey], isNew = d.identityKey in scan.newKeys,
+                onOpen = onOpen,
+                onToggleMine = { mine ->
+                    scope.launch {
+                        if (mine) container.store.setKnown(d.identityKey, d.bestName ?: context.getString(d.kind.label()))
+                        else container.store.forget(d.identityKey)
+                    }
+                    if (mine) Telemetry.deviceMarkedKnown()
+                },
+                modifier = Modifier.animateItem().padding(horizontal = 16.dp, vertical = 5.dp),
             )
         }
         item(key = "lockout") {
@@ -213,30 +237,65 @@ fun DevicesScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun DeviceCard(d: Device, app: AppState, worstIssue: Int?, onOpen: (String) -> Unit, modifier: Modifier = Modifier) {
+private fun DeviceCard(
+    d: Device,
+    app: AppState,
+    risk: DeviceRisk.Assessment?,
+    isNew: Boolean,
+    onOpen: (String) -> Unit,
+    onToggleMine: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val status = LocalStatusColors.current
-    GlassCard(modifier.fillMaxWidth(), onClick = { onOpen(d.identityKey) }) {
-        Row(Modifier.padding(horizontal = 18.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(d.kind.icon(), null, Modifier.size(30.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f))
-            Spacer(Modifier.width(18.dp))
-            Column(Modifier.weight(1f)) {
-                Text(deviceName(d, app), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    if (d.isSelf || d.kind == DeviceKind.UNKNOWN) d.ip else stringResource(d.kind.label()),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                )
+    val haptics = LocalHapticFeedback.current
+    val editable = !d.isSelf && !d.isGateway
+    val mine = isMarked(d, app)
+    var menu by remember { mutableStateOf(false) }
+    val shape = RoundedCornerShape(20.dp)
+    Box(modifier.fillMaxWidth()) {
+        GlassCard(
+            Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .combinedClickable(
+                    onClick = { onOpen(d.identityKey) },
+                    onLongClick = if (editable) ({ haptics.performHapticFeedback(HapticFeedbackType.LongPress); menu = true }) else null,
+                ),
+            shape = shape,
+        ) {
+            Row(Modifier.padding(horizontal = 18.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(d.kind.icon(), null, Modifier.size(30.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f))
+                Spacer(Modifier.width(18.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(deviceName(d, app), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        if (d.isSelf || d.kind == DeviceKind.UNKNOWN) d.ip else stringResource(d.kind.label()),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                    )
+                }
+                // Tags only when they say something: nothing is shown for a quiet, known device.
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (d.identityKey in app.blocked) Tag(stringResource(R.string.tag_blocked), status.high)
+                    else if (isNew && !mine) Tag(stringResource(R.string.tag_new), Color.White)
+                    when (risk?.level) {
+                        DeviceRisk.Level.HIGH -> Tag(stringResource(R.string.risk_high), status.high)
+                        DeviceRisk.Level.MEDIUM -> Tag(stringResource(R.string.risk_medium), status.medium)
+                        else -> {}
+                    }
+                }
+                Spacer(Modifier.width(4.dp))
+                Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            if (worstIssue != null) {
-                StatusDot(if (worstIssue == Severity.HIGH.ordinal) status.high else status.medium)
-                Spacer(Modifier.width(10.dp))
-            } else if (!isMarked(d, app)) {
-                StatusDot(Color.White.copy(alpha = 0.7f))
-                Spacer(Modifier.width(10.dp))
-            }
-            Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(if (mine) R.string.detail_forget else R.string.detail_mark_known)) },
+                onClick = { menu = false; onToggleMine(!mine) },
+            )
         }
     }
 }

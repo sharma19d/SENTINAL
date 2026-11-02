@@ -109,10 +109,10 @@ class ScanRepository(private val store: Store, private val wifi: WifiReader) {
             val at = outcome.startedAt + outcome.durationMs
             val prev = state.lastScan
             val events = ArrayList<HistoryEvent>()
+            val newDevices = if (prev == null) emptyList() else outcome.devices
+                .filter { !it.isSelf && !it.isGateway && it.identityKey !in state.seenKeys && it.identityKey !in state.known }
             if (prev != null) {
-                outcome.devices
-                    .filter { !it.isSelf && !it.isGateway && it.identityKey !in state.seenKeys && it.identityKey !in state.known }
-                    .forEach { events += HistoryEvent(at, HistoryKind.NEW_DEVICE, it.bestName ?: it.ip) }
+                newDevices.forEach { events += HistoryEvent(at, HistoryKind.NEW_DEVICE, it.bestName ?: it.ip) }
                 val prevIds = prev.findings.map { it.id }.toSet()
                 val newIds = findings.map { it.id }.toSet()
                 val present = outcome.devices.map { it.identityKey }.toSet()
@@ -125,7 +125,7 @@ class ScanRepository(private val store: Store, private val wifi: WifiReader) {
             }
             return state.copy(
                 seenKeys = state.seenKeys + outcome.devices.map { it.identityKey },
-                lastScan = StoredScan(at, outcome.durationMs, outcome.devices, findings, wifi),
+                lastScan = StoredScan(at, outcome.durationMs, outcome.devices, findings, wifi, newDevices.map { it.identityKey }.toSet()),
                 history = (events + state.history).take(MAX_HISTORY),
             )
         }

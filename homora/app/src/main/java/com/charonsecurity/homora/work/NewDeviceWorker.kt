@@ -48,28 +48,32 @@ class NewDeviceWorker(context: Context, params: WorkerParameters) : CoroutineWor
         val newOnes = outcome.devices.filter { !it.isSelf && !it.isGateway && it.identityKey !in before.seenKeys && it.identityKey !in before.known }
         val report = com.charonsecurity.homora.checks.Checks.evaluate(outcome.devices, before.lastScan.wifi)
         c.store.update { ScanRepository.applyScan(it, outcome, report.findings, before.lastScan.wifi) }
-        if (newOnes.isNotEmpty()) notify(newOnes.size)
+        val blockedBack = outcome.devices.count { it.identityKey in before.blocked }
+        if (newOnes.isNotEmpty()) notify(NOTIFICATION_ID, ctxPlural(R.plurals.notif_new_devices_title, newOnes.size), applicationContext.getString(R.string.notif_new_devices_text))
+        if (blockedBack > 0) notify(BLOCKED_ID, ctxPlural(R.plurals.notif_blocked_title, blockedBack), applicationContext.getString(R.string.notif_blocked_text))
         return Result.success()
     }
 
-    private fun notify(count: Int) {
+    private fun ctxPlural(id: Int, n: Int) = applicationContext.resources.getQuantityString(id, n, n)
+
+    private fun notify(id: Int, title: String, text: String) {
         val ctx = applicationContext
-        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&
-            android.os.Build.VERSION.SDK_INT >= 33
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) return
         val open = PendingIntent.getActivity(
-            ctx, 0, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            ctx, id, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE,
         )
         val n = NotificationCompat.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_homora)
-            .setContentTitle(ctx.resources.getQuantityString(R.plurals.notif_new_devices_title, count, count))
-            .setContentText(ctx.getString(R.string.notif_new_devices_text))
+            .setContentTitle(title)
+            .setContentText(text)
             .setContentIntent(open)
             .setAutoCancel(true)
             .build()
         try {
-            NotificationManagerCompat.from(ctx).notify(NOTIFICATION_ID, n)
+            NotificationManagerCompat.from(ctx).notify(id, n)
         } catch (_: SecurityException) {
         }
     }
@@ -78,6 +82,7 @@ class NewDeviceWorker(context: Context, params: WorkerParameters) : CoroutineWor
         private const val NAME = "new-device-check"
         const val CHANNEL = "new_devices"
         private const val NOTIFICATION_ID = 1
+        private const val BLOCKED_ID = 2
 
         fun createChannel(context: Context) {
             val ch = NotificationChannel(CHANNEL, context.getString(R.string.notif_channel_name), NotificationManager.IMPORTANCE_DEFAULT)

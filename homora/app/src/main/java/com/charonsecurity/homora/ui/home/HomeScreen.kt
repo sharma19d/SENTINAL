@@ -1,6 +1,14 @@
 package com.charonsecurity.homora.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.outlined.FiberNew
+import androidx.compose.material3.TextButton
+import com.charonsecurity.homora.data.blockedStillPresent
+import com.charonsecurity.homora.ui.components.ExpandableCard
+import com.charonsecurity.homora.ui.devices.deviceName
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
@@ -88,7 +96,10 @@ fun HomeScreen(
     onSecurity: () -> Unit,
     onWifi: () -> Unit,
     onLockout: () -> Unit,
+    onDevice: (String) -> Unit = {},
+    onFinding: (String) -> Unit = {},
 ) {
+    val alerts by container.prefs.newDeviceAlerts.collectAsStateWithLifecycle()
     val scanState by container.scans.state.collectAsStateWithLifecycle()
     val app by container.store.state.collectAsStateWithLifecycle()
     val status = LocalStatusColors.current
@@ -201,17 +212,56 @@ fun HomeScreen(
         Spacer(Modifier.height(16.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (scan != null) {
+                // Blocked devices that are still here come first: that's the one thing to act on now.
+                val stillHere = remember(app) { app.blockedStillPresent() }
+                if (stillHere.isNotEmpty()) {
+                    InsightRow(
+                        pluralStringResource(R.plurals.home_blocked_present, stillHere.size, stillHere.size),
+                        dot = status.high,
+                        onClick = { onDevice(stillHere.first().identityKey) },
+                    )
+                }
+
                 val n = scan.findings.size
                 if (n > 0) {
                     val worst = scan.findings.minOf { it.type.severity.ordinal }
-                    InsightRow(
+                    ExpandableCard(
                         pluralStringResource(R.plurals.home_risks, n, n),
-                        dot = if (worst == Severity.HIGH.ordinal) status.high else status.medium,
-                        onClick = onSecurity,
-                    )
+                        icon = Icons.Outlined.GppMaybe,
+                        iconTint = if (worst == Severity.HIGH.ordinal) status.high else status.medium,
+                    ) {
+                        Column {
+                            scan.findings.take(4).forEach { f ->
+                                MiniRow(
+                                    stringResource(f.type.text().title),
+                                    f.deviceName ?: f.deviceIp,
+                                    if (f.type.severity == Severity.HIGH) status.high else if (f.type.severity == Severity.MEDIUM) status.medium else MaterialTheme.colorScheme.outline,
+                                ) { onFinding(f.id) }
+                            }
+                            TextButton(onClick = onSecurity, modifier = Modifier.align(Alignment.End)) { Text(stringResource(R.string.home_see_all)) }
+                        }
+                    }
                 } else {
                     InsightRow(stringResource(R.string.home_no_risks), icon = Icons.Outlined.CheckCircle, iconTint = status.good, onClick = onSecurity)
                 }
+
+                val fresh = remember(scan, app.known) { scan.devices.filter { it.identityKey in scan.newKeys && !isMarked(it, app) } }
+                if (fresh.isNotEmpty()) {
+                    ExpandableCard(
+                        pluralStringResource(R.plurals.home_new_devices, fresh.size, fresh.size),
+                        icon = Icons.Outlined.FiberNew,
+                    ) {
+                        Column {
+                            fresh.take(5).forEach { d ->
+                                MiniRow(deviceName(d, app), d.ip, Color.White) { onDevice(d.identityKey) }
+                            }
+                            if (!alerts) {
+                                TextButton(onClick = onSettings, modifier = Modifier.align(Alignment.End)) { Text(stringResource(R.string.home_alerts_cta)) }
+                            }
+                        }
+                    }
+                }
+
                 if (unmarked > 0) {
                     InsightRow(pluralStringResource(R.plurals.home_unmarked, unmarked, unmarked), dot = Color.White, onClick = { onDevices(DeviceFilter.UNKNOWN) })
                 }
@@ -253,6 +303,23 @@ fun HomeScreen(
             }
         }
         Spacer(Modifier.height(28.dp))
+    }
+}
+
+/** A compact tappable line inside an expanded card. */
+@Composable
+private fun MiniRow(title: String, sub: String?, dot: Color, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 10.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        StatusDot(dot)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            sub?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1) }
+        }
+        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

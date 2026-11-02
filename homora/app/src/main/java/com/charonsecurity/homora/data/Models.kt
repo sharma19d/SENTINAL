@@ -19,6 +19,8 @@ data class StoredScan(
     val devices: List<Device>,
     val findings: List<Finding>,
     val wifi: WifiSecurityInfo? = null,
+    /** Devices seen for the first time in this scan (empty for the very first scan). */
+    val newKeys: Set<String> = emptySet(),
 )
 
 /** A saved spot from the Wi-Fi meter. */
@@ -40,7 +42,15 @@ data class AppState(
     val lastScan: StoredScan? = null,
     val rooms: List<RoomReading> = emptyList(),
     val history: List<HistoryEvent> = emptyList(),
+    /** Devices the user chose to block, with when, so a later scan can check they're gone. */
+    val blocked: Map<String, Long> = emptyMap(),
 )
+
+/** A blocked device that a scan made after blocking still found on the network. */
+fun AppState.blockedStillPresent(): List<com.charonsecurity.homora.net.Device> {
+    val scan = lastScan ?: return emptyList()
+    return scan.devices.filter { d -> blocked[d.identityKey]?.let { scan.at > it } == true }
+}
 
 sealed interface ScanState {
     data object Idle : ScanState

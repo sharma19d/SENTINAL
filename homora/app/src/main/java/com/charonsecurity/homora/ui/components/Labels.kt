@@ -173,3 +173,34 @@ fun serviceInfo(port: Int): ServiceInfo = when (port) {
     62078 -> ServiceInfo("Apple", Icons.Outlined.PhoneIphone, false)
     else -> ServiceInfo(port.toString(), Icons.Outlined.Lan, false)
 }
+
+@StringRes
+fun com.charonsecurity.homora.checks.DeviceRisk.Level.label(): Int = when (this) {
+    com.charonsecurity.homora.checks.DeviceRisk.Level.LOW -> R.string.risk_low
+    com.charonsecurity.homora.checks.DeviceRisk.Level.MEDIUM -> R.string.risk_medium
+    com.charonsecurity.homora.checks.DeviceRisk.Level.HIGH -> R.string.risk_high
+}
+
+@StringRes
+fun com.charonsecurity.homora.checks.DeviceRisk.Reason.label(): Int = when (this) {
+    com.charonsecurity.homora.checks.DeviceRisk.Reason.HIGH_ISSUE -> R.string.risk_r_high
+    com.charonsecurity.homora.checks.DeviceRisk.Reason.MEDIUM_ISSUE -> R.string.risk_r_medium
+    com.charonsecurity.homora.checks.DeviceRisk.Reason.LOW_ISSUE -> R.string.risk_r_low
+    com.charonsecurity.homora.checks.DeviceRisk.Reason.NOT_MARKED -> R.string.risk_r_not_marked
+    com.charonsecurity.homora.checks.DeviceRisk.Reason.NEW_DEVICE -> R.string.risk_r_new
+    com.charonsecurity.homora.checks.DeviceRisk.Reason.NO_NAME -> R.string.risk_r_no_name
+    com.charonsecurity.homora.checks.DeviceRisk.Reason.SMART_DEVICE -> R.string.risk_r_smart
+    com.charonsecurity.homora.checks.DeviceRisk.Reason.MANY_SERVICES -> R.string.risk_r_services
+}
+
+/** Title and one-paragraph body for a piece of isolation advice. */
+fun com.charonsecurity.homora.checks.Isolation.Advice.text(): Pair<Int, Int> = when (this) {
+    com.charonsecurity.homora.checks.Isolation.Advice.GUEST_NETWORK -> R.string.iso_guest_title to R.string.iso_guest_body
+    com.charonsecurity.homora.checks.Isolation.Advice.CHANGE_PASSWORD -> R.string.iso_password_title to R.string.iso_password_body
+    com.charonsecurity.homora.checks.Isolation.Advice.UPDATE_FIRMWARE -> R.string.iso_update_title to R.string.iso_update_body
+    com.charonsecurity.homora.checks.Isolation.Advice.CLOSE_REMOTE_ACCESS -> R.string.iso_remote_title to R.string.iso_remote_body
+    com.charonsecurity.homora.checks.Isolation.Advice.TURN_OFF_UPNP -> R.string.iso_upnp_title to R.string.iso_upnp_body
+    com.charonsecurity.homora.checks.Isolation.Advice.CAMERA_CLOUD -> R.string.iso_camera_title to R.string.iso_camera_body
+    com.charonsecurity.homora.checks.Isolation.Advice.IDENTIFY_FIRST -> R.string.iso_identify_title to R.string.iso_identify_body
+    com.charonsecurity.homora.checks.Isolation.Advice.KEEP_ROUTER_UPDATED -> R.string.iso_router_title to R.string.iso_router_body
+}

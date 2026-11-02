@@ -169,6 +169,8 @@ private fun MainNav(container: AppContainer) {
                     onSecurity = { nav.switchTab(Routes.SECURITY) },
                     onWifi = { nav.switchTab(Routes.WIFI) },
                     onLockout = { nav.navigate(Routes.LOCKOUT) },
+                    onDevice = { nav.navigate(Routes.device(it)) },
+                    onFinding = { nav.navigate(Routes.finding(it)) },
                 )
             }
             composable(Routes.DEVICES) {

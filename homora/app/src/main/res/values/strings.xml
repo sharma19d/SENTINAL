@@ -358,4 +358,81 @@
     <string name="onb_p4_title">Private by design</string>
     <string name="onb_p4_body">Scans run on this phone and only look at the network you\'re on; your device list never leaves it. Android needs location access to show the Wi-Fi name. Homora never reads or stores your location.</string>
     <string name="onb_share_body">Counts only, never names or addresses. Change it any time in Settings.</string>
+    <!-- Per-device risk -->
+    <string name="risk_title">Risk</string>
+    <string name="risk_low">Low</string>
+    <string name="risk_medium">Medium</string>
+    <string name="risk_high">High</string>
+    <string name="risk_score">%1$d/100</string>
+    <string name="risk_none">Nothing stands out about this device.</string>
+    <string name="risk_r_high">Has a serious issue to fix</string>
+    <string name="risk_r_medium">Has an issue worth fixing</string>
+    <string name="risk_r_low">Has a minor issue</string>
+    <string name="risk_r_not_marked">Not marked as yours</string>
+    <string name="risk_r_new">Joined since your last scan</string>
+    <string name="risk_r_no_name">Doesn\'t say what it is</string>
+    <string name="risk_r_smart">Camera or smart-home device, a common target</string>
+    <string name="risk_r_services">Has many services open</string>
+    <string name="tag_new">New</string>
+    <string name="tag_blocked">Blocked</string>
+
+    <!-- New devices and risks on Home -->
+    <plurals name="home_new_devices">
+        <item quantity="one">%d new device joined</item>
+        <item quantity="other">%d new devices joined</item>
+    </plurals>
+    <string name="home_alerts_cta">Alert me about new devices</string>
+    <plurals name="home_blocked_present">
+        <item quantity="one">%d blocked device is still connected</item>
+        <item quantity="other">%d blocked devices are still connected</item>
+    </plurals>
+    <string name="home_see_all">See all</string>
+
+    <!-- Quick actions on the device list -->
+    <string name="devices_long_press_hint">Tip: long-press a device to mark it as yours.</string>
+
+    <!-- Block device -->
+    <string name="block_toggle">Block device</string>
+    <string name="block_toggle_on">Homora will warn you if it\'s still connected</string>
+    <string name="block_toggle_off">Remove it from your network</string>
+    <string name="block_sheet_title">Block %1$s</string>
+    <string name="block_sheet_router">Your router: %1$s</string>
+    <string name="block_sheet_intro">Phones can\'t block other devices themselves, so it\'s done in your router. It takes about two minutes.</string>
+    <string-array name="block_steps">
+        <item>Open your router\'s settings with the button below and sign in. The password is often on a sticker on the router.</item>
+        <item>Find the connected-devices list (often under Wireless, Clients, or Access control).</item>
+        <item>Look for the IP address %1$s and choose Block or Blacklist.</item>
+        <item>If you can\'t find it, change your Wi-Fi password instead. Everyone gets disconnected, and only people you give the new password can rejoin.</item>
+    </string-array>
+    <string name="block_open_router">Open router settings</string>
+    <string name="block_done">Done, check on next scan</string>
+    <string name="block_no_browser">No browser found to open %1$s.</string>
+
+    <!-- Isolation advice -->
+    <string name="iso_title">Keep it isolated</string>
+    <plurals name="iso_count">
+        <item quantity="one">%d tip</item>
+        <item quantity="other">%d tips</item>
+    </plurals>
+    <string name="iso_guest_title">Move it to a guest network</string>
+    <string name="iso_guest_body">Most routers can run a separate guest or IoT network. Devices there can reach the internet but not your phones and laptops, so a hacked gadget can\'t spread.</string>
+    <string name="iso_password_title">Change the default password</string>
+    <string name="iso_password_body">Open the device\'s app or web page and replace any factory password with a long, unique one.</string>
+    <string name="iso_update_title">Update its firmware</string>
+    <string name="iso_update_body">Check the maker\'s app or website for updates and turn on automatic updates if offered. Old firmware is the most common way in.</string>
+    <string name="iso_remote_title">Turn off remote access</string>
+    <string name="iso_remote_body">Telnet, FTP and screen sharing let anyone on your Wi-Fi try to log in. Switch them off in the device\'s settings if you don\'t use them.</string>
+    <string name="iso_upnp_title">Turn off UPnP</string>
+    <string name="iso_upnp_body">UPnP lets devices open doors to the internet on their own. Turn it off in the router unless a game console or app needs it.</string>
+    <string name="iso_camera_title">Lock down the camera</string>
+    <string name="iso_camera_body">Use the maker\'s app with two-step sign-in, and turn off the direct video stream (RTSP/ONVIF) unless a recorder needs it.</string>
+    <string name="iso_identify_title">Find out what it is first</string>
+    <string name="iso_identify_body">Use \"Find this device\": unplug things one at a time and Homora tells you when this one disappears. If nothing you own matches, block it.</string>
+    <string name="iso_router_title">Keep the router updated</string>
+    <string name="iso_router_body">Turn on automatic firmware updates in the router\'s settings. The router guards every other device, so it matters most.</string>
+    <plurals name="notif_blocked_title">
+        <item quantity="one">A device you blocked is back on your Wi-Fi</item>
+        <item quantity="other">%d devices you blocked are back on your Wi-Fi</item>
+    </plurals>
+    <string name="notif_blocked_text">Open Homora to block it in your router or change your Wi-Fi password.</string>
 </resources>

@@ -1,6 +1,26 @@
 package com.charonsecurity.homora.ui.devices
 
 import androidx.compose.foundation.BorderStroke
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import androidx.core.net.toUri
+import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material.icons.outlined.Lan
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.OpenInBrowser
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringArrayResource
+import com.charonsecurity.homora.checks.DeviceRisk
+import com.charonsecurity.homora.checks.Isolation
+import com.charonsecurity.homora.ui.components.ExpandableCard
+import com.charonsecurity.homora.ui.components.GlowButton
+import com.charonsecurity.homora.ui.components.NumberedSteps
+import com.charonsecurity.homora.ui.components.Tag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -77,6 +97,7 @@ fun DeviceDetailScreen(
     val scope = rememberCoroutineScope()
     var naming by rememberSaveable { mutableStateOf(false) }
     var menu by remember { mutableStateOf(false) }
+    var blockSheet by rememberSaveable { mutableStateOf(false) }
     val known = app.known[key]
     val editable = device != null && !device.isSelf && !device.isGateway
 
@@ -145,6 +166,34 @@ fun DeviceDetailScreen(
             }
 
             if (!device.isSelf) {
+                val risk = remember(app.lastScan, app.known, key) {
+                    DeviceRisk.assess(device, app.lastScan?.findings.orEmpty(), isMarked(device, app), key in app.lastScan?.newKeys.orEmpty())
+                }
+                val riskColor = when (risk.level) {
+                    DeviceRisk.Level.HIGH -> status.high
+                    DeviceRisk.Level.MEDIUM -> status.medium
+                    DeviceRisk.Level.LOW -> status.good
+                }
+                Spacer(Modifier.height(12.dp))
+                ExpandableCard(
+                    stringResource(R.string.risk_title),
+                    icon = Icons.Outlined.Speed,
+                    iconTint = riskColor,
+                    trailing = { Tag(stringResource(risk.level.label()) + " · " + stringResource(R.string.risk_score, risk.score), riskColor) },
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (risk.reasons.isEmpty()) {
+                            Text(stringResource(R.string.risk_none), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        risk.reasons.forEach { r ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                StatusDot(riskColor)
+                                Spacer(Modifier.width(10.dp))
+                                Text(stringResource(r.label()), style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
+                }
                 Label(stringResource(R.string.detail_open_services))
                 ServiceGrid(services(device))
             }
@@ -165,17 +214,55 @@ fun DeviceDetailScreen(
                 }
             }
 
-            if (editable) {
+            val advice = remember(app.lastScan, app.known, key) {
+                Isolation.advise(device, app.lastScan?.findings.orEmpty(), isMarked(device, app))
+            }
+            if (advice.isNotEmpty()) {
                 Spacer(Modifier.height(12.dp))
-                GlassCard(Modifier.fillMaxWidth(), onClick = onBlock) {
-                    Row(Modifier.padding(horizontal = 18.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Outlined.Block, null, Modifier.size(24.dp))
+                ExpandableCard(
+                    stringResource(R.string.iso_title),
+                    icon = Icons.Outlined.Lan,
+                    trailing = { Tag(pluralStringResource(R.plurals.iso_count, advice.size, advice.size), MaterialTheme.colorScheme.onSurfaceVariant) },
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        advice.forEachIndexed { i, a ->
+                            val (t, b) = a.text()
+                            Row {
+                                Text("${i + 1}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(22.dp))
+                                Column {
+                                    Text(stringResource(t), style = MaterialTheme.typography.titleSmall)
+                                    Spacer(Modifier.height(2.dp))
+                                    Text(stringResource(b), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (editable) {
+                val isBlocked = key in app.blocked
+                Spacer(Modifier.height(12.dp))
+                GlassCard(Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(horizontal = 18.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.Block, null, Modifier.size(22.dp), tint = if (isBlocked) status.high else MaterialTheme.colorScheme.onSurface)
                         Spacer(Modifier.width(14.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(stringResource(R.string.detail_block), style = MaterialTheme.typography.bodyLarge)
-                            Text(stringResource(R.string.detail_block_body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.block_toggle), style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                stringResource(if (isBlocked) R.string.block_toggle_on else R.string.block_toggle_off),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
-                        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Switch(
+                            checked = isBlocked,
+                            onCheckedChange = { on ->
+                                scope.launch { container.store.setBlocked(key, on) }
+                                if (on) blockSheet = true
+                            },
+                            colors = SwitchDefaults.colors(checkedTrackColor = status.high, checkedThumbColor = Color.White),
+                        )
                     }
                 }
             }
@@ -193,15 +280,19 @@ fun DeviceDetailScreen(
 
             if (!device.isSelf && device.bestName == null) {
                 Spacer(Modifier.height(12.dp))
-                GlassCard(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(18.dp)) {
-                        Text(stringResource(R.string.detail_why_unknown_title), style = MaterialTheme.typography.titleSmall)
-                        Spacer(Modifier.height(6.dp))
-                        Text(stringResource(R.string.detail_why_unknown_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                ExpandableCard(stringResource(R.string.detail_why_unknown_title), icon = Icons.AutoMirrored.Outlined.HelpOutline) {
+                    Text(stringResource(R.string.detail_why_unknown_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             Spacer(Modifier.height(32.dp))
+        }
+        if (blockSheet) {
+            BlockSheet(
+                deviceName = deviceName(device, app),
+                deviceIp = device.ip,
+                router = app.lastScan?.devices?.firstOrNull { it.isGateway },
+                onDismiss = { blockSheet = false },
+            )
         }
         if (naming) {
             NameDialog(
@@ -310,3 +401,55 @@ fun NameDialog(initial: String, onDismiss: () -> Unit, onSave: (String) -> Unit)
 }
 
 internal fun Device.watchablePort(): Int? = openPorts.minOrNull()
+
+/** The router's settings page, over HTTPS when the router offers it. */
+private fun Device.adminUrl(): String =
+    if (443 in openPorts || 8443 in openPorts) "https://$ip" + (if (443 in openPorts) "" else ":8443")
+    else "http://$ip" + (if (80 in openPorts || 8080 !in openPorts) "" else ":8080")
+
+/**
+ * How to block a device, done the only way a phone app honestly can: in the
+ * router. Detects the router, opens its settings page, and keeps the steps short.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BlockSheet(deviceName: String, deviceIp: String, router: Device?, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    var error by remember { mutableStateOf<String?>(null) }
+    val steps = stringArrayResource(R.array.block_steps).map { it.replace("%1\$s", deviceIp) }
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surfaceContainerHigh) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 28.dp)) {
+            Text(stringResource(R.string.block_sheet_title, deviceName), style = MaterialTheme.typography.titleLarge)
+            router?.let { r ->
+                val name = listOfNotNull(r.manufacturer, r.upnpName ?: r.model ?: r.httpTitle).distinct().joinToString(" ").ifBlank { null }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(R.string.block_sheet_router, listOfNotNull(name, r.ip).joinToString(" · ")),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.height(14.dp))
+            Text(stringResource(R.string.block_sheet_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(16.dp))
+            NumberedSteps(steps)
+            Spacer(Modifier.height(22.dp))
+            if (router != null) {
+                val url = router.adminUrl()
+                GlowButton(stringResource(R.string.block_open_router), onClick = {
+                    try {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+                    } catch (_: ActivityNotFoundException) {
+                        error = context.getString(R.string.block_no_browser, url)
+                    }
+                }, icon = Icons.Outlined.OpenInBrowser)
+                error?.let {
+                    Spacer(Modifier.height(8.dp))
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.block_done)) }
+        }
+    }
+}

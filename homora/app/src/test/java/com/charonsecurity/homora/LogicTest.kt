@@ -2,11 +2,14 @@ package com.charonsecurity.homora
 
 import com.charonsecurity.homora.checks.CheckId
 import com.charonsecurity.homora.checks.Checks
+import com.charonsecurity.homora.checks.DeviceRisk
+import com.charonsecurity.homora.checks.Isolation
 import com.charonsecurity.homora.checks.Finding
 import com.charonsecurity.homora.checks.FindingType
 import com.charonsecurity.homora.checks.Health
 import com.charonsecurity.homora.data.AppState
 import com.charonsecurity.homora.data.HistoryKind
+import com.charonsecurity.homora.data.blockedStillPresent
 import com.charonsecurity.homora.data.ScanRepository
 import com.charonsecurity.homora.net.Device
 import com.charonsecurity.homora.net.DeviceKind
@@ -166,5 +169,49 @@ class HealthTest {
         val second = ScanOutcome(emptyList(), startedAt = 2000, durationMs = 10)
         s = ScanRepository.applyScan(s, second, Checks.evaluate(second.devices, null).findings)
         assertTrue(s.history.none { it.kind == HistoryKind.ISSUE_FIXED })
+    }
+}
+
+class DeviceRiskTest {
+    private val telnetCam = Device("192.168.1.9", upnpUuid = "cam", upnpName = "Hall Cam", openPorts = setOf(23, 554))
+
+    @Test fun issuesAndUnknownRaiseRisk() {
+        val f = Checks.evaluate(listOf(telnetCam), null).findings
+        val r = DeviceRisk.assess(telnetCam, f, marked = false, isNew = true)
+        assertEquals(DeviceRisk.Level.HIGH, r.level)
+        assertTrue(DeviceRisk.Reason.HIGH_ISSUE in r.reasons)
+        assertTrue(DeviceRisk.Reason.NEW_DEVICE in r.reasons)
+        assertTrue(r.score <= 100)
+    }
+
+    @Test fun markedQuietDeviceIsLow() {
+        val tv = Device("192.168.1.30", mdnsHost = "tv.local", services = setOf("_googlecast._tcp.local"))
+        val r = DeviceRisk.assess(tv, emptyList(), marked = true, isNew = false)
+        assertEquals(DeviceRisk.Level.LOW, r.level)
+        assertEquals(0, DeviceRisk.assess(Device("1", isSelf = true), emptyList(), false, true).score)
+    }
+
+    @Test fun isolationAdviceFitsTheDevice() {
+        val f = Checks.evaluate(listOf(telnetCam), null).findings
+        val a = Isolation.advise(telnetCam, f, marked = false)
+        assertTrue(Isolation.Advice.GUEST_NETWORK in a)
+        assertTrue(Isolation.Advice.CLOSE_REMOTE_ACCESS in a)
+        assertTrue(Isolation.Advice.CAMERA_CLOUD in a)
+        assertEquals(Isolation.Advice.IDENTIFY_FIRST, a.first())
+        assertTrue(Isolation.advise(Device("1", isSelf = true), emptyList(), true).isEmpty())
+    }
+
+    @Test fun newDevicesAndBlockedTracking() {
+        val router = Device("192.168.1.1", isGateway = true)
+        var s = ScanRepository.applyScan(AppState(), ScanOutcome(listOf(router), 1000, 10), emptyList())
+        assertTrue(s.lastScan!!.newKeys.isEmpty()) // first scan is the baseline
+        val stranger = Device("192.168.1.77", mdnsHost = "stranger.local")
+        s = ScanRepository.applyScan(s, ScanOutcome(listOf(router, stranger), 2000, 10), emptyList())
+        assertEquals(setOf(stranger.identityKey), s.lastScan!!.newKeys)
+        s = s.copy(blocked = mapOf(stranger.identityKey to 2500L))
+        assertTrue(s.blockedStillPresent().isEmpty()) // blocked after the last scan
+        s = ScanRepository.applyScan(s, ScanOutcome(listOf(router, stranger), 3000, 10), emptyList())
+        assertEquals(listOf(stranger), s.blockedStillPresent())
+        assertTrue(s.lastScan!!.newKeys.isEmpty())
     }
 }

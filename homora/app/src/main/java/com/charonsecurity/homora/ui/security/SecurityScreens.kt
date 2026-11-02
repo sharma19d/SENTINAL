@@ -47,6 +47,7 @@ import com.charonsecurity.homora.data.ScanState
 import com.charonsecurity.homora.telemetry.Telemetry
 import com.charonsecurity.homora.ui.components.DetailScaffold
 import com.charonsecurity.homora.ui.components.EmptyState
+import com.charonsecurity.homora.ui.components.ExpandableCard
 import com.charonsecurity.homora.ui.components.GlassCard
 import com.charonsecurity.homora.ui.components.GlowButton
 import com.charonsecurity.homora.ui.components.TabHeader
@@ -156,13 +157,13 @@ fun FindingScreen(container: AppContainer, id: String, onBack: () -> Unit, onRes
                 Text(stringResource(R.string.finding_on_device, it), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Spacer(Modifier.height(20.dp))
-            Text(stringResource(R.string.finding_why), style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(6.dp))
-            Text(stringResource(t.why), style = MaterialTheme.typography.bodyLarge)
-            Spacer(Modifier.height(20.dp))
             Text(stringResource(R.string.finding_fix), style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
             NumberedSteps(stringArrayResource(t.steps).toList())
+            Spacer(Modifier.height(16.dp))
+            ExpandableCard(stringResource(R.string.finding_why)) {
+                Text(stringResource(t.why), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             Spacer(Modifier.height(24.dp))
             GlowButton(stringResource(R.string.finding_rescan), onRescan)
             Spacer(Modifier.height(24.dp))
