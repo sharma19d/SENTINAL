@@ -5,7 +5,6 @@ import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Computer
-import androidx.compose.material.icons.outlined.DeviceUnknown
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Print
 import androidx.compose.material.icons.outlined.Router
@@ -15,6 +14,18 @@ import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material.icons.outlined.Speaker
+import androidx.compose.material.icons.outlined.Cast
+import androidx.compose.material.icons.outlined.DesktopWindows
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Hub
+import androidx.compose.material.icons.outlined.Lan
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.PhoneIphone
+import androidx.compose.material.icons.outlined.QuestionMark
+import androidx.compose.material.icons.outlined.Terminal
+import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.charonsecurity.homora.R
 import com.charonsecurity.homora.checks.CheckId
@@ -85,7 +96,7 @@ fun DeviceKind.icon(): ImageVector = when (this) {
     DeviceKind.SMART_HOME -> Icons.Outlined.Lightbulb
     DeviceKind.GAME_CONSOLE -> Icons.Outlined.SportsEsports
     DeviceKind.STORAGE -> Icons.Outlined.Storage
-    DeviceKind.UNKNOWN -> Icons.Outlined.DeviceUnknown
+    DeviceKind.UNKNOWN -> Icons.Outlined.QuestionMark
 }
 
 @StringRes
@@ -139,4 +150,26 @@ fun portName(port: Int): String = when (port) {
     49152 -> "UPnP (49152)"
     62078 -> "Apple sync (62078)"
     else -> port.toString()
+}
+
+/** A short name and icon for an open port, for the service tiles on a device. */
+data class ServiceInfo(val short: String, val icon: ImageVector, val risky: Boolean)
+
+fun serviceInfo(port: Int): ServiceInfo = when (port) {
+    21 -> ServiceInfo("FTP", Icons.Outlined.FolderOpen, true)
+    22 -> ServiceInfo("SSH", Icons.Outlined.Terminal, false)
+    23, 2323 -> ServiceInfo("Telnet", Icons.Outlined.Terminal, true)
+    80, 8080 -> ServiceInfo("Web", Icons.Outlined.Language, false)
+    443, 8443 -> ServiceInfo("HTTPS", Icons.Outlined.Lock, false)
+    139, 445 -> ServiceInfo("Files", Icons.Outlined.Folder, false)
+    554 -> ServiceInfo("Video", Icons.Outlined.Videocam, true)
+    1883 -> ServiceInfo("MQTT", Icons.Outlined.Hub, false)
+    3389 -> ServiceInfo("RDP", Icons.Outlined.DesktopWindows, true)
+    5000, 49152 -> ServiceInfo("UPnP", Icons.Outlined.Wifi, false)
+    5900 -> ServiceInfo("VNC", Icons.Outlined.DesktopWindows, true)
+    7000 -> ServiceInfo("AirPlay", Icons.Outlined.Cast, false)
+    8008, 8009 -> ServiceInfo("Cast", Icons.Outlined.Cast, false)
+    9100 -> ServiceInfo("Print", Icons.Outlined.Print, false)
+    62078 -> ServiceInfo("Apple", Icons.Outlined.PhoneIphone, false)
+    else -> ServiceInfo(port.toString(), Icons.Outlined.Lan, false)
 }

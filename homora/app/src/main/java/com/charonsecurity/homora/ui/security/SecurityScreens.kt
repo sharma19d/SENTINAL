@@ -2,6 +2,7 @@ package com.charonsecurity.homora.ui.security
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,8 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Shield
-import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -30,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,6 +47,9 @@ import com.charonsecurity.homora.data.ScanState
 import com.charonsecurity.homora.telemetry.Telemetry
 import com.charonsecurity.homora.ui.components.DetailScaffold
 import com.charonsecurity.homora.ui.components.EmptyState
+import com.charonsecurity.homora.ui.components.GlassCard
+import com.charonsecurity.homora.ui.components.GlowButton
+import com.charonsecurity.homora.ui.components.TabHeader
 import com.charonsecurity.homora.ui.components.NumberedSteps
 import com.charonsecurity.homora.ui.components.PlainCard
 import com.charonsecurity.homora.ui.components.ScanControl
@@ -70,63 +73,65 @@ fun SecurityScreen(container: AppContainer, onOpen: (String) -> Unit) {
     val scanState by container.scans.state.collectAsStateWithLifecycle()
     val app by container.store.state.collectAsStateWithLifecycle()
     val scan = app.lastScan
-    val report = container.scans.report(scan)
+    val report = remember(scan) { container.scans.report(scan) }
 
-    LazyColumn(Modifier.fillMaxSize()) {
-        item {
-            if (scan != null || scanState !is ScanState.Idle) {
-                ScanControl(scanState, scan?.at, onScan = container.scans::start, onStop = container.scans::cancel)
-            }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
+        item(key = "header") { TabHeader(stringResource(R.string.nav_security)) }
+        if (scan != null || scanState !is ScanState.Idle) {
+            item(key = "scan") { ScanControl(scanState, scan?.at, onScan = container.scans::start, onStop = container.scans::cancel) }
         }
         if (report == null) {
             if (scanState !is ScanState.Running) {
-                item {
-                    EmptyState(Icons.Outlined.Shield, stringResource(R.string.nav_security), stringResource(R.string.security_empty)) {
-                        Button(onClick = container.scans::start) { Text(stringResource(R.string.action_scan)) }
+                item(key = "empty") {
+                    EmptyState(Icons.Outlined.Shield, stringResource(R.string.security_empty_title), stringResource(R.string.security_empty)) {
+                        GlowButton(stringResource(R.string.action_scan), container.scans::start, Modifier.padding(horizontal = 24.dp))
                     }
                 }
             }
             return@LazyColumn
         }
-        item {
+        item(key = "summary") {
             val n = report.findings.size
             Text(
                 if (n == 0) stringResource(R.string.security_all_good) else pluralStringResource(R.plurals.security_issues, n, n),
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
             )
         }
-        items(report.findings, key = { it.id }) { f -> FindingRow(f, onOpen) }
+        items(report.findings, key = { it.id }) { f -> FindingRow(f, onOpen, Modifier.animateItem()) }
         if (report.passed.isNotEmpty()) {
-            item { SectionHeader(stringResource(R.string.security_passed)) }
-            items(report.passed) { c ->
-                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Outlined.CheckCircle, null, tint = LocalStatusColors.current.good, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(12.dp))
-                    Text(stringResource(c.label()), style = MaterialTheme.typography.bodyMedium)
+            item(key = "passedHeader") { SectionHeader(stringResource(R.string.security_passed)) }
+            item(key = "passed") {
+                GlassCard(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    Column(Modifier.padding(vertical = 6.dp)) {
+                        report.passed.forEach { c ->
+                            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Outlined.CheckCircle, null, tint = LocalStatusColors.current.good, modifier = Modifier.size(20.dp))
+                                Spacer(Modifier.width(12.dp))
+                                Text(stringResource(c.label()), style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
                 }
             }
         }
-        item { Spacer(Modifier.height(24.dp)) }
     }
 }
 
 @Composable
-private fun FindingRow(f: Finding, onOpen: (String) -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().clickable { onOpen(f.id) }.padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        StatusDot(severityColor(f.type.severity))
-        Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f)) {
-            Text(stringResource(f.type.text().title), style = MaterialTheme.typography.bodyLarge)
-            val sub = listOfNotNull(stringResource(f.type.severity.label()), f.deviceName ?: f.deviceIp).joinToString(" · ")
-            Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun FindingRow(f: Finding, onOpen: (String) -> Unit, modifier: Modifier = Modifier) {
+    GlassCard(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp), onClick = { onOpen(f.id) }) {
+        Row(Modifier.padding(horizontal = 18.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            StatusDot(severityColor(f.type.severity), Modifier.size(12.dp))
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(f.type.text().title), style = MaterialTheme.typography.bodyLarge)
+                val sub = listOfNotNull(stringResource(f.type.severity.label()), f.deviceName ?: f.deviceIp).joinToString(" · ")
+                Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
-    HorizontalDivider(Modifier.padding(start = 40.dp), color = MaterialTheme.colorScheme.outlineVariant)
 }
 
 @Composable
@@ -159,7 +164,7 @@ fun FindingScreen(container: AppContainer, id: String, onBack: () -> Unit, onRes
             Spacer(Modifier.height(8.dp))
             NumberedSteps(stringArrayResource(t.steps).toList())
             Spacer(Modifier.height(24.dp))
-            Button(onClick = onRescan, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.finding_rescan)) }
+            GlowButton(stringResource(R.string.finding_rescan), onRescan)
             Spacer(Modifier.height(24.dp))
 
             PlainCard {
@@ -196,7 +201,7 @@ fun LockoutScreen(onBack: () -> Unit, onRescan: () -> Unit) {
             Spacer(Modifier.height(20.dp))
             Text(stringResource(R.string.lockout_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(24.dp))
-            Button(onClick = onRescan, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_rescan)) }
+            GlowButton(stringResource(R.string.action_rescan), onRescan)
         }
     }
 }

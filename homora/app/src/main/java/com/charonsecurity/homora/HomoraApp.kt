@@ -25,8 +25,14 @@ class HomoraApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
-        if (BuildConfig.FIREBASE) AppCheckSetup.install()
-        Telemetry.init(this, container.prefs.analytics.value)
-        NewDeviceWorker.createChannel(this)
+        // None of this is needed for the first frame, so it runs off the main thread
+        // instead of delaying the app's start.
+        Thread({
+            runCatching {
+                if (BuildConfig.FIREBASE) AppCheckSetup.install()
+                Telemetry.init(this) { container.prefs.analytics.value }
+            }
+            runCatching { NewDeviceWorker.createChannel(this) }
+        }, "homora-init").apply { priority = Thread.NORM_PRIORITY - 1 }.start()
     }
 }

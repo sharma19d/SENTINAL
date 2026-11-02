@@ -1,6 +1,7 @@
 package com.charonsecurity.homora.ui.settings
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -77,7 +78,11 @@ fun SettingsScreen(container: AppContainer, onBack: () -> Unit, onFeedback: () -
             }
             LinkRow(stringResource(R.string.settings_what_sent)) { showSent = true }
             LinkRow(stringResource(R.string.settings_privacy_policy)) {
-                context.startActivity(Intent(Intent.ACTION_VIEW, privacyUrl.toUri()))
+                // Some phones have no browser; that must not crash the app.
+                try {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, privacyUrl.toUri()))
+                } catch (_: ActivityNotFoundException) {
+                }
             }
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
             ToggleRow(stringResource(R.string.settings_alerts), stringResource(R.string.settings_alerts_body), alerts) { on ->

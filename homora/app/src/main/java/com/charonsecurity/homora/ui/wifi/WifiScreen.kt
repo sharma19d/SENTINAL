@@ -55,6 +55,7 @@ import com.charonsecurity.homora.telemetry.Telemetry
 import com.charonsecurity.homora.ui.components.EmptyState
 import com.charonsecurity.homora.ui.components.PlainCard
 import com.charonsecurity.homora.ui.components.SectionHeader
+import com.charonsecurity.homora.ui.components.TabHeader
 import com.charonsecurity.homora.ui.components.hasWifiDetailPermission
 import com.charonsecurity.homora.ui.components.label
 import com.charonsecurity.homora.ui.components.roomAdvice
@@ -217,6 +218,7 @@ fun WifiContent(
     onSmartHelper: () -> Unit,
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        TabHeader(stringResource(R.string.nav_wifi))
         if (!connected) {
             EmptyState(Icons.Outlined.WifiOff, stringResource(R.string.nav_wifi), stringResource(R.string.wifi_not_connected)) {}
             return@Column

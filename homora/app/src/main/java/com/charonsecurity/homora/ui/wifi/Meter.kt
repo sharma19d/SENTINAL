@@ -47,15 +47,17 @@ fun SignalGauge(rssi: Double?, trend: Int, modifier: Modifier = Modifier) {
     val fraction by animateFloatAsState(rssi?.let { SignalZone.fraction(it) } ?: 0f, tween(900), label = "gauge")
     val zone = rssi?.let { SignalZone.of(it.toInt()) }
     val color = zone?.let { zoneColor(it) } ?: MaterialTheme.colorScheme.outline
-    val track = MaterialTheme.colorScheme.surfaceContainerHighest
+    val track = Color.White.copy(alpha = 0.08f)
     Box(modifier.padding(top = 12.dp).size(240.dp, 200.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(200.dp)) {
-            val stroke = 18.dp.toPx()
-            val inset = stroke / 2
+            val stroke = 14.dp.toPx()
+            val inset = stroke
             val arcSize = Size(size.width - stroke, size.height - stroke)
             drawArc(track, 150f, 240f, false, Offset(inset, inset), arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
             if (fraction > 0f) {
-                drawArc(color, 150f, 240f * fraction, false, Offset(inset, inset), arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
+                val sweep = 240f * fraction
+                drawArc(color.copy(alpha = 0.12f), 150f, sweep, false, Offset(inset, inset), arcSize, style = Stroke(stroke * 2f, cap = StrokeCap.Round))
+                drawArc(color, 150f, sweep, false, Offset(inset, inset), arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
             }
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {

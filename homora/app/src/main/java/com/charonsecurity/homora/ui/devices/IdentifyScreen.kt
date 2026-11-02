@@ -45,15 +45,17 @@ private enum class Watch { STARTING, WATCHING, GONE, CANT_WATCH }
 @Composable
 fun IdentifyScreen(container: AppContainer, key: String, onBack: () -> Unit) {
     val app by container.store.state.collectAsStateWithLifecycle()
-    val device = remember(key) { app.lastScan?.devices?.firstOrNull { it.identityKey == key } }
+    val device = remember(key, app.lastScan) { app.lastScan?.devices?.firstOrNull { it.identityKey == key } }
     var watch by remember { mutableStateOf(Watch.STARTING) }
     var naming by remember { mutableStateOf(false) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(device) {
+    LaunchedEffect(device?.ip) {
         val ip = device?.ip?.let(Ipv4::parse) ?: return@LaunchedEffect
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            // Coming back to the screen after the device went away must keep that result.
+            if (watch == Watch.GONE || watch == Watch.CANT_WATCH) return@repeatOnLifecycle
             val port = device.watchablePort() ?: withContext(Dispatchers.IO) {
                 Scanner.SWEEP_PORTS.firstOrNull { Probe.tcp(ip, it, 600) != Probe.PortState.NO_ANSWER }
             }

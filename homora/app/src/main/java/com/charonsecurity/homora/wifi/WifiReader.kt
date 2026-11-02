@@ -19,13 +19,26 @@ class WifiReader(context: Context) {
 
     /** The Wi-Fi network, even when Android routes internet over mobile data. */
     @Suppress("DEPRECATION")
-    fun wifiNetwork(): Network? {
+    fun wifiNetwork(): Network? = try {
+        findWifiNetwork()
+    } catch (_: RuntimeException) {
+        null // some OEM builds throw SecurityException here; treat as "no Wi-Fi"
+    }
+
+    @Suppress("DEPRECATION")
+    private fun findWifiNetwork(): Network? {
         val active = cm.activeNetwork
         if (active != null && cm.getNetworkCapabilities(active)?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) return active
         return cm.allNetworks.firstOrNull { cm.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true }
     }
 
-    fun lanInfo(): LanInfo? {
+    fun lanInfo(): LanInfo? = try {
+        readLanInfo()
+    } catch (_: RuntimeException) {
+        null
+    }
+
+    private fun readLanInfo(): LanInfo? {
         val net = wifiNetwork() ?: return null
         val lp: LinkProperties = cm.getLinkProperties(net) ?: return null
         val link = lp.linkAddresses.firstOrNull { it.address is Inet4Address } ?: return null
@@ -36,8 +49,14 @@ class WifiReader(context: Context) {
         return LanInfo(self, link.prefixLength, gateway, dns)
     }
 
+    fun connection(): Connection? = try {
+        readConnection()
+    } catch (_: RuntimeException) {
+        null
+    }
+
     @Suppress("DEPRECATION")
-    fun connection(): Connection? {
+    private fun readConnection(): Connection? {
         if (wifiNetwork() == null) return null
         val info = wifi.connectionInfo ?: return null
         if (info.networkId == -1 && info.rssi <= -127) return null

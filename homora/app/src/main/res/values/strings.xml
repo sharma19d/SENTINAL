@@ -29,18 +29,9 @@
     <string name="err_scan">The scan stopped unexpectedly. Please try again.</string>
 
     <!-- Onboarding -->
-    <string name="onb1_title">See what\'s on your Wi-Fi</string>
-    <string name="onb1_body">Homora finds the devices on your home network, checks your setup for common security problems, and shows where your Wi-Fi signal is strong or weak.</string>
-    <string name="onb_privacy_title">Private by design</string>
-    <string name="onb_privacy_body">Scans run on your phone and only look at the network you\'re connected to. Your device list never leaves this phone.</string>
-    <string name="onb2_title">One permission</string>
-    <string name="onb2_body">Android only shows the Wi-Fi name and nearby networks to apps with location permission. Homora never reads, stores or sends your location.</string>
-    <string name="onb2_allow">Allow</string>
+    <string name="onb2_allow">Allow Wi-Fi access</string>
     <string name="onb2_skip">Not now</string>
-    <string name="onb3_title">Help improve Homora?</string>
-    <string name="onb3_body">Share anonymous usage counts, like how long scans take and which checks find problems. Never your devices, network names or addresses. You can change this any time in Settings.</string>
-    <string name="onb3_yes">Share anonymous usage</string>
-    <string name="onb3_no">No thanks</string>
+    <string name="onb3_yes">Share anonymous usage stats</string>
     <string name="onb_continue">Continue</string>
 
     <!-- Devices -->
@@ -312,4 +303,59 @@
         <item quantity="other">%d new devices on your Wi-Fi</item>
     </plurals>
     <string name="notif_new_devices_text">Open Homora to see what it is.</string>
+    <!-- Home -->
+    <string name="nav_home">Home</string>
+    <string name="home_health">Network Health</string>
+    <string name="home_scanning">Scanning…</string>
+    <string name="home_level_secure">Secure</string>
+    <string name="home_level_fair">Needs attention</string>
+    <string name="home_level_risk">At risk</string>
+    <string name="home_not_scanned">Not scanned yet</string>
+    <string name="home_issues">Issues</string>
+    <string name="home_wifi_connected">Connected</string>
+    <string name="home_wifi_disconnected">Not connected</string>
+    <string name="home_wifi_off">Wi-Fi</string>
+    <string name="home_scan_network">Scan Network</string>
+    <string name="home_stop_scan">Stop scan</string>
+    <plurals name="home_risks">
+        <item quantity="one">%d security risk</item>
+        <item quantity="other">%d security risks</item>
+    </plurals>
+    <string name="home_no_risks">No security risks found</string>
+    <plurals name="home_unmarked">
+        <item quantity="one">%d device not marked yet</item>
+        <item quantity="other">%d devices not marked yet</item>
+    </plurals>
+
+    <!-- Devices list -->
+    <string name="devices_search">Search devices</string>
+    <string name="devices_search_hint">Name, type or IP address</string>
+    <string name="devices_filter_all">All %1$d</string>
+    <string name="devices_filter_mine">Mine %1$d</string>
+    <string name="devices_filter_unknown">Unknown %1$d</string>
+    <string name="devices_none_in_filter">Nothing here. Every device in the last scan is in another list.</string>
+    <string name="devices_no_match">No devices match your search.</string>
+    <string name="detail_more">More options</string>
+    <string name="detail_gone">This device isn\'t in the latest scan.</string>
+    <string name="detail_not_marked">Not marked as yours yet</string>
+    <string name="detail_block">Block this device</string>
+    <string name="detail_block_body">Step-by-step guide for your router</string>
+    <string name="detail_about">About this device</string>
+    <string name="detail_no_services">No open services found.</string>
+    <string name="security_empty_title">No scan yet</string>
+
+    <!-- Onboarding -->
+    <string name="onb_tagline">Your home network, guarded.</string>
+    <string name="onb_skip">Skip</string>
+    <string name="onb_get_started">Get started</string>
+    <string name="onb_next">Next</string>
+    <string name="onb_p1_title">See everything on your Wi-Fi</string>
+    <string name="onb_p1_body">Homora finds every phone, TV, camera and smart plug on your network and names them, so anything you don\'t recognise stands out.</string>
+    <string name="onb_p2_title">Protect your smart home</string>
+    <string name="onb_p2_body">Checks your router and IoT devices for open Telnet, exposed cameras, weak Wi-Fi security and more, each with a step-by-step fix.</string>
+    <string name="onb_p3_title">Find your strongest signal</string>
+    <string name="onb_p3_body">A live Wi-Fi meter, room-by-room readings, and help for smart devices that won\'t connect.</string>
+    <string name="onb_p4_title">Private by design</string>
+    <string name="onb_p4_body">Scans run on this phone and only look at the network you\'re on; your device list never leaves it. Android needs location access to show the Wi-Fi name. Homora never reads or stores your location.</string>
+    <string name="onb_share_body">Counts only, never names or addresses. Change it any time in Settings.</string>
 </resources>

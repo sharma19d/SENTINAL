@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.compose.material3.Surface
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -90,23 +91,24 @@ class SnapshotTest {
 
     private fun shot(name: String) = compose.onRoot().captureRoboImage("snapshots/$name.png")
 
+    @Test fun home() {
+        val c = container()
+        compose.setContent { HomoraTheme { HomoraRoot(c) } }
+        shot("01_home")
+    }
+
     @Test fun devices() {
         val c = container()
         compose.setContent { HomoraTheme { HomoraRoot(c) } }
-        shot("01_devices")
-    }
-
-    @Test @Config(qualifiers = "+night")
-    fun devicesDark() {
-        val c = container()
-        compose.setContent { HomoraTheme { HomoraRoot(c) } }
-        shot("02_devices_dark")
+        compose.onNodeWithContentDescription("Devices").performClick()
+        compose.waitForIdle()
+        shot("02_devices")
     }
 
     @Test fun security() {
         val c = container()
         compose.setContent { HomoraTheme { HomoraRoot(c) } }
-        compose.onNodeWithText("Security").performClick()
+        compose.onNodeWithContentDescription("Security").performClick()
         compose.waitForIdle()
         shot("03_security")
     }
@@ -160,10 +162,25 @@ class SnapshotTest {
         shot("07_wifi_dark_weak")
     }
 
-    @Test fun onboarding() {
+    @Test fun onboardingIntro() {
+        val c = container(onboarded = false, scanned = false)
+        compose.mainClock.autoAdvance = false
+        compose.setContent { HomoraTheme { HomoraRoot(c) } }
+        compose.mainClock.advanceTimeBy(2_200)
+        shot("08_onboarding_intro")
+    }
+
+    @Test fun onboardingPages() {
         val c = container(onboarded = false, scanned = false)
         compose.setContent { HomoraTheme { HomoraRoot(c) } }
-        shot("08_onboarding")
+        compose.waitForIdle()
+        shot("08b_onboarding_page1")
+        compose.onNodeWithText("Get started").performClick()
+        compose.waitForIdle()
+        shot("08c_onboarding_page2")
+        compose.onNodeWithText("Skip").performClick()
+        compose.waitForIdle()
+        shot("08d_onboarding_privacy")
     }
 
     @Test fun settings() {

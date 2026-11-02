@@ -2,7 +2,9 @@ package com.charonsecurity.homora
 
 import com.charonsecurity.homora.checks.CheckId
 import com.charonsecurity.homora.checks.Checks
+import com.charonsecurity.homora.checks.Finding
 import com.charonsecurity.homora.checks.FindingType
+import com.charonsecurity.homora.checks.Health
 import com.charonsecurity.homora.data.AppState
 import com.charonsecurity.homora.data.HistoryKind
 import com.charonsecurity.homora.data.ScanRepository
@@ -141,5 +143,28 @@ class HistoryAndTelemetryTest {
         assertEquals("6-15", Telemetry.countBucket(12))
         assertEquals("60+", Telemetry.countBucket(200))
         assertEquals("10-30s", Telemetry.durationBucket(21_000))
+    }
+}
+
+class HealthTest {
+    @Test fun scoreDropsWithSeverity() {
+        assertEquals(100, Health.score(emptyList(), 0))
+        val high = Finding(FindingType.TELNET_OPEN, "k")
+        val low = Finding(FindingType.CAMERA_STREAM_OPEN, "k")
+        assertEquals(79, Health.score(listOf(high, low), 0))
+        assertEquals(90, Health.score(emptyList(), 20)) // unknown devices cost at most 10
+        assertEquals(5, Health.score(List(10) { high }, 0))
+        assertEquals(Health.Level.SECURE, Health.level(80))
+        assertEquals(Health.Level.FAIR, Health.level(60))
+        assertEquals(Health.Level.AT_RISK, Health.level(40))
+    }
+
+    @Test fun deviceThatDisappearsIsNotCountedAsFixed() {
+        val cam = Device("192.168.1.9", upnpUuid = "cam", openPorts = setOf(23))
+        val first = ScanOutcome(listOf(cam), startedAt = 1000, durationMs = 10)
+        var s = ScanRepository.applyScan(AppState(), first, Checks.evaluate(first.devices, null).findings)
+        val second = ScanOutcome(emptyList(), startedAt = 2000, durationMs = 10)
+        s = ScanRepository.applyScan(s, second, Checks.evaluate(second.devices, null).findings)
+        assertTrue(s.history.none { it.kind == HistoryKind.ISSUE_FIXED })
     }
 }

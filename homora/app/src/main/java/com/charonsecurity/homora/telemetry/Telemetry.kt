@@ -14,12 +14,14 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
  * Nothing is sent unless the user has opted in.
  */
 object Telemetry {
+    @Volatile
     private var analytics: FirebaseAnalytics? = null
 
-    fun init(context: Context, consent: Boolean) {
+    /** Runs on a background thread at startup; [consent] is read once Firebase is ready. */
+    fun init(context: Context, consent: () -> Boolean) {
         if (!BuildConfig.FIREBASE) return
         analytics = FirebaseAnalytics.getInstance(context)
-        setConsent(consent)
+        setConsent(consent())
     }
 
     fun setConsent(on: Boolean) {
