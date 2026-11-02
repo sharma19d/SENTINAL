@@ -54,6 +54,9 @@ android {
                 //   ./gradlew testDebugUnitTest -Psnapshots
                 it.systemProperty("roborazzi.test.record", project.hasProperty("snapshots").toString())
                 it.systemProperty("robolectric.pixelCopyRenderMode", "hardware")
+                // Name each test in the log and fail a stuck run instead of hanging CI.
+                it.testLogging { events("started", "passed", "failed", "skipped") }
+                it.timeout.set(java.time.Duration.ofMinutes(15))
             }
         }
     }

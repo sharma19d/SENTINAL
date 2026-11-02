@@ -1,7 +1,14 @@
 package com.charonsecurity.homora
 
 import android.app.Application
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.charonsecurity.homora.ui.components.HomoraLogo
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -162,12 +169,18 @@ class SnapshotTest {
         shot("07_wifi_dark_weak")
     }
 
-    @Test fun onboardingIntro() {
-        val c = container(onboarded = false, scanned = false)
-        compose.mainClock.autoAdvance = false
-        compose.setContent { HomoraTheme { HomoraRoot(c) } }
-        compose.mainClock.advanceTimeBy(2_200)
-        shot("08_onboarding_intro")
+    /** The intro animation's frames: the logo drawing itself at a few points in time. */
+    @Test fun logoAnimationFrames() {
+        compose.setContent {
+            HomoraTheme {
+                Surface {
+                    Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        listOf(0.2f, 0.45f, 0.7f, 1f).forEach { HomoraLogo(Modifier.size(80.dp), progress = it) }
+                    }
+                }
+            }
+        }
+        shot("08_logo_frames")
     }
 
     @Test fun onboardingPages() {

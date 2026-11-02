@@ -29,7 +29,11 @@ Requirements: JDK 17 and the Android SDK (platform 36). From this folder:
 ./gradlew testDebugUnitTest assembleDebug
 ```
 
-The APK is written to `app/build/outputs/apk/debug/`. GitHub Actions (`.github/workflows/homora.yml`) runs the same build on every push that touches `homora/` and uploads the APK as an artifact.
+The APK is written to `app/build/outputs/apk/debug/`. GitHub Actions (`.github/workflows/homora.yml`) runs the tests and builds on every push that touches `homora/` and uploads three artifacts:
+
+- **homora-release-apk** — install this one to try the app. It is minified and precompiled (baseline profile), so it opens much faster than the debug build. It is signed with the debug key; switch `signingConfig` in `app/build.gradle.kts` to your Play upload key before publishing.
+- **homora-debug-apk** — for debugging only; debug builds of Compose apps start noticeably slower.
+- **homora-screenshots** — PNGs of the real screens rendered by `SnapshotTest`, for reviewing the UI without a phone.
 
 ### Firebase config
 
@@ -64,7 +68,7 @@ app/src/main/java/com/charonsecurity/homora/
   telemetry/  the only analytics entry point
   feedback/   Firestore feedback with anonymous sign-in
   work/       the optional daily new-device check
-  ui/         Compose screens (devices, security, wifi, settings, onboarding)
+  ui/         Compose screens (home, devices, security, wifi, settings, onboarding)
 app/src/test/ unit tests for parsers, identity, checks, Wi-Fi analysis, history
 firebase/     Firestore rules, Hosting config, privacy policy page
 tools/        make_icon.py (all icon assets from one geometry)
