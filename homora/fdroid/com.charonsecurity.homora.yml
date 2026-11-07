@@ -1,10 +1,10 @@
-# DRAFT for F-Droid's fdroiddata repo (metadata/com.charonsecurity.homora.yml).
-# Not yet validated with `fdroid build`; see README "Publishing on F-Droid".
+# Copy of the F-Droid recipe submitted to fdroiddata (metadata/com.charonsecurity.homora.yml).
 Categories:
   - Security
   - Connectivity
 License: Apache-2.0
 AuthorName: sharma19d
+AuthorEmail: vinayyssharma17@gmail.com
 SourceCode: https://github.com/sharma19d/SENTINAL/tree/main/homora
 IssueTracker: https://github.com/sharma19d/SENTINAL/issues
 
@@ -14,7 +14,7 @@ Repo: https://github.com/sharma19d/SENTINAL.git
 Builds:
   - versionName: 0.1.0
     versionCode: 1
-    commit: v0.1.0
+    commit: bfeb18f54ecbc4b2ef3ab2dd8582273a0f409da0
     subdir: homora/app
     gradle:
       - foss
