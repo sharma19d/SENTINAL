@@ -23,6 +23,7 @@ import com.charonsecurity.homora.R
 import com.charonsecurity.homora.data.ScanRepository
 import com.charonsecurity.homora.net.Ipv4
 import com.charonsecurity.homora.net.Scanner
+import com.charonsecurity.homora.ui.Launch
 import java.util.concurrent.TimeUnit
 
 /**
@@ -49,21 +50,24 @@ class NewDeviceWorker(context: Context, params: WorkerParameters) : CoroutineWor
         val report = com.charonsecurity.homora.checks.Checks.evaluate(outcome.devices, before.lastScan.wifi)
         c.store.update { ScanRepository.applyScan(it, outcome, report.findings, before.lastScan.wifi) }
         val blockedBack = outcome.devices.count { it.identityKey in before.blocked }
-        if (newOnes.isNotEmpty()) notify(NOTIFICATION_ID, ctxPlural(R.plurals.notif_new_devices_title, newOnes.size), applicationContext.getString(R.string.notif_new_devices_text))
+        if (newOnes.isNotEmpty()) notify(NOTIFICATION_ID, ctxPlural(R.plurals.notif_new_devices_title, newOnes.size), applicationContext.getString(R.string.notif_new_devices_text), Launch.NEW_DEVICES)
         if (blockedBack > 0) notify(BLOCKED_ID, ctxPlural(R.plurals.notif_blocked_title, blockedBack), applicationContext.getString(R.string.notif_blocked_text))
         return Result.success()
     }
 
     private fun ctxPlural(id: Int, n: Int) = applicationContext.resources.getQuantityString(id, n, n)
 
-    private fun notify(id: Int, title: String, text: String) {
+    private fun notify(id: Int, title: String, text: String, target: String? = null) {
         val ctx = applicationContext
         if (android.os.Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) return
         val open = PendingIntent.getActivity(
-            ctx, id, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-            PendingIntent.FLAG_IMMUTABLE,
+            ctx, id,
+            Intent(ctx, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .apply { if (target != null) putExtra(Launch.EXTRA, target) },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val n = NotificationCompat.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_homora)

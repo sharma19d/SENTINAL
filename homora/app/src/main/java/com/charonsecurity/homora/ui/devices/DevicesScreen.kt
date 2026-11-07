@@ -77,7 +77,7 @@ import com.charonsecurity.homora.ui.components.icon
 import com.charonsecurity.homora.ui.components.label
 import com.charonsecurity.homora.ui.theme.LocalStatusColors
 
-enum class DeviceFilter { ALL, MINE, UNKNOWN }
+enum class DeviceFilter { ALL, MINE, UNKNOWN, NEW }
 
 /** The user's label or the best announced name, without any fallback text. */
 fun namedAs(d: Device, state: AppState): String? = state.known[d.identityKey]?.label ?: d.bestName
@@ -118,6 +118,8 @@ fun DevicesScreen(
     }
     val mineCount = remember(all) { all.count { isMarked(it, app) } }
     val unknownCount = all.size - mineCount
+    val newKeys = scan?.newKeys.orEmpty()
+    val newCount = remember(all, newKeys) { all.count { it.identityKey in newKeys && !isMarked(it, app) } }
     // One risk assessment per device, recomputed only when the scan or labels change.
     val risks = remember(scan, app.known) {
         scan?.devices.orEmpty().associate { d ->
@@ -125,13 +127,14 @@ fun DevicesScreen(
         }
     }
     val scope = rememberCoroutineScope()
-    val shown = remember(all, filter, query) {
+    val shown = remember(all, filter, query, newKeys) {
         val q = query.trim().lowercase()
         all.filter {
             when (filter) {
                 DeviceFilter.ALL -> true
                 DeviceFilter.MINE -> isMarked(it, app)
                 DeviceFilter.UNKNOWN -> !isMarked(it, app)
+                DeviceFilter.NEW -> it.identityKey in newKeys && !isMarked(it, app)
             }
         }.filter { d ->
             q.isEmpty() || d.ip.contains(q) || namedAs(d, app)?.lowercase()?.contains(q) == true ||
@@ -175,6 +178,9 @@ fun DevicesScreen(
                     Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
+                    if (newCount > 0 || filter == DeviceFilter.NEW) {
+                        PillChip(stringResource(R.string.devices_filter_new, newCount), filter == DeviceFilter.NEW, { onFilter(DeviceFilter.NEW) })
+                    }
                     PillChip(stringResource(R.string.devices_filter_all, all.size), filter == DeviceFilter.ALL, { onFilter(DeviceFilter.ALL) })
                     PillChip(stringResource(R.string.devices_filter_mine, mineCount), filter == DeviceFilter.MINE, { onFilter(DeviceFilter.MINE) })
                     PillChip(stringResource(R.string.devices_filter_unknown, unknownCount), filter == DeviceFilter.UNKNOWN, { onFilter(DeviceFilter.UNKNOWN) })

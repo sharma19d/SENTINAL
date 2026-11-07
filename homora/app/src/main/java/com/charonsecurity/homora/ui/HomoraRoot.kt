@@ -40,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -76,6 +77,12 @@ import com.charonsecurity.homora.ui.settings.SettingsScreen
 import com.charonsecurity.homora.ui.wifi.SmartHelperScreen
 import com.charonsecurity.homora.ui.wifi.WifiScreen
 
+/** What a notification asks the app to open. */
+object Launch {
+    const val EXTRA = "open"
+    const val NEW_DEVICES = "new_devices"
+}
+
 object Routes {
     const val HOME = "home"
     const val DEVICES = "devices"
@@ -107,19 +114,19 @@ private val TAB_ROUTES = TABS.map { it.route }.toSet()
 private fun NavBackStackEntry.isTab() = destination.route in TAB_ROUTES
 
 @Composable
-fun HomoraRoot(container: AppContainer) {
+fun HomoraRoot(container: AppContainer, openRequest: String? = null, onRequestHandled: () -> Unit = {}) {
     val onboarded by container.prefs.onboarded.collectAsStateWithLifecycle()
     AnimatedContent(
         targetState = onboarded,
         transitionSpec = { fadeIn(tween(450, delayMillis = 100)) togetherWith fadeOut(tween(250)) },
         label = "root",
     ) { done ->
-        if (done) MainNav(container) else OnboardingScreen(container)
+        if (done) MainNav(container, openRequest, onRequestHandled) else OnboardingScreen(container)
     }
 }
 
 @Composable
-private fun MainNav(container: AppContainer) {
+private fun MainNav(container: AppContainer, openRequest: String?, onRequestHandled: () -> Unit) {
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route ?: Routes.HOME
@@ -129,6 +136,13 @@ private fun MainNav(container: AppContainer) {
     fun openDevices(filter: DeviceFilter) {
         deviceFilter = filter
         nav.switchTab(Routes.DEVICES)
+    }
+
+    LaunchedEffect(openRequest) {
+        if (openRequest == Launch.NEW_DEVICES) {
+            openDevices(DeviceFilter.NEW)
+            onRequestHandled()
+        }
     }
 
     Scaffold(

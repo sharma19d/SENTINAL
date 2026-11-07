@@ -302,7 +302,7 @@
         <item quantity="one">%d new device on your Wi-Fi</item>
         <item quantity="other">%d new devices on your Wi-Fi</item>
     </plurals>
-    <string name="notif_new_devices_text">Open Homora to see what it is.</string>
+    <string name="notif_new_devices_text">Tap to see which device it is.</string>
     <!-- Home -->
     <string name="nav_home">Home</string>
     <string name="home_health">Network Health</string>
@@ -333,6 +333,7 @@
     <string name="devices_filter_all">All %1$d</string>
     <string name="devices_filter_mine">Mine %1$d</string>
     <string name="devices_filter_unknown">Unknown %1$d</string>
+    <string name="devices_filter_new">New %1$d</string>
     <string name="devices_none_in_filter">Nothing here. Every device in the last scan is in another list.</string>
     <string name="devices_no_match">No devices match your search.</string>
     <string name="detail_more">More options</string>
