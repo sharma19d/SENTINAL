@@ -1,11 +1,11 @@
 # Copy of the F-Droid recipe submitted to fdroiddata (metadata/com.charonsecurity.homora.yml).
 Categories:
+  - Network Analyzer
   - Security
-  - Connectivity
 License: Apache-2.0
 AuthorName: sharma19d
 AuthorEmail: vinayyssharma17@gmail.com
-SourceCode: https://github.com/sharma19d/SENTINAL/tree/main/homora
+SourceCode: https://github.com/sharma19d/SENTINAL/tree/HEAD/homora
 IssueTracker: https://github.com/sharma19d/SENTINAL/issues
 
 RepoType: git
@@ -19,8 +19,11 @@ Builds:
     gradle:
       - foss
     prebuild:
-      - sed -i -e '/libs\.firebase/d' -e '/libs\.plugins\.firebase/d' -e '/libs\.plugins\.google\.services/d' -e '/libs\.kotlinx\.coroutines\.play\.services/d' -e '/com\.google\.gms/d' -e '/com\.google\.firebase/d' build.gradle.kts ../build.gradle.kts
-      - sed -i -e '/^firebase/d' -e '/^crashlytics/d' -e '/^googleServices/d' -e '/^google-services/d' -e '/play-services/d' ../gradle/libs.versions.toml
+      - sed -i -e '/libs\.firebase/d' -e '/libs\.plugins\.firebase/d' -e '/libs\.plugins\.google\.services/d'
+        -e '/libs\.kotlinx\.coroutines\.play\.services/d' -e '/com\.google\.gms/d'
+        -e '/com\.google\.firebase/d' build.gradle.kts ../build.gradle.kts
+      - sed -i -e '/^firebase/d' -e '/^crashlytics/d' -e '/^googleServices/d' -e '/^google-services/d'
+        -e '/play-services/d' ../gradle/libs.versions.toml
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
