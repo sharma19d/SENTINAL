@@ -1,0 +1,13 @@
+Homora checks the home network your phone is on. It does three jobs:
+
+<b>Who's on my Wi-Fi.</b> Finds the devices on the network, names them from what they announce, and lets you mark them as yours. Anything left unmarked deserves a closer look. It also has a "find this device" helper and a guide for getting someone off your Wi-Fi.
+
+<b>Is my network set up safely.</b> Checks Wi-Fi encryption, WPS, UPnP, Telnet, FTP, VNC, open camera streams and an unencrypted router settings page. Every finding comes with a fix.
+
+<b>Where's my Wi-Fi good.</b> A live signal meter with router latency, a sound mode for walking around, saved rooms ranked best to worst, and a helper for smart devices that won't connect on 2.4 GHz.
+
+<b>A scanner, never an attack tool.</b> It only checks the private network your phone is on, with a short list of ports and read-only questions. It never tries passwords, sends exploits or disconnects devices.
+
+<b>Private.</b> Device lists, names and rooms stay on your phone. The F-Droid version has no analytics, no crash reporting and makes no connection to any server of ours.
+
+Android only shows Wi-Fi names and scan results to apps with the location permission. Homora asks for it with an explanation and never reads your location.

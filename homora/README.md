@@ -35,6 +35,13 @@ The APK is written to `app/build/outputs/apk/debug/`. GitHub Actions (`.github/w
 - **homora-debug-apk** — for debugging only; debug builds of Compose apps start noticeably slower.
 - **homora-screenshots** — PNGs of the real screens rendered by `SnapshotTest`, for reviewing the UI without a phone.
 
+### Build flavors
+
+- **play** — Firebase analytics, crash reports and feedback (needs `google-services.json`, see below).
+- **foss** — no Google or other proprietary libraries; telemetry and feedback are disabled. This is the flavor F-Droid builds: `./gradlew assembleFossRelease`. Its APK is under `app/build/outputs/apk/foss/release/`.
+
+CI builds both, so the artifacts hold a `play` and a `foss` APK.
+
 ### Firebase config
 
 `app/google-services.json` is **not committed**. Put your copy there for local builds, and store its contents as the repository secret `GOOGLE_SERVICES_JSON` for CI. Without it the app still builds and runs, with analytics, crash reports and feedback disabled.
@@ -74,3 +81,11 @@ firebase/     Firestore rules, Hosting config, privacy policy page
 tools/        make_icon.py (all icon assets from one geometry)
 store/        Play Store icon (512 px)
 ```
+
+## License
+
+Apache License 2.0, see [LICENSE](LICENSE).
+
+## Publishing on F-Droid
+
+F-Droid builds from source. `fdroid/com.charonsecurity.homora.yml` is the draft recipe to submit as a merge request to [fdroiddata](https://gitlab.com/fdroid/fdroiddata), and the store text and icon live in `fastlane/metadata/android/en-US/`. Tag the release (`v0.1.0`, matching `versionName`) before submitting.

@@ -25,7 +25,20 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
-        buildConfigField("boolean", "FIREBASE", hasFirebaseConfig.toString())
+    }
+
+    flavorDimensions += "distribution"
+    productFlavors {
+        // Google Play / sideload build: Firebase analytics, crash reports and feedback.
+        create("play") {
+            dimension = "distribution"
+            buildConfigField("boolean", "FIREBASE", hasFirebaseConfig.toString())
+        }
+        // F-Droid build: no Google or other proprietary libraries, no network features.
+        create("foss") {
+            dimension = "distribution"
+            buildConfigField("boolean", "FIREBASE", "false")
+        }
     }
 
     buildTypes {
@@ -86,16 +99,16 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.work.runtime)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.kotlinx.coroutines.play.services)
+    "playImplementation"(libs.kotlinx.coroutines.play.services)
     implementation(libs.kotlinx.serialization.json)
 
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.crashlytics)
-    implementation(libs.firebase.firestore)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.appcheck.playintegrity)
-    debugImplementation(libs.firebase.appcheck.debug)
+    "playImplementation"(platform(libs.firebase.bom))
+    "playImplementation"(libs.firebase.analytics)
+    "playImplementation"(libs.firebase.crashlytics)
+    "playImplementation"(libs.firebase.firestore)
+    "playImplementation"(libs.firebase.auth)
+    "playImplementation"(libs.firebase.appcheck.playintegrity)
+    "playDebugImplementation"(libs.firebase.appcheck.debug)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)

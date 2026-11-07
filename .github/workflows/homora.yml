@@ -31,16 +31,17 @@ jobs:
           if [ -n "$GOOGLE_SERVICES_JSON" ]; then echo "$GOOGLE_SERVICES_JSON" > app/google-services.json; fi
       - name: Unit tests, debug and release builds
         run: ./gradlew --no-daemon testDebugUnitTest -Psnapshots assembleDebug assembleRelease
+      # Contains a "play" APK (with Firebase) and a "foss" APK (no Google libraries, what F-Droid builds).
       # Install this one to try the app: it's minified and precompiled, so it starts
       # far faster than the debug build. (Signed with the debug key; see app/build.gradle.kts.)
       - uses: actions/upload-artifact@v4
         with:
           name: homora-release-apk
-          path: homora/app/build/outputs/apk/release/*.apk
+          path: homora/app/build/outputs/apk/*/release/*.apk
       - uses: actions/upload-artifact@v4
         with:
           name: homora-debug-apk
-          path: homora/app/build/outputs/apk/debug/*.apk
+          path: homora/app/build/outputs/apk/*/debug/*.apk
       # Screenshots of the real screens (SnapshotTest), for reviewing the UI without a phone.
       - uses: actions/upload-artifact@v4
         if: always()

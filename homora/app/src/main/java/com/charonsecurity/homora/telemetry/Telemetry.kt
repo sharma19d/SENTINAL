@@ -1,11 +1,8 @@
 package com.charonsecurity.homora.telemetry
 
 import android.content.Context
-import android.os.Bundle
 import com.charonsecurity.homora.BuildConfig
 import com.charonsecurity.homora.checks.FindingType
-import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 
 /**
  * The only way the app reports usage. Every function takes counts or enums,
@@ -14,20 +11,16 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
  * Nothing is sent unless the user has opted in.
  */
 object Telemetry {
-    @Volatile
-    private var analytics: FirebaseAnalytics? = null
-
     /** Runs on a background thread at startup; [consent] is read once Firebase is ready. */
     fun init(context: Context, consent: () -> Boolean) {
         if (!BuildConfig.FIREBASE) return
-        analytics = FirebaseAnalytics.getInstance(context)
+        TelemetryBackend.init(context)
         setConsent(consent())
     }
 
     fun setConsent(on: Boolean) {
         if (!BuildConfig.FIREBASE) return
-        analytics?.setAnalyticsCollectionEnabled(on)
-        FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = on
+        TelemetryBackend.setEnabled(on)
     }
 
     enum class ScanFailure { NO_WIFI, NOT_PRIVATE_NETWORK, ERROR }
@@ -82,7 +75,7 @@ object Telemetry {
     }
 
     private fun log(event: String, vararg params: Pair<String, String>) {
-        val a = analytics ?: return
-        a.logEvent(event, Bundle().apply { params.forEach { (k, v) -> putString(k, v) } })
+        if (!BuildConfig.FIREBASE) return
+        TelemetryBackend.log(event, params.toMap())
     }
 }
