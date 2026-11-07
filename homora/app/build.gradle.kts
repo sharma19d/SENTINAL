@@ -66,7 +66,7 @@ android {
             isIncludeAndroidResources = true
             all {
                 // Screenshots of real screens (SnapshotTest) are written only on request:
-                //   ./gradlew testDebugUnitTest -Psnapshots
+                //   ./gradlew testPlayDebugUnitTest -Psnapshots
                 it.systemProperty("roborazzi.test.record", project.hasProperty("snapshots").toString())
                 it.systemProperty("robolectric.pixelCopyRenderMode", "hardware")
                 // Name each test in the log and fail a stuck run instead of hanging CI.

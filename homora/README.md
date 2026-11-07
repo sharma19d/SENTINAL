@@ -26,7 +26,7 @@ Homora is a spin-off of [SENTINEL](../README.md) and shares its goal, but it is 
 Requirements: JDK 17 and the Android SDK (platform 36). From this folder:
 
 ```
-./gradlew testDebugUnitTest assembleDebug
+./gradlew testPlayDebugUnitTest testFossDebugUnitTest assembleDebug
 ```
 
 The APK is written to `app/build/outputs/apk/debug/`. GitHub Actions (`.github/workflows/homora.yml`) runs the tests and builds on every push that touches `homora/` and uploads three artifacts:
