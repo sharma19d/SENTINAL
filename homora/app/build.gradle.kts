@@ -83,6 +83,9 @@ kotlin {
     }
 }
 
+// Flavor + build-type configurations are only created after configuration, so declare this one up front.
+configurations.maybeCreate("playDebugImplementation")
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
