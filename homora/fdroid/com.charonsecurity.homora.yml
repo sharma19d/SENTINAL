@@ -19,7 +19,8 @@ Builds:
     gradle:
       - foss
     prebuild:
-      - sed -i -e '/firebase/d' -e '/crashlytics/d' -e '/google-services/d' -e '/google.services/d' build.gradle.kts ../build.gradle.kts ../gradle/libs.versions.toml
+      - sed -i -e '/libs\.firebase/d' -e '/libs\.plugins\.firebase/d' -e '/libs\.plugins\.google\.services/d' -e '/libs\.kotlinx\.coroutines\.play\.services/d' -e '/com\.google\.gms/d' -e '/com\.google\.firebase/d' build.gradle.kts ../build.gradle.kts
+      - sed -i -e '/^firebase/d' -e '/^crashlytics/d' -e '/^googleServices/d' -e '/^google-services/d' -e '/play-services/d' ../gradle/libs.versions.toml
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
