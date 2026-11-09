@@ -8,6 +8,8 @@ AuthorEmail: vinayyssharma17@gmail.com
 SourceCode: https://github.com/sharma19d/SENTINAL/tree/HEAD/homora
 IssueTracker: https://github.com/sharma19d/SENTINAL/issues
 
+AutoName: Homora
+
 RepoType: git
 Repo: https://github.com/sharma19d/SENTINAL.git
 
@@ -18,6 +20,10 @@ Builds:
     subdir: homora/app
     gradle:
       - foss
+    rm:
+      - sentinel.zip
+      - .DS_Store
+      - .DS_Store:AFP_AfpInfo
     prebuild:
       - sed -i -e '/libs\.firebase/d' -e '/libs\.plugins\.firebase/d' -e '/libs\.plugins\.google\.services/d'
         -e '/libs\.kotlinx\.coroutines\.play\.services/d' -e '/com\.google\.gms/d'
