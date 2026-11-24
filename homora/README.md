@@ -90,12 +90,12 @@ Apache License 2.0, see [LICENSE](LICENSE).
 
 F-Droid builds from source using the recipe in `fdroid/com.charonsecurity.homora.yml`. It reads the store listing from `fastlane/metadata/android/en-US/` at the repository root. Name each changelog after its Android `versionCode`.
 
-Build the unsigned FOSS APK from a clean checkout of the release commit with JDK 17, Android platform 36 and build-tools 35.0.0. Sign it with the Homora FOSS release key and keep that key backed up for future updates.
+Build the unsigned FOSS APK from a clean checkout of the release commit with JDK 17, Android platform 36 and build-tools 35.0.0. Preserve the APK's ZIP alignment when signing so F-Droid can copy and verify the signature. Keep the Homora FOSS release key backed up for future updates.
 
 ```sh
 ./gradlew --no-daemon clean assembleFossRelease
 apksigner="$ANDROID_HOME/build-tools/35.0.0/apksigner"
-"$apksigner" sign --ks /path/to/homora-foss.p12 --ks-key-alias homora-foss \
+"$apksigner" sign --alignment-preserved true --ks /path/to/homora-foss.p12 --ks-key-alias homora-foss \
   --out Homora-0.1.1-foss.apk app/build/outputs/apk/foss/release/app-foss-release-unsigned.apk
 "$apksigner" verify --print-certs Homora-0.1.1-foss.apk
 ```

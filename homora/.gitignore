@@ -10,4 +10,5 @@ app/google-services.json
 # Signing material
 *.jks
 *.keystore
+*.p12
 keystore.properties
