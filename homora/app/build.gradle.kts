@@ -10,6 +10,7 @@ plugins {
 // google-services.json is kept out of git (see README). Without it the app
 // still builds and runs; analytics, crash reports and feedback are disabled.
 val hasFirebaseConfig = file("google-services.json").exists()
+val signTestRelease = providers.gradleProperty("signTestRelease").orNull == "true"
 if (hasFirebaseConfig) {
     apply(plugin = "com.google.gms.google-services")
     apply(plugin = "com.google.firebase.crashlytics")
@@ -18,13 +19,14 @@ if (hasFirebaseConfig) {
 android {
     namespace = "com.charonsecurity.homora"
     compileSdk = 36
+    buildToolsVersion = "35.0.0"
 
     defaultConfig {
         applicationId = "com.charonsecurity.homora"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.1.1"
     }
 
     flavorDimensions += "distribution"
@@ -46,10 +48,9 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // There is no upload key in the repo, so the optimised build is signed with the
-            // debug key and can be installed straight from CI for testing. Swap in your
-            // Play upload key before publishing to the store.
-            signingConfig = signingConfigs.getByName("debug")
+            if (signTestRelease) {
+                signingConfig = signingConfigs.getByName("debug")
+            }
         }
     }
     compileOptions {

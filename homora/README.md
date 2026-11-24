@@ -29,9 +29,9 @@ Requirements: JDK 17 and the Android SDK (platform 36). From this folder:
 ./gradlew testPlayDebugUnitTest testFossDebugUnitTest assembleDebug
 ```
 
-The APK is written to `app/build/outputs/apk/debug/`. GitHub Actions (`.github/workflows/homora.yml`) runs the tests and builds on every push that touches `homora/` and uploads three artifacts:
+The debug APKs are written to `app/build/outputs/apk/<flavor>/debug/`. GitHub Actions (`.github/workflows/homora.yml`) runs the tests and builds on every push that touches `homora/` and uploads three artifacts:
 
-- **homora-release-apk** — install this one to try the app. It is minified and precompiled (baseline profile), so it opens much faster than the debug build. It is signed with the debug key; switch `signingConfig` in `app/build.gradle.kts` to your Play upload key before publishing.
+- **homora-release-apk** — install this one to try the app. It is minified and precompiled (baseline profile), so it opens much faster than the debug build. CI uses `-PsignTestRelease=true` to sign these test APKs with the debug key.
 - **homora-debug-apk** — for debugging only; debug builds of Compose apps start noticeably slower.
 - **homora-screenshots** — PNGs of the real screens rendered by `SnapshotTest`, for reviewing the UI without a phone.
 
@@ -88,4 +88,16 @@ Apache License 2.0, see [LICENSE](LICENSE).
 
 ## Publishing on F-Droid
 
-F-Droid builds from source. `fdroid/com.charonsecurity.homora.yml` is the draft recipe to submit as a merge request to [fdroiddata](https://gitlab.com/fdroid/fdroiddata), and the store text and icon live in `fastlane/metadata/android/en-US/`. Tag the release (`v0.1.0`, matching `versionName`) before submitting.
+F-Droid builds from source using the recipe in `fdroid/com.charonsecurity.homora.yml`. It reads the store listing from `app/fastlane/metadata/android/en-US/`, under the recipe's `homora/app` build directory. Name each changelog after its Android `versionCode`.
+
+Build the unsigned FOSS APK from a clean checkout of the release commit with JDK 17, Android platform 36 and build-tools 35.0.0. Sign it with the Homora FOSS release key and keep that key backed up for future updates.
+
+```sh
+./gradlew --no-daemon clean assembleFossRelease
+apksigner="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+"$apksigner" sign --ks /path/to/homora-foss.p12 --ks-key-alias homora-foss \
+  --out Homora-0.1.1-foss.apk app/build/outputs/apk/foss/release/app-foss-release-unsigned.apk
+"$apksigner" verify --print-certs Homora-0.1.1-foss.apk
+```
+
+Publish the signed FOSS APK as `Homora-<versionName>-foss.apk` on the GitHub release tagged `v<versionName>`. The F-Droid recipe must pin the release commit and SHA-256 signing certificate and refer to the GitHub asset with `Binaries`. Run `fdroid build --test com.charonsecurity.homora:<versionCode>` from the [fdroiddata](https://gitlab.com/fdroid/fdroiddata) checkout to verify that F-Droid can reproduce the signed APK.
