@@ -88,7 +88,7 @@ Apache License 2.0, see [LICENSE](LICENSE).
 
 ## Publishing on F-Droid
 
-F-Droid builds from source using the recipe in `fdroid/com.charonsecurity.homora.yml`. It reads the store listing from `app/fastlane/metadata/android/en-US/`, under the recipe's `homora/app` build directory. Name each changelog after its Android `versionCode`.
+F-Droid builds from source using the recipe in `fdroid/com.charonsecurity.homora.yml`. It reads the store listing from `fastlane/metadata/android/en-US/` at the repository root. Name each changelog after its Android `versionCode`.
 
 Build the unsigned FOSS APK from a clean checkout of the release commit with JDK 17, Android platform 36 and build-tools 35.0.0. Sign it with the Homora FOSS release key and keep that key backed up for future updates.
 
